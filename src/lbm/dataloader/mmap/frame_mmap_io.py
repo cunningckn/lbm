@@ -3,7 +3,10 @@
 Hot path: letterbox to ``image_size`` (224) at pack time, JPEG quality 85,
 ``frames.bin`` + offset/length tables, mmap + parallel cv2 decode into RGB.
 
-Decode is always native resolution. ``write_frame_cache`` pads to square.
+Decode is always native resolution. Pack streams one frame at a time
+(letterbox + JPEG) so a long episode never sits in RAM as ``T×H×W``.
+A rebuild unlinks ``manifest.json`` first and writes it last, so a crash
+cannot leave a matching manifest on a half-written blob.
 """
 
 from __future__ import annotations
@@ -36,11 +39,13 @@ from lbm.dataloader.mmap.mmap_io import (
     read_manifest,
     read_source_manifest,
 )
+from lbm.utils.mem import reclaim_if_over, set_worker_rss_limit, worker_rss_limit_bytes
 
 FRAMES_SUBDIR = "frames"
 MANIFEST = "manifest.json"
 JPEG_FILES = ("frames.bin", "offset.npy", "length.npy", MANIFEST)
 LAYOUT_JPEG = "jpeg_pack"
+_RECLAIM_EVERY = 64
 
 
 def get_all_frames(
@@ -225,60 +230,109 @@ def pack_jpeg_frames(jpegs: list[bytes]) -> tuple[bytes, np.ndarray, np.ndarray]
     return b"".join(chunks), offset, length
 
 
+def _drop_manifest(cache_dir: Path) -> None:
+    """Make an in-progress rebuild look unread so a crash cannot skip mixed files."""
+    path = cache_dir / MANIFEST
+    try:
+        path.unlink()
+    except FileNotFoundError:
+        return
+
+
+def _encode_rgb_jpeg(
+    frame: np.ndarray, *, jpeg_quality: int, image_size: int | None
+) -> tuple[bytes, tuple[int, int]]:
+    rgb = np.asarray(frame, dtype=np.uint8)
+    if image_size is not None:
+        rgb = resize_with_pad(rgb, int(image_size))
+    return encode_jpeg_rgb(rgb, quality=jpeg_quality), (int(rgb.shape[0]), int(rgb.shape[1]))
+
+
+def _commit_jpeg_pack(
+    cache_dir: Path,
+    jpegs: list[bytes],
+    *,
+    source_tag: str,
+    jpeg_quality: int,
+    image_size: int | None,
+    height: int,
+    width: int,
+) -> None:
+    if not jpegs:
+        raise ValueError("write_frame_cache got no frames")
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    _drop_manifest(cache_dir)
+    blob, offset, length = pack_jpeg_frames(jpegs)
+    atomic_write_bytes(cache_dir / "frames.bin", blob)
+    atomic_save_npy(cache_dir / "offset.npy", offset)
+    atomic_save_npy(cache_dir / "length.npy", length)
+    manifest = {
+        "source": source_tag,
+        "layout": LAYOUT_JPEG,
+        "num_frames": int(len(jpegs)),
+        "jpeg_quality": int(jpeg_quality),
+        "height": int(height),
+        "width": int(width),
+        "image_size": int(image_size) if image_size is not None else None,
+    }
+    atomic_write_text(cache_dir / MANIFEST, json.dumps(manifest, indent=2))
+
+
+def _iter_pack_items(frames: np.ndarray | None, source_jpegs: list[bytes] | None, frame_iter):
+    if source_jpegs is not None:
+        for blob in source_jpegs:
+            yield decode_still_rgb(blob)
+        return
+    if frame_iter is not None:
+        yield from frame_iter
+        return
+    if frames is None:
+        raise ValueError("write_frame_cache needs frames, frame_iter, or source_jpegs")
+    arr = np.ascontiguousarray(frames, dtype=np.uint8)
+    for i in range(int(arr.shape[0])):
+        yield arr[i]
+
+
 def write_frame_cache(
     cache_dir: Path,
     *,
     source_tag: str,
     frames: np.ndarray | None = None,
     source_jpegs: list[bytes] | None = None,
+    frame_iter=None,
     jpeg_quality: int = 85,
     image_size: int | None = None,
     desc: str | None = None,
     progress: bool | None = None,
 ) -> None:
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    if source_jpegs is not None:
-        items: list | np.ndarray = source_jpegs
-        stills = True
-    elif frames is not None:
-        items = np.ascontiguousarray(frames, dtype=np.uint8)
-        stills = False
-    else:
-        raise ValueError("write_frame_cache needs frames or source_jpegs")
-    n = len(items)
-    if n <= 0:
-        raise ValueError("write_frame_cache got no frames")
-    jpegs: list[bytes] = []
-    sample: np.ndarray | None = None
+    """Letterbox + JPEG each frame as it arrives. Manifest is written last."""
+    items = _iter_pack_items(frames, source_jpegs, frame_iter)
     if progress is None:
         progress = _show_progress()
-    indices = range(n)
     if progress:
         from lbm.utils.progress import track
 
-        indices = track(indices, desc=desc or "mmap-frames jpeg", total=n, unit="f", leave=False)
-    for i in indices:
-        frame = decode_still_rgb(items[i]) if stills else items[i]
-        if image_size is not None:
-            frame = resize_with_pad(frame, int(image_size))
-        if sample is None:
-            sample = frame
-        jpegs.append(encode_jpeg_rgb(frame, quality=jpeg_quality))
-    blob, offset, length = pack_jpeg_frames(jpegs)
-    atomic_write_bytes(cache_dir / "frames.bin", blob)
-    atomic_save_npy(cache_dir / "offset.npy", offset)
-    atomic_save_npy(cache_dir / "length.npy", length)
-    assert sample is not None
-    manifest = {
-        "source": source_tag,
-        "layout": LAYOUT_JPEG,
-        "num_frames": int(n),
-        "jpeg_quality": int(jpeg_quality),
-        "height": int(sample.shape[0]),
-        "width": int(sample.shape[1]),
-        "image_size": int(image_size) if image_size is not None else None,
-    }
-    atomic_write_text(cache_dir / MANIFEST, json.dumps(manifest, indent=2))
+        items = track(items, desc=desc or "mmap-frames jpeg", unit="f", leave=False)
+    jpegs: list[bytes] = []
+    hw: tuple[int, int] | None = None
+    for frame in items:
+        blob, hw = _encode_rgb_jpeg(frame, jpeg_quality=jpeg_quality, image_size=image_size)
+        jpegs.append(blob)
+        if len(jpegs) % _RECLAIM_EVERY == 0:
+            reclaim_if_over()
+    if hw is None:
+        raise ValueError("write_frame_cache got no frames")
+    _commit_jpeg_pack(
+        cache_dir,
+        jpegs,
+        source_tag=source_tag,
+        jpeg_quality=jpeg_quality,
+        image_size=image_size,
+        height=hw[0],
+        width=hw[1],
+    )
+    jpegs.clear()
+    reclaim_if_over()
 
 
 @dataclass
@@ -423,11 +477,103 @@ def _source_jpegs_of(decode_fn, kwargs: dict) -> list[bytes] | None:
     return getter(kwargs)
 
 
-def _write_job_rgb(store: MmapFrameStore, job: dict, frames: np.ndarray, *, progress: bool = False) -> None:
-    timestamps = job.get("episode_timestamps")
-    if timestamps is not None:
-        timestamps = np.asarray(timestamps, dtype=np.float64)
-    frames = align_frames_to_parquet_steps(frames, timestamps, float(job["from_timestamp"]))
+def _lerobot_file_span(kw: dict) -> tuple[int, int] | None:
+    """Contiguous packed-file ``[start, stop)`` for a lerobot mmap job (v2 or v3)."""
+    if str(kw.get("mode") or "") != "lerobot":
+        return None
+    dump = (kw.get("extra") or {}).get("lerobot")
+    cam = kw.get("cam")
+    n = int(kw.get("n_frames") or 0)
+    if dump is None or cam is None or n <= 0:
+        return None
+    try:
+        idxs = dump.mp4_indices(str(cam), list(range(n)))
+    except Exception:
+        return None
+    from lbm.dataloader.custom.video import contiguous_span
+
+    return contiguous_span(idxs)
+
+
+def _chain_first(first, rest):
+    yield first
+    yield from rest
+
+
+def _iter_native_rgb(video_path: Path, video_backend_kwargs: dict, *, progress: bool = False):
+    """Stream native RGB if the source is a contiguous mp4. None → stacked decode."""
+    kw = video_backend_kwargs or {}
+    mode = str(kw.get("mode") or "")
+    if mode == "mp4_all":
+        from lbm.dataloader.custom.video import iter_mp4_all
+
+        return iter_mp4_all(video_path, progress=progress)
+    if mode == "lerobot":
+        span = _lerobot_file_span(kw)
+        if span is None:
+            return None
+        from lbm.dataloader.custom.video import iter_mp4_span
+
+        return iter_mp4_span(video_path, span[0], span[1], progress=progress)
+    if mode:
+        return None
+    from lbm.dataloader.custom.video import iter_mp4_all
+
+    return iter_mp4_all(video_path, progress=progress)
+
+
+def _native_rgb_source(
+    video_path: Path,
+    *,
+    video_backend: str,
+    video_backend_kwargs: dict,
+    episode_timestamps: np.ndarray | None,
+    from_timestamp: float,
+    decode_all_frames,
+    progress: bool,
+) -> tuple[np.ndarray | None, object]:
+    """Prefer a frame iterator. Array fallback when timestamps need aligning or stream is empty."""
+    if episode_timestamps is not None:
+        decode = decode_all_frames or get_all_frames
+        frames = decode(
+            video_path.as_posix(),
+            video_backend=video_backend,
+            video_backend_kwargs=video_backend_kwargs,
+            progress=progress,
+        )
+        return align_frames_to_parquet_steps(frames, episode_timestamps, from_timestamp), None
+
+    stream = _iter_native_rgb(video_path, video_backend_kwargs, progress=progress)
+    if stream is not None:
+        first = next(iter(stream), None)
+        if first is not None:
+            return None, _chain_first(first, stream)
+        if decode_all_frames is not None:
+            return np.zeros((0, 1, 1, 3), dtype=np.uint8), None
+        frames = get_all_frames(
+            video_path.as_posix(),
+            video_backend=video_backend,
+            video_backend_kwargs=video_backend_kwargs,
+            progress=progress,
+        )
+        return frames, None
+
+    decode = decode_all_frames or get_all_frames
+    frames = decode(
+        video_path.as_posix(),
+        video_backend=video_backend,
+        video_backend_kwargs=video_backend_kwargs,
+        progress=progress,
+    )
+    return frames, None
+
+
+def _write_job_encoded(
+    store: MmapFrameStore,
+    job: dict,
+    jpegs: list[bytes],
+    hw: tuple[int, int],
+) -> None:
     cache_dir = store.cache_dir_for(int(job["trajectory_id"]), str(job["video_key"]))
     source_tag = store._source_tag(
         Path(job["video_path"]),
@@ -437,19 +583,19 @@ def _write_job_rgb(store: MmapFrameStore, job: dict, frames: np.ndarray, *, prog
     with exclusive_cache_lock(cache_dir / ".lock"):
         if _cache_is_ready(cache_dir, source_tag):
             return
-        write_frame_cache(
+        _commit_jpeg_pack(
             cache_dir,
+            jpegs,
             source_tag=source_tag,
-            frames=frames,
             jpeg_quality=store.jpeg_quality,
             image_size=store.image_size,
-            desc=f"mmap-frames ep{int(job['trajectory_id']):06d} {job['video_key']}",
-            progress=progress,
+            height=hw[0],
+            width=hw[1],
         )
 
 
 def write_shared_mp4_caches(store: MmapFrameStore, jobs: list[dict], *, progress: bool = False) -> None:
-    """Decode one packed mp4 once and write each episode's JPEG cache."""
+    """Decode one packed mp4 once; JPEG-encode each frame without stacking the file."""
     from lbm.dataloader.custom.video import iter_mp4_span
 
     items: list[tuple[dict, tuple[int, int]]] = []
@@ -465,26 +611,38 @@ def write_shared_mp4_caches(store: MmapFrameStore, jobs: list[dict], *, progress
     min_start = items[0][1][0]
     max_stop = max(span[1] for _job, span in items)
     path = Path(items[0][0]["video_path"])
-    pending = [(job, start, stop, []) for job, (start, stop) in items]
+    pending: list[tuple[dict, int, int, list[bytes], tuple[int, int] | None]] = [
+        (job, start, stop, [], None) for job, (start, stop) in items
+    ]
     file_i = min_start
     for frame in iter_mp4_span(path, min_start, max_stop, progress=progress):
         keep = []
-        for job, start, stop, buf in pending:
+        for job, start, stop, jpegs, hw in pending:
             if start <= file_i < stop:
-                buf.append(frame)
-                if len(buf) == stop - start:
-                    _write_job_rgb(store, job, np.stack(buf, axis=0), progress=False)
+                blob, hw = _encode_rgb_jpeg(
+                    frame, jpeg_quality=store.jpeg_quality, image_size=store.image_size
+                )
+                jpegs.append(blob)
+                if len(jpegs) % _RECLAIM_EVERY == 0:
+                    reclaim_if_over()
+                if len(jpegs) == stop - start:
+                    assert hw is not None
+                    _write_job_encoded(store, job, jpegs, hw)
+                    jpegs.clear()
+                    reclaim_if_over()
                     continue
-            keep.append((job, start, stop, buf))
+            keep.append((job, start, stop, jpegs, hw))
         pending = keep
         file_i += 1
         if not pending:
             break
-    for job, _start, _stop, _buf in pending:
+    for job, _start, _stop, _jpegs, _hw in pending:
         _prebuild_frame_job({**job, "progress": progress})
 
 
-def _shared_payload(store: MmapFrameStore, jobs: list[dict], *, progress: bool = False) -> dict:
+def _shared_payload(
+    store: MmapFrameStore, jobs: list[dict], *, progress: bool = False, rss_limit: int | None = None
+) -> dict:
     return {
         "dataset_path": str(store.dataset_path),
         "jpeg_quality": int(store.jpeg_quality),
@@ -492,10 +650,19 @@ def _shared_payload(store: MmapFrameStore, jobs: list[dict], *, progress: bool =
         "jobs": jobs,
         "progress": progress,
         "video_path": jobs[0]["video_path"],
+        "rss_limit": rss_limit,
     }
 
 
+def _bind_worker_rss_limit(payload: dict) -> None:
+    limit = payload.get("rss_limit")
+    if limit is None:
+        return
+    set_worker_rss_limit(int(limit))
+
+
 def _prebuild_shared_file_job(payload: dict) -> str:
+    _bind_worker_rss_limit(payload)
     jobs = payload["jobs"]
     store = MmapFrameStore(
         payload["dataset_path"],
@@ -508,11 +675,13 @@ def _prebuild_shared_file_job(payload: dict) -> str:
         write_shared_mp4_caches(store, jobs, progress=bool(payload.get("progress")))
     finally:
         store.close()
+        reclaim_if_over()
     return str(payload["video_path"])
 
 
 def _prebuild_frame_job(job: dict) -> str:
     """Spawn-safe worker: decode one episode×camera into the JPEG mmap cache."""
+    _bind_worker_rss_limit(job)
     store = MmapFrameStore(
         job["dataset_path"],
         jpeg_quality=int(job["jpeg_quality"]),
@@ -536,6 +705,7 @@ def _prebuild_frame_job(job: dict) -> str:
         )
     finally:
         store.close()
+        reclaim_if_over()
     return f"{job['trajectory_id']}:{job['video_key']}"
 
 
@@ -675,17 +845,24 @@ class MmapFrameStore:
         n_units = len(shared) + len(solo)
         nproc = workers if workers and workers > 0 else default_prebuild_workers()
         nproc = max(1, min(int(nproc), n_units))
+        rss_limit = worker_rss_limit_bytes(nproc)
+        set_worker_rss_limit(rss_limit)
+        solo = [{**job, "rss_limit": rss_limit} for job in solo]
         from lbm.utils.progress import track
 
         if nproc == 1:
             for group in shared:
                 write_shared_mp4_caches(self, group, progress=True)
+                reclaim_if_over()
             for job in track(solo, desc="prebuild mmap-frames", unit="vid") if solo else ():
                 _prebuild_frame_job({**job, "progress": True})
             return len(pending), skipped
         ctx = multiprocessing.get_context("spawn")
         with ProcessPoolExecutor(max_workers=nproc, mp_context=ctx) as pool:
-            futures = [pool.submit(_prebuild_shared_file_job, _shared_payload(self, group)) for group in shared]
+            futures = [
+                pool.submit(_prebuild_shared_file_job, _shared_payload(self, group, rss_limit=rss_limit))
+                for group in shared
+            ]
             futures += [pool.submit(_prebuild_frame_job, job) for job in solo]
             for fut in track(
                 as_completed(futures), total=len(futures), desc=f"prebuild mmap-frames x{nproc}", unit="vid"
@@ -808,18 +985,20 @@ class MmapFrameStore:
                         progress=progress,
                     )
                 else:
-                    decode = self._decode_all_frames or get_all_frames
-                    frames = decode(
-                        video_path.as_posix(),
+                    frames, frame_iter = _native_rgb_source(
+                        video_path,
                         video_backend=video_backend,
                         video_backend_kwargs=video_backend_kwargs,
+                        episode_timestamps=episode_timestamps,
+                        from_timestamp=from_timestamp,
+                        decode_all_frames=self._decode_all_frames,
                         progress=progress,
                     )
-                    frames = align_frames_to_parquet_steps(frames, episode_timestamps, from_timestamp)
                     write_frame_cache(
                         cache_dir,
                         source_tag=source_tag,
                         frames=frames,
+                        frame_iter=frame_iter,
                         jpeg_quality=self.jpeg_quality,
                         image_size=self.image_size,
                         desc=f"mmap-frames ep{int(trajectory_id):06d} {video_key}",

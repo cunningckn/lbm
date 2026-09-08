@@ -25,19 +25,27 @@ def read_mp4_indices(path: Path | str, indices: list[int], *, fallback_hw: tuple
     return np.zeros((len(indices), h, w, 3), dtype=np.uint8)
 
 
+def iter_mp4_all(video_path: str | Path, *, progress: bool = False):
+    """Yield every native RGB frame. Av first, then OpenCV. Does not stack the episode."""
+    path = Path(video_path)
+    if not path.is_file():
+        return
+    n = 0
+    for frame in _iter_av_all(path, progress=progress):
+        n += 1
+        yield frame
+    if n:
+        return
+    yield from _iter_cv2_all(path, progress=progress)
+
+
 def read_mp4_all(video_path: str | Path, *args, progress: bool = False, **kwargs) -> np.ndarray:
     """Decode every frame for mmap cache build."""
     del args, kwargs
-    path = Path(video_path)
-    if not path.is_file():
-        return np.zeros((0, 1, 1, 3), dtype=np.uint8)
-    frames = _read_av_all(path, progress=progress)
-    if frames is not None and frames.shape[0] > 0:
-        return frames
-    cv = _read_cv2_all(path, progress=progress)
-    if cv is not None and cv.shape[0] > 0:
-        return cv
-    return frames if frames is not None else np.zeros((0, 1, 1, 3), dtype=np.uint8)
+    frames = list(iter_mp4_all(video_path, progress=progress))
+    if frames:
+        return np.stack(frames, axis=0)
+    return np.zeros((0, 1, 1, 3), dtype=np.uint8)
 
 
 def contiguous_span(indices: list[int]) -> tuple[int, int] | None:
@@ -257,10 +265,10 @@ def _iter_cv2_span(path: Path, start: int, stop: int, *, progress: bool = False)
         cap.release()
 
 
-def _read_av_all(path: Path, *, progress: bool = False) -> np.ndarray | None:
+def _iter_av_all(path: Path, *, progress: bool = False):
     opened = _open_av(path)
     if opened is None:
-        return None
+        return
     container, stream = opened
     iterator = container.decode(stream)
     n = int(stream.frames or 0) or None
@@ -268,21 +276,22 @@ def _read_av_all(path: Path, *, progress: bool = False) -> np.ndarray | None:
         from lbm.utils.progress import track
 
         iterator = track(iterator, desc=f"decode {path.name}", total=n, unit="f", leave=False)
-    frames = [frame.to_ndarray(format="rgb24") for frame in iterator]
-    container.close()
-    return np.stack(frames, axis=0) if frames else None
+    try:
+        for frame in iterator:
+            yield frame.to_ndarray(format="rgb24")
+    finally:
+        container.close()
 
 
-def _read_cv2_all(path: Path, *, progress: bool = False) -> np.ndarray | None:
+def _iter_cv2_all(path: Path, *, progress: bool = False):
     try:
         import cv2
     except ImportError:
-        return None
+        return
     cap = cv2.VideoCapture(str(path))
     if not cap.isOpened():
-        return None
+        return
     n = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0) or None
-    out: list[np.ndarray] = []
     bar = None
     if progress:
         from lbm.utils.progress import progress_bar
@@ -293,11 +302,10 @@ def _read_cv2_all(path: Path, *, progress: bool = False) -> np.ndarray | None:
             ok, frame = cap.read()
             if not ok or frame is None:
                 break
-            out.append(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+            yield cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             if bar is not None:
                 bar.update(1)
     finally:
         if bar is not None:
             bar.close()
         cap.release()
-    return np.stack(out, axis=0) if out else None

@@ -191,6 +191,112 @@ class TestFrameMmap:
         assert int(padded[y0 + 10, 20, 0]) == 200
         assert int(padded[0, 0, 0]) == 0
 
+    def test_write_frame_cache_reclaims_on_long_stream(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        hits = {"n": 0}
+
+        def _hit(*_a, **_k):
+            hits["n"] += 1
+            return True
+
+        monkeypatch.setattr("lbm.dataloader.mmap.frame_mmap_io.reclaim_if_over", _hit)
+        frames = np.zeros((70, 8, 8, 3), dtype=np.uint8)
+        write_frame_cache(tmp_path / "cache", source_tag="t", frames=frames, jpeg_quality=85)
+        assert hits["n"] >= 2
+
+    def test_frame_iter_matches_ndarray_write(self, tmp_path: Path) -> None:
+        frames = np.stack(
+            [np.full((16, 16, 3), fill_value=i * 20, dtype=np.uint8) for i in range(4)],
+            axis=0,
+        )
+        a = tmp_path / "arr"
+        b = tmp_path / "iter"
+        write_frame_cache(a, source_tag="t", frames=frames, jpeg_quality=85, image_size=16)
+        write_frame_cache(
+            b,
+            source_tag="t",
+            frame_iter=(frames[i] for i in range(frames.shape[0])),
+            jpeg_quality=85,
+            image_size=16,
+        )
+        ea = MmapFrameEpisode.open(a)
+        eb = MmapFrameEpisode.open(b)
+        try:
+            assert ea.num_frames == eb.num_frames == 4
+            fa = ea.get_frames(np.arange(4))
+            fb = eb.get_frames(np.arange(4))
+            assert fa.shape == fb.shape == (4, 16, 16, 3)
+            assert np.array_equal(fa, fb)
+        finally:
+            ea.close()
+            eb.close()
+
+    def test_incomplete_cache_rebuilds(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        repo = tmp_path / "dataset"
+        video_path = repo / "videos" / "cam.mp4"
+        video_path.parent.mkdir(parents=True, exist_ok=True)
+        video_path.write_bytes(b"fake")
+        frames = np.stack([np.full((8, 8, 3), i, dtype=np.uint8) for i in range(3)], axis=0)
+        monkeypatch.setattr(
+            "lbm.dataloader.mmap.frame_mmap_io.get_all_frames",
+            lambda *a, **k: frames,
+        )
+        store = MmapFrameStore(repo, jpeg_quality=85, image_size=None, decode_workers=1)
+        kwargs = dict(
+            trajectory_id=0,
+            video_key="cam",
+            video_path=video_path,
+            frame_indices=np.array([0, 2]),
+            episode_timestamps=None,
+            from_timestamp=0.0,
+            video_backend="decord",
+            video_backend_kwargs={},
+        )
+        job = store.make_job(
+            trajectory_id=0,
+            video_key="cam",
+            video_path=video_path,
+            episode_timestamps=None,
+            from_timestamp=0.0,
+            video_backend="decord",
+            video_backend_kwargs={},
+        )
+        cache_dir = store.cache_dir_for(0, "cam")
+        try:
+            store.get_frames(**kwargs)
+            assert store.job_ready(job) is True
+            (cache_dir / "manifest.json").unlink()
+            assert store.job_ready(job) is False
+            store._episodes.clear()
+            out = store.get_frames(**kwargs)
+            assert out.shape == (2, 8, 8, 3)
+            assert store.job_ready(job) is True
+
+            store._episodes.clear()
+            (cache_dir / "offset.npy").unlink()
+            (cache_dir / "length.npy").unlink()
+            (cache_dir / "manifest.json").unlink()
+            (cache_dir / "frames.bin").write_bytes(b"half")
+            assert store.job_ready(job) is False
+            out = store.get_frames(**kwargs)
+            assert out.shape == (2, 8, 8, 3)
+            assert store.job_ready(job) is True
+        finally:
+            store.close()
+
+    def test_rebuild_drops_manifest_before_blob(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        frames = np.stack([np.full((8, 8, 3), 40, dtype=np.uint8) for _ in range(2)], axis=0)
+        cache_dir = tmp_path / "cache"
+        write_frame_cache(cache_dir, source_tag="t", frames=frames, jpeg_quality=85)
+        assert (cache_dir / "manifest.json").is_file()
+
+        def _boom(*_a, **_k):
+            raise RuntimeError("fail after unlink")
+
+        monkeypatch.setattr("lbm.dataloader.mmap.frame_mmap_io.atomic_write_bytes", _boom)
+        with pytest.raises(RuntimeError, match="fail after unlink"):
+            write_frame_cache(cache_dir, source_tag="t", frames=frames, jpeg_quality=85)
+        assert not (cache_dir / "manifest.json").exists()
+
     def test_source_jpegs_match_rgb_write(self, tmp_path: Path) -> None:
         rgb = np.zeros((32, 48, 3), dtype=np.uint8)
         rgb[:, :24, 0] = 180

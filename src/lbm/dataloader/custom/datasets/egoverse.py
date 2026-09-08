@@ -1,0 +1,140 @@
+"""EgoVerse / Aria zarr (JPEG ``images.front_1`` broadcast to three cameras)."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import numpy as np
+
+from lbm.action_space import dual_eef
+from lbm.dataloader.custom.common.arrays import fit_dim
+from lbm.dataloader.custom.common.jpeg import jpeg_bytes
+from lbm.dataloader.custom.record import EpisodeRecord
+from lbm.dataloader.custom.spec import WRISTS, CustomSpec, make_spec
+
+NAME = "egoverse"
+SPEC = make_spec("egoverse", "egoverse", WRISTS, 16, 16, 30.0, 12, kind="zarr", action_space=dual_eef())
+
+
+def scan(root: Path, spec: CustomSpec, *, max_episodes: int | None = None) -> list[EpisodeRecord]:
+    from lbm.dataloader.custom.common.fs import list_dirs, map_threads
+
+    paths = list_dirs(Path(root), suffix=".zarr", max_depth=2, max_dirs=max_episodes)
+    metas = map_threads(_meta, paths, desc=f"scan {spec.name}")
+    records: list[EpisodeRecord] = []
+    for zpath, (n, lang) in zip(paths, metas, strict=True):
+        if n <= 0:
+            continue
+        records.append(
+            EpisodeRecord(
+                kind="zarr",
+                path=str(zpath),
+                n_frames=n,
+                lang=lang,
+                extra={"video_key": "images.front_1"},
+            )
+        )
+    return records
+
+
+def _array(root: Path, name: str):
+    import zarr
+
+    direct = Path(root) / name
+    if (direct / "zarr.json").is_file() or (direct / ".zarray").is_file():
+        return zarr.open_array(str(direct), mode="r")
+    group = zarr.open(str(root), mode="r")
+    return group[name]
+
+
+def _meta(path: Path) -> tuple[int, str]:
+    info = path / "zarr.json"
+    lang = ""
+    n = 0
+    if info.is_file():
+        try:
+            data = json.loads(info.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            data = {}
+        attrs = data.get("attributes") if isinstance(data.get("attributes"), dict) else {}
+        lang = str(
+            attrs.get("task_description")
+            or attrs.get("task_name")
+            or data.get("task_description")
+            or data.get("task_name")
+            or ""
+        )
+        n = int(attrs.get("total_frames") or 0)
+    if n <= 0:
+        try:
+            n = int(_array(path, "left.obs_ee_pose").shape[0])
+        except Exception:
+            n = 0
+    return n, lang
+
+
+def read_vectors(
+    record: EpisodeRecord,
+    spec: CustomSpec,
+    *,
+    action_freq: float | None = None,
+    **_kwargs,
+) -> tuple[np.ndarray, np.ndarray]:
+    left = np.asarray(_array(Path(record.path), "left.obs_ee_pose")[...], dtype=np.float32)
+    right = np.asarray(_array(Path(record.path), "right.obs_ee_pose")[...], dtype=np.float32)
+    grip = np.full((left.shape[0], 2), 0.5, dtype=np.float32)
+    state = np.concatenate([left, grip[:, :1], right, grip[:, 1:]], axis=1)
+    state = fit_dim(state, spec.state_dim)
+    from lbm.action_space import derive_absolute_actions
+
+    freq = spec.fps if action_freq is None else float(action_freq)
+    action = derive_absolute_actions(state, spec, native_fps=spec.fps, action_freq=freq)
+    return state, action
+
+
+def read_frames(record: EpisodeRecord, spec: CustomSpec, cam: str, indices: list[int]) -> np.ndarray:
+    import cv2
+
+    hw = (spec.image_size, spec.image_size)
+    try:
+        stream = _array(Path(record.path), "images.front_1")
+    except Exception:
+        return np.zeros((len(indices),) + hw + (3,), dtype=np.uint8)
+    from lbm.dataloader.custom.video import contiguous_span
+
+    n = int(stream.shape[0])
+    idx = [int(np.clip(i, 0, max(n - 1, 0))) for i in indices]
+    span = contiguous_span(idx)
+    cells = stream[span[0] : span[1]] if span is not None else [stream[i] for i in idx]
+    frames = []
+    for cell in cells:
+        blob = jpeg_bytes(cell)
+        img = None
+        if blob:
+            bgr = cv2.imdecode(np.frombuffer(blob, dtype=np.uint8), cv2.IMREAD_COLOR)
+            if bgr is not None:
+                img = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+        if img is None:
+            img = np.zeros(hw + (3,), dtype=np.uint8)
+        frames.append(img)
+    return np.stack(frames, axis=0)
+
+
+def mmap_source_jpegs(record: EpisodeRecord, spec: CustomSpec, cam: str) -> list[bytes] | None:
+    del spec, cam
+    try:
+        stream = _array(Path(record.path), "images.front_1")
+    except Exception:
+        return None
+    n = int(record.n_frames) if record.n_frames else int(stream.shape[0])
+    n = min(n, int(stream.shape[0]))
+    if n <= 0:
+        return None
+    blobs: list[bytes] = []
+    for cell in stream[:n]:
+        blob = jpeg_bytes(cell)
+        if not blob:
+            return None
+        blobs.append(blob)
+    return blobs

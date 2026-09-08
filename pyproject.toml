@@ -1,0 +1,82 @@
+[project]
+name = "lbm"
+version = "0.1.0"
+description = "Large Behavior Cloning Model."
+readme = "README.md"
+authors = [
+    { name = "Ao-Qun Jin", email = "aojiaojiao@foxmail.com" }
+]
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "numpy",
+    "torch==2.7.1",
+    "ftfy",
+    "regex",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff",
+]
+data = [
+    "pandas",
+    "pyarrow",
+    "av",
+    "opencv-python-headless",
+    "tqdm",
+    "pydantic",
+    "numpydantic",
+    "albumentations",
+    "einops",
+    "pillow",
+    "decord",
+    "omegaconf",
+    "transformers",
+    "torchvision==0.22.1",
+    "h5py",
+    "zarr",
+    "mcap",
+    "mcap-protobuf-support",
+    "pylance",
+]
+dist = [
+    "megatron-fsdp",
+]
+
+[build-system]
+requires = ["uv_build>=0.12.0,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv]
+environments = ["sys_platform == 'linux' and platform_machine == 'x86_64'"]
+
+[[tool.uv.index]]
+name = "pytorch-cu126"
+url = "https://download.pytorch.org/whl/cu126"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu126" }
+torchvision = { index = "pytorch-cu126" }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "."]
+markers = [
+    "integration: tests that need real datasets on disk",
+    "gpu: tests that need a CUDA device",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+src = ["src", "tests", "scripts", "examples"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/**" = ["E402"]
+"examples/**" = ["E402"]
+"benchmarks/**" = ["E402"]

@@ -1,0 +1,22 @@
+.venv/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.python-version
+
+# data and run artifacts (datasets/ is only symlinks + helper scripts)
+datasets/*
+!datasets/scripts/
+!datasets/scripts/**
+checkpoints/
+outputs/
+**/.mmap/
+**/.cache/
+
+# vendored trees and sim assets are too large for git
+third_party/
+simulation/libero/
+simulation/rmbench/
+simulation/lerobot/

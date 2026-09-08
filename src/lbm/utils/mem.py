@@ -1,4 +1,4 @@
-"""Per-worker RSS reclaim. Used by mmap prebuild processes."""
+"""Per-worker RSS reclaim for mmap prebuild processes."""
 
 from __future__ import annotations
 
@@ -43,9 +43,8 @@ def cgroup_memory_max_bytes() -> int | None:
             value = int(text)
         except ValueError:
             continue
-        if value >= (1 << 62):
-            continue
-        return value
+        if value < (1 << 62):
+            return value
     return None
 
 
@@ -56,23 +55,22 @@ def worker_rss_limit_bytes(nproc: int | None = None) -> int:
         return max(1, int(float(env))) * 1024 * 1024
     n = int(nproc) if nproc and int(nproc) > 0 else _nproc_hint()
     cap = cgroup_memory_max_bytes()
-    if cap is not None:
-        return max(_MIN_RSS, int(cap * _CGROUP_FRACTION / max(n, 1)))
-    return _DEFAULT_RSS
+    if cap is None:
+        return _DEFAULT_RSS
+    return max(_MIN_RSS, int(cap * _CGROUP_FRACTION / max(n, 1)))
 
 
 def _nproc_hint() -> int:
-    for key in ("LBM_PREBUILD_WORKERS",):
-        raw = os.environ.get(key)
-        if raw and int(raw) > 0:
-            return int(raw)
+    raw = os.environ.get("LBM_PREBUILD_WORKERS")
+    if raw and int(raw) > 0:
+        return int(raw)
     return max(1, min(32, os.cpu_count() or 8))
 
 
 def set_worker_rss_limit(limit_bytes: int | None) -> None:
-    """Pin the process-local budget used by ``reclaim_if_over()``."""
+    """Pin the process-local budget. ``None`` falls back to ``worker_rss_limit_bytes()``."""
     global _LIMIT
-    _LIMIT = int(limit_bytes) if limit_bytes else None
+    _LIMIT = None if limit_bytes is None else int(limit_bytes)
 
 
 def malloc_trim() -> bool:
@@ -85,15 +83,17 @@ def malloc_trim() -> bool:
         return False
 
 
-def reclaim_if_over(limit_bytes: int | None = None) -> bool:
-    """If RSS exceeds the worker budget, ``gc.collect`` + ``malloc_trim``. True if it ran."""
+def _active_limit(limit_bytes: int | None) -> int:
     if limit_bytes is not None:
-        limit = int(limit_bytes)
-    elif _LIMIT is not None:
-        limit = int(_LIMIT)
-    else:
-        limit = worker_rss_limit_bytes()
-    if process_rss_bytes() <= limit:
+        return int(limit_bytes)
+    if _LIMIT is not None:
+        return _LIMIT
+    return worker_rss_limit_bytes()
+
+
+def reclaim_if_over(limit_bytes: int | None = None) -> bool:
+    """If RSS exceeds the budget, ``gc.collect`` + ``malloc_trim``. True if it ran."""
+    if process_rss_bytes() <= _active_limit(limit_bytes):
         return False
     gc.collect()
     malloc_trim()

@@ -30,13 +30,7 @@ def iter_mp4_all(video_path: str | Path, *, progress: bool = False):
     path = Path(video_path)
     if not path.is_file():
         return
-    n = 0
-    for frame in _iter_av_all(path, progress=progress):
-        n += 1
-        yield frame
-    if n:
-        return
-    yield from _iter_cv2_all(path, progress=progress)
+    yield from _prefer_av(_iter_av_all(path, progress=progress), _iter_cv2_all(path, progress=progress))
 
 
 def read_mp4_all(video_path: str | Path, *args, progress: bool = False, **kwargs) -> np.ndarray:
@@ -82,13 +76,20 @@ def iter_mp4_span(path: Path | str, start: int, stop: int, *, progress: bool = F
     start, stop = int(start), int(stop)
     if not path.is_file() or stop <= start:
         return
+    yield from _prefer_av(
+        _iter_av_span(path, start, stop, progress=progress),
+        _iter_cv2_span(path, start, stop, progress=progress),
+    )
+
+
+def _prefer_av(av_frames, cv_frames):
     n = 0
-    for frame in _iter_av_span(path, start, stop, progress=progress):
+    for frame in av_frames:
         n += 1
         yield frame
-    if n == stop - start or n:
+    if n:
         return
-    yield from _iter_cv2_span(path, start, stop, progress=progress)
+    yield from cv_frames
 
 
 def _read_cv2(path: Path, indices: list[int], hw: tuple[int, int]) -> np.ndarray | None:

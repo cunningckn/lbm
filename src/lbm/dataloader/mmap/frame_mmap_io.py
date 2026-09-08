@@ -15,8 +15,10 @@ import json
 import multiprocessing
 import os
 import weakref
+from collections.abc import Iterable, Iterator
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
-from dataclasses import dataclass
+from contextlib import contextmanager
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
@@ -58,17 +60,11 @@ def get_all_frames(
 ) -> np.ndarray:
     """Decode a whole video for cache build (PyAV first, OpenCV fallback)."""
     del video_backend, video_backend_kwargs
-    path = Path(video_path)
-    if not path.is_file():
-        return np.zeros((0, 1, 1, 3), dtype=np.uint8)
-    frames = _decode_av_all(path, progress=progress)
-    if frames is None or frames.shape[0] == 0:
-        frames = _decode_cv2_all(path, progress=progress)
-    if frames is None or frames.shape[0] == 0:
-        return np.zeros((0, 1, 1, 3), dtype=np.uint8)
-    if resize_size is not None:
-        h, w = int(resize_size[0]), int(resize_size[1])
-        frames = _resize_thwc(frames, h, w)
+    from lbm.dataloader.custom.video import read_mp4_all
+
+    frames = read_mp4_all(video_path, progress=progress)
+    if resize_size is not None and frames.shape[0]:
+        frames = _resize_thwc(frames, int(resize_size[0]), int(resize_size[1]))
     return frames
 
 
@@ -83,61 +79,6 @@ def _resize_thwc(frames: np.ndarray, height: int, width: int) -> np.ndarray:
     for i, frame in enumerate(frames):
         out[i] = cv2.resize(frame, (width, height), interpolation=cv2.INTER_AREA)
     return out
-
-
-def _decode_av_all(path: Path, *, progress: bool = False) -> np.ndarray | None:
-    try:
-        import av
-    except ImportError:
-        return None
-    try:
-        av.logging.set_level(av.logging.ERROR)
-    except Exception:
-        pass
-    try:
-        container = av.open(str(path))
-        stream = container.streams.video[0]
-    except Exception:
-        return None
-    iterator = container.decode(stream)
-    n = int(stream.frames or 0) or None
-    if progress:
-        from lbm.utils.progress import track
-
-        iterator = track(iterator, desc=f"decode {path.name}", total=n, unit="f", leave=False)
-    frames = [frame.to_ndarray(format="rgb24") for frame in iterator]
-    container.close()
-    return np.stack(frames, axis=0) if frames else None
-
-
-def _decode_cv2_all(path: Path, *, progress: bool = False) -> np.ndarray | None:
-    try:
-        import cv2
-    except ImportError:
-        return None
-    cap = cv2.VideoCapture(str(path))
-    if not cap.isOpened():
-        return None
-    n = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0) or None
-    out: list[np.ndarray] = []
-    bar = None
-    if progress:
-        from lbm.utils.progress import progress_bar
-
-        bar = progress_bar(total=n, desc=f"decode {path.name}", unit="f", leave=False)
-    try:
-        while True:
-            ok, frame = cap.read()
-            if not ok or frame is None:
-                break
-            out.append(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-            if bar is not None:
-                bar.update(1)
-    finally:
-        if bar is not None:
-            bar.close()
-        cap.release()
-    return np.stack(out, axis=0) if out else None
 
 
 def _decode_from_job(job: dict):
@@ -217,24 +158,17 @@ def align_frames_to_parquet_steps(
 
 def pack_jpeg_frames(jpegs: list[bytes]) -> tuple[bytes, np.ndarray, np.ndarray]:
     """Pack per-frame JPEG bytes into a single blob with offset/length tables."""
-    count = len(jpegs)
-    offset = np.zeros(count, dtype=np.int64)
-    length = np.zeros(count, dtype=np.uint32)
-    chunks: list[bytes] = []
-    cursor = 0
-    for i, data in enumerate(jpegs):
-        offset[i] = cursor
-        length[i] = len(data)
-        chunks.append(data)
-        cursor += len(data)
-    return b"".join(chunks), offset, length
+    length = np.fromiter((len(blob) for blob in jpegs), dtype=np.uint32, count=len(jpegs))
+    offset = np.zeros(len(jpegs), dtype=np.int64)
+    if len(jpegs) > 1:
+        np.cumsum(length[:-1], out=offset[1:])
+    return b"".join(jpegs), offset, length
 
 
 def _drop_manifest(cache_dir: Path) -> None:
-    """Make an in-progress rebuild look unread so a crash cannot skip mixed files."""
-    path = cache_dir / MANIFEST
+    """Unlink first so a crash mid-rebuild cannot look like a ready cache."""
     try:
-        path.unlink()
+        (cache_dir / MANIFEST).unlink()
     except FileNotFoundError:
         return
 
@@ -246,6 +180,20 @@ def _encode_rgb_jpeg(
     if image_size is not None:
         rgb = resize_with_pad(rgb, int(image_size))
     return encode_jpeg_rgb(rgb, quality=jpeg_quality), (int(rgb.shape[0]), int(rgb.shape[1]))
+
+
+def _append_jpeg(
+    jpegs: list[bytes],
+    frame: np.ndarray,
+    *,
+    jpeg_quality: int,
+    image_size: int | None,
+) -> tuple[int, int]:
+    blob, hw = _encode_rgb_jpeg(frame, jpeg_quality=jpeg_quality, image_size=image_size)
+    jpegs.append(blob)
+    if len(jpegs) % _RECLAIM_EVERY == 0:
+        reclaim_if_over()
+    return hw
 
 
 def _commit_jpeg_pack(
@@ -266,19 +214,28 @@ def _commit_jpeg_pack(
     atomic_write_bytes(cache_dir / "frames.bin", blob)
     atomic_save_npy(cache_dir / "offset.npy", offset)
     atomic_save_npy(cache_dir / "length.npy", length)
-    manifest = {
-        "source": source_tag,
-        "layout": LAYOUT_JPEG,
-        "num_frames": int(len(jpegs)),
-        "jpeg_quality": int(jpeg_quality),
-        "height": int(height),
-        "width": int(width),
-        "image_size": int(image_size) if image_size is not None else None,
-    }
-    atomic_write_text(cache_dir / MANIFEST, json.dumps(manifest, indent=2))
+    atomic_write_text(
+        cache_dir / MANIFEST,
+        json.dumps(
+            {
+                "source": source_tag,
+                "layout": LAYOUT_JPEG,
+                "num_frames": int(len(jpegs)),
+                "jpeg_quality": int(jpeg_quality),
+                "height": int(height),
+                "width": int(width),
+                "image_size": int(image_size) if image_size is not None else None,
+            },
+            indent=2,
+        ),
+    )
 
 
-def _iter_pack_items(frames: np.ndarray | None, source_jpegs: list[bytes] | None, frame_iter):
+def _iter_rgb_source(
+    frames: np.ndarray | None,
+    source_jpegs: list[bytes] | None,
+    frame_iter: Iterable[np.ndarray] | None,
+) -> Iterator[np.ndarray]:
     if source_jpegs is not None:
         for blob in source_jpegs:
             yield decode_still_rgb(blob)
@@ -288,9 +245,7 @@ def _iter_pack_items(frames: np.ndarray | None, source_jpegs: list[bytes] | None
         return
     if frames is None:
         raise ValueError("write_frame_cache needs frames, frame_iter, or source_jpegs")
-    arr = np.ascontiguousarray(frames, dtype=np.uint8)
-    for i in range(int(arr.shape[0])):
-        yield arr[i]
+    yield from np.ascontiguousarray(frames, dtype=np.uint8)
 
 
 def write_frame_cache(
@@ -299,14 +254,14 @@ def write_frame_cache(
     source_tag: str,
     frames: np.ndarray | None = None,
     source_jpegs: list[bytes] | None = None,
-    frame_iter=None,
+    frame_iter: Iterable[np.ndarray] | None = None,
     jpeg_quality: int = 85,
     image_size: int | None = None,
     desc: str | None = None,
     progress: bool | None = None,
 ) -> None:
     """Letterbox + JPEG each frame as it arrives. Manifest is written last."""
-    items = _iter_pack_items(frames, source_jpegs, frame_iter)
+    items: Iterable[np.ndarray] = _iter_rgb_source(frames, source_jpegs, frame_iter)
     if progress is None:
         progress = _show_progress()
     if progress:
@@ -316,10 +271,7 @@ def write_frame_cache(
     jpegs: list[bytes] = []
     hw: tuple[int, int] | None = None
     for frame in items:
-        blob, hw = _encode_rgb_jpeg(frame, jpeg_quality=jpeg_quality, image_size=image_size)
-        jpegs.append(blob)
-        if len(jpegs) % _RECLAIM_EVERY == 0:
-            reclaim_if_over()
+        hw = _append_jpeg(jpegs, frame, jpeg_quality=jpeg_quality, image_size=image_size)
     if hw is None:
         raise ValueError("write_frame_cache got no frames")
     _commit_jpeg_pack(
@@ -429,26 +381,29 @@ def split_pending_frame_jobs(
     return out, len(ready)
 
 
-def lerobot_v3_file_span(job: dict) -> tuple[int, int] | None:
-    """Packed-file ``[start, stop)`` from v3 ``from_timestamp``. None if not shareable."""
-    kw = job.get("video_backend_kwargs") or {}
+def _lerobot_mp4_span(kw: dict, *, v3_only: bool = False) -> tuple[int, int] | None:
+    """Contiguous packed-file ``[start, stop)``. None if the cam is not a linear mp4 span."""
     if str(kw.get("mode") or "") != "lerobot":
         return None
     dump = (kw.get("extra") or {}).get("lerobot")
     cam = kw.get("cam")
     n = int(kw.get("n_frames") or 0)
-    if dump is None or cam is None or n <= 0 or not getattr(dump, "is_v3", False):
+    if dump is None or cam is None or n <= 0:
+        return None
+    if v3_only and not getattr(dump, "is_v3", False):
         return None
     try:
         idxs = dump.mp4_indices(str(cam), list(range(n)))
     except Exception:
         return None
-    if not idxs:
-        return None
-    start = int(idxs[0])
-    if start < 0 or any(int(v) != start + i for i, v in enumerate(idxs)):
-        return None
-    return start, start + len(idxs)
+    from lbm.dataloader.custom.video import contiguous_span
+
+    return contiguous_span(idxs)
+
+
+def lerobot_v3_file_span(job: dict) -> tuple[int, int] | None:
+    """Packed-file ``[start, stop)`` from v3 ``from_timestamp``. None if not shareable."""
+    return _lerobot_mp4_span(job.get("video_backend_kwargs") or {}, v3_only=True)
 
 
 def partition_shared_frame_jobs(jobs: list[dict]) -> tuple[list[list[dict]], list[dict]]:
@@ -477,52 +432,39 @@ def _source_jpegs_of(decode_fn, kwargs: dict) -> list[bytes] | None:
     return getter(kwargs)
 
 
-def _lerobot_file_span(kw: dict) -> tuple[int, int] | None:
-    """Contiguous packed-file ``[start, stop)`` for a lerobot mmap job (v2 or v3)."""
-    if str(kw.get("mode") or "") != "lerobot":
-        return None
-    dump = (kw.get("extra") or {}).get("lerobot")
-    cam = kw.get("cam")
-    n = int(kw.get("n_frames") or 0)
-    if dump is None or cam is None or n <= 0:
-        return None
-    try:
-        idxs = dump.mp4_indices(str(cam), list(range(n)))
-    except Exception:
-        return None
-    from lbm.dataloader.custom.video import contiguous_span
-
-    return contiguous_span(idxs)
-
-
-def _chain_first(first, rest):
-    yield first
-    yield from rest
+def _decode_stacked_rgb(
+    video_path: Path,
+    *,
+    video_backend: str,
+    video_backend_kwargs: dict,
+    decode_all_frames,
+    progress: bool,
+) -> np.ndarray:
+    decode = decode_all_frames or get_all_frames
+    return decode(
+        video_path.as_posix(),
+        video_backend=video_backend,
+        video_backend_kwargs=video_backend_kwargs,
+        progress=progress,
+    )
 
 
-def _iter_native_rgb(video_path: Path, video_backend_kwargs: dict, *, progress: bool = False):
-    """Stream native RGB if the source is a contiguous mp4. None → stacked decode."""
-    kw = video_backend_kwargs or {}
-    mode = str(kw.get("mode") or "")
-    if mode == "mp4_all":
-        from lbm.dataloader.custom.video import iter_mp4_all
+def _iter_native_rgb(video_path: Path, kwargs: dict, *, progress: bool = False):
+    """Stream native RGB for a contiguous mp4. None means the caller should stack-decode."""
+    from lbm.dataloader.custom.video import iter_mp4_all, iter_mp4_span
 
-        return iter_mp4_all(video_path, progress=progress)
+    mode = str((kwargs or {}).get("mode") or "")
     if mode == "lerobot":
-        span = _lerobot_file_span(kw)
+        span = _lerobot_mp4_span(kwargs)
         if span is None:
             return None
-        from lbm.dataloader.custom.video import iter_mp4_span
-
         return iter_mp4_span(video_path, span[0], span[1], progress=progress)
-    if mode:
-        return None
-    from lbm.dataloader.custom.video import iter_mp4_all
-
-    return iter_mp4_all(video_path, progress=progress)
+    if mode in ("", "mp4_all"):
+        return iter_mp4_all(video_path, progress=progress)
+    return None
 
 
-def _native_rgb_source(
+def _rgb_for_cache(
     video_path: Path,
     *,
     video_backend: str,
@@ -531,44 +473,36 @@ def _native_rgb_source(
     from_timestamp: float,
     decode_all_frames,
     progress: bool,
-) -> tuple[np.ndarray | None, object]:
-    """Prefer a frame iterator. Array fallback when timestamps need aligning or stream is empty."""
+) -> tuple[np.ndarray | None, Iterator[np.ndarray] | None]:
+    """Exactly one of ``(frames, iterator)`` is set. Prefer streaming a contiguous mp4."""
+    stacked = dict(
+        video_backend=video_backend,
+        video_backend_kwargs=video_backend_kwargs,
+        decode_all_frames=decode_all_frames,
+        progress=progress,
+    )
     if episode_timestamps is not None:
-        decode = decode_all_frames or get_all_frames
-        frames = decode(
-            video_path.as_posix(),
-            video_backend=video_backend,
-            video_backend_kwargs=video_backend_kwargs,
-            progress=progress,
-        )
+        frames = _decode_stacked_rgb(video_path, **stacked)
         return align_frames_to_parquet_steps(frames, episode_timestamps, from_timestamp), None
 
     stream = _iter_native_rgb(video_path, video_backend_kwargs, progress=progress)
-    if stream is not None:
-        first = next(iter(stream), None)
-        if first is not None:
-            return None, _chain_first(first, stream)
-        if decode_all_frames is not None:
-            return np.zeros((0, 1, 1, 3), dtype=np.uint8), None
-        frames = get_all_frames(
-            video_path.as_posix(),
-            video_backend=video_backend,
-            video_backend_kwargs=video_backend_kwargs,
-            progress=progress,
-        )
-        return frames, None
+    if stream is None:
+        return _decode_stacked_rgb(video_path, **stacked), None
 
-    decode = decode_all_frames or get_all_frames
-    frames = decode(
-        video_path.as_posix(),
-        video_backend=video_backend,
-        video_backend_kwargs=video_backend_kwargs,
-        progress=progress,
-    )
-    return frames, None
+    first = next(iter(stream), None)
+    if first is not None:
+
+        def _rest():
+            yield first
+            yield from stream
+
+        return None, _rest()
+    if decode_all_frames is None:
+        return _decode_stacked_rgb(video_path, **stacked), None
+    return np.zeros((0, 1, 1, 3), dtype=np.uint8), None
 
 
-def _write_job_encoded(
+def _write_encoded_job(
     store: MmapFrameStore,
     job: dict,
     jpegs: list[bytes],
@@ -594,50 +528,55 @@ def _write_job_encoded(
         )
 
 
+@dataclass
+class _SharedSpan:
+    job: dict
+    start: int
+    stop: int
+    jpegs: list[bytes] = field(default_factory=list)
+    hw: tuple[int, int] | None = None
+
+    def accept(self, file_i: int, frame: np.ndarray, store: MmapFrameStore) -> bool:
+        """Encode this file index if it belongs here. False once the span is written."""
+        if not (self.start <= file_i < self.stop):
+            return True
+        self.hw = _append_jpeg(
+            self.jpegs, frame, jpeg_quality=store.jpeg_quality, image_size=store.image_size
+        )
+        if len(self.jpegs) < self.stop - self.start:
+            return True
+        assert self.hw is not None
+        _write_encoded_job(store, self.job, self.jpegs, self.hw)
+        self.jpegs.clear()
+        reclaim_if_over()
+        return False
+
+
 def write_shared_mp4_caches(store: MmapFrameStore, jobs: list[dict], *, progress: bool = False) -> None:
     """Decode one packed mp4 once; JPEG-encode each frame without stacking the file."""
     from lbm.dataloader.custom.video import iter_mp4_span
 
-    items: list[tuple[dict, tuple[int, int]]] = []
+    spans: list[_SharedSpan] = []
     for job in jobs:
         span = lerobot_v3_file_span(job)
         if span is None:
             _prebuild_frame_job({**job, "progress": progress})
             continue
-        items.append((job, span))
-    if not items:
+        spans.append(_SharedSpan(job, span[0], span[1]))
+    if not spans:
         return
-    items.sort(key=lambda item: item[1][0])
-    min_start = items[0][1][0]
-    max_stop = max(span[1] for _job, span in items)
-    path = Path(items[0][0]["video_path"])
-    pending: list[tuple[dict, int, int, list[bytes], tuple[int, int] | None]] = [
-        (job, start, stop, [], None) for job, (start, stop) in items
-    ]
-    file_i = min_start
-    for frame in iter_mp4_span(path, min_start, max_stop, progress=progress):
-        keep = []
-        for job, start, stop, jpegs, hw in pending:
-            if start <= file_i < stop:
-                blob, hw = _encode_rgb_jpeg(
-                    frame, jpeg_quality=store.jpeg_quality, image_size=store.image_size
-                )
-                jpegs.append(blob)
-                if len(jpegs) % _RECLAIM_EVERY == 0:
-                    reclaim_if_over()
-                if len(jpegs) == stop - start:
-                    assert hw is not None
-                    _write_job_encoded(store, job, jpegs, hw)
-                    jpegs.clear()
-                    reclaim_if_over()
-                    continue
-            keep.append((job, start, stop, jpegs, hw))
-        pending = keep
+    spans.sort(key=lambda item: item.start)
+    path = Path(spans[0].job["video_path"])
+    file_i = spans[0].start
+    max_stop = max(item.stop for item in spans)
+    pending = list(spans)
+    for frame in iter_mp4_span(path, file_i, max_stop, progress=progress):
+        pending = [item for item in pending if item.accept(file_i, frame, store)]
         file_i += 1
         if not pending:
             break
-    for job, _start, _stop, _jpegs, _hw in pending:
-        _prebuild_frame_job({**job, "progress": progress})
+    for item in pending:
+        _prebuild_frame_job({**item.job, "progress": progress})
 
 
 def _shared_payload(
@@ -661,38 +600,40 @@ def _bind_worker_rss_limit(payload: dict) -> None:
     set_worker_rss_limit(int(limit))
 
 
-def _prebuild_shared_file_job(payload: dict) -> str:
+def _open_worker_store(payload: dict, decode_job: dict) -> MmapFrameStore:
     _bind_worker_rss_limit(payload)
-    jobs = payload["jobs"]
-    store = MmapFrameStore(
+    return MmapFrameStore(
         payload["dataset_path"],
         jpeg_quality=int(payload["jpeg_quality"]),
         image_size=payload["image_size"],
         decode_workers=1,
-        decode_all_frames=_decode_from_job(jobs[0]),
+        decode_all_frames=_decode_from_job(decode_job),
     )
+
+
+@contextmanager
+def _worker_store(payload: dict, decode_job: dict):
+    store = _open_worker_store(payload, decode_job)
     try:
-        write_shared_mp4_caches(store, jobs, progress=bool(payload.get("progress")))
+        yield store
     finally:
         store.close()
         reclaim_if_over()
+
+
+def _prebuild_shared_file_job(payload: dict) -> str:
+    jobs = payload["jobs"]
+    with _worker_store(payload, jobs[0]) as store:
+        write_shared_mp4_caches(store, jobs, progress=bool(payload.get("progress")))
     return str(payload["video_path"])
 
 
 def _prebuild_frame_job(job: dict) -> str:
     """Spawn-safe worker: decode one episode×camera into the JPEG mmap cache."""
-    _bind_worker_rss_limit(job)
-    store = MmapFrameStore(
-        job["dataset_path"],
-        jpeg_quality=int(job["jpeg_quality"]),
-        image_size=job["image_size"],
-        decode_workers=1,
-        decode_all_frames=_decode_from_job(job),
-    )
     timestamps = job.get("episode_timestamps")
     if timestamps is not None:
         timestamps = np.asarray(timestamps, dtype=np.float64)
-    try:
+    with _worker_store(job, job) as store:
         store._load_or_build(
             trajectory_id=int(job["trajectory_id"]),
             video_key=str(job["video_key"]),
@@ -703,9 +644,6 @@ def _prebuild_frame_job(job: dict) -> str:
             video_backend_kwargs=job.get("video_backend_kwargs") or {},
             progress=bool(job.get("progress")),
         )
-    finally:
-        store.close()
-        reclaim_if_over()
     return f"{job['trajectory_id']}:{job['video_key']}"
 
 
@@ -973,39 +911,57 @@ class MmapFrameStore:
             progress = _show_progress()
         with exclusive_cache_lock(cache_dir / ".lock"):
             if not _cache_is_ready(cache_dir, source_tag):
-                jpegs = _source_jpegs_of(self._decode_all_frames, video_backend_kwargs)
-                if jpegs is not None:
-                    write_frame_cache(
-                        cache_dir,
-                        source_tag=source_tag,
-                        source_jpegs=jpegs,
-                        jpeg_quality=self.jpeg_quality,
-                        image_size=self.image_size,
-                        desc=f"mmap-frames ep{int(trajectory_id):06d} {video_key}",
-                        progress=progress,
-                    )
-                else:
-                    frames, frame_iter = _native_rgb_source(
-                        video_path,
-                        video_backend=video_backend,
-                        video_backend_kwargs=video_backend_kwargs,
-                        episode_timestamps=episode_timestamps,
-                        from_timestamp=from_timestamp,
-                        decode_all_frames=self._decode_all_frames,
-                        progress=progress,
-                    )
-                    write_frame_cache(
-                        cache_dir,
-                        source_tag=source_tag,
-                        frames=frames,
-                        frame_iter=frame_iter,
-                        jpeg_quality=self.jpeg_quality,
-                        image_size=self.image_size,
-                        desc=f"mmap-frames ep{int(trajectory_id):06d} {video_key}",
-                        progress=progress,
-                    )
+                self._build_cache(
+                    cache_dir,
+                    source_tag=source_tag,
+                    video_path=video_path,
+                    trajectory_id=trajectory_id,
+                    video_key=video_key,
+                    episode_timestamps=episode_timestamps,
+                    from_timestamp=from_timestamp,
+                    video_backend=video_backend,
+                    video_backend_kwargs=video_backend_kwargs,
+                    progress=progress,
+                )
             self._episodes[key] = MmapFrameEpisode.open(cache_dir)
         return self._episodes[key]
+
+    def _build_cache(
+        self,
+        cache_dir: Path,
+        *,
+        source_tag: str,
+        video_path: Path,
+        trajectory_id: int,
+        video_key: str,
+        episode_timestamps: np.ndarray | None,
+        from_timestamp: float,
+        video_backend: str,
+        video_backend_kwargs: dict,
+        progress: bool,
+    ) -> None:
+        pack = dict(
+            cache_dir=cache_dir,
+            source_tag=source_tag,
+            jpeg_quality=self.jpeg_quality,
+            image_size=self.image_size,
+            desc=f"mmap-frames ep{int(trajectory_id):06d} {video_key}",
+            progress=progress,
+        )
+        stills = _source_jpegs_of(self._decode_all_frames, video_backend_kwargs)
+        if stills is not None:
+            write_frame_cache(**pack, source_jpegs=stills)
+            return
+        frames, frame_iter = _rgb_for_cache(
+            video_path,
+            video_backend=video_backend,
+            video_backend_kwargs=video_backend_kwargs,
+            episode_timestamps=episode_timestamps,
+            from_timestamp=from_timestamp,
+            decode_all_frames=self._decode_all_frames,
+            progress=progress,
+        )
+        write_frame_cache(**pack, frames=frames, frame_iter=frame_iter)
 
     def _source_tag(
         self,

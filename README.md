@@ -245,13 +245,13 @@ my_dataset/
 | `kai0` / `galaxea` / `droid` | LeRobot v2.x | 可嵌套 `task/.../meta/info.json`。galaxea 是拆开的 `observation.state.*` / `action.*` 列；droid 用 packed `observation.state` / `action`（8-D 关节+夹爪） |
 | `hifi_umi` | LeRobot v3 packed | `meta/episodes/*.parquet` + `data/chunk-*/file-*.parquet`；hifi 在 `chunk-*/part-*/` |
 | `agibot` | HDF5 + mp4 | `proprio_stats/{task}/{ep}/proprio_stats.h5`，视频 `observations/.../videos/*_color.mp4` |
-| `das_gripper` | HDF5 + mp4 | `**/episode.hdf5`，腕部 `cam_*_wrist.mp4`；`cam_high` 用黑帧 |
-| `egoverse` | zarr | `*.zarr` 里 `left/right.obs_ee_pose` + JPEG `images.front_1`（广播到三路相机） |
+| `das_gripper` | HDF5 + mp4 | `**/episode.hdf5`，腕部 `cam_*_wrist.mp4`；缺的相机（含 `cam_high`）用黑帧 + `camera_mask` |
+| `egoverse` | zarr | `*.zarr` 里 `left/right.obs_ee_pose` + JPEG `images.front_1`（只给 `cam_high`；腕部黑帧 + mask） |
 | `hy_lance` | Lance | `table_*/table_*.lance` + `meta/hy_episodes.jsonl`；2 维 action 当作夹爪，EE 用下一帧 state |
 | `abc` | MCAP | `data/train/<task>/episode_*/episode.mcap` |
 | numpy | `.npz` | 任意 spec 在扫不到原生 dump 时回退 |
 
-缺 MP4 时用黑帧。依赖：`uv sync --extra data`（含 `h5py` / `zarr` / `mcap` / `pylance`）。
+缺相机用黑帧并打 `camera_mask=False`，不会复制其他路的图。依赖：`uv sync --extra data`（含 `h5py` / `zarr` / `mcap` / `pylance`）。
 
 ### 3. 训练
 

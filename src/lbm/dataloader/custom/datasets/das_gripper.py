@@ -1,4 +1,4 @@
-"""DAS gripper slim: episode.hdf5 + wrist mp4 (cam_high is a black placeholder)."""
+"""DAS gripper slim: episode.hdf5 + wrist mp4 (missing cam_high is black + mask)."""
 
 from __future__ import annotations
 
@@ -48,7 +48,7 @@ def _record(h5: Path, spec: CustomSpec, n: int, names: frozenset[str]) -> Episod
         path=str(h5),
         n_frames=n,
         lang=_lang(parent),
-        extra={"dir": str(parent), "videos": cam_paths, "cache_root": str(parent)},
+        extra={"dir": str(parent), "videos": cam_paths},
     )
 
 

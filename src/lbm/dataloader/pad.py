@@ -37,6 +37,21 @@ def _as_2d(arr: np.ndarray) -> np.ndarray:
     return x
 
 
+def _sample_cam_present(sample: dict[str, Any], names: tuple[str, ...], cam: str) -> bool:
+    if cam not in names:
+        return False
+    mask = sample.get("camera_mask")
+    if mask is None:
+        return True
+    if torch.is_tensor(mask):
+        mask = mask.detach().cpu().numpy()
+    arr = np.asarray(mask).reshape(-1)
+    index = names.index(cam)
+    if index >= arr.size:
+        return True
+    return bool(arr[index])
+
+
 def _camera_names(sample: dict[str, Any]) -> tuple[str, ...]:
     keys = sample.get("camera_keys")
     if keys:
@@ -89,7 +104,7 @@ def pad_loader_batch(samples: list[dict[str, Any]]) -> dict[str, Any]:
             thwc = frames[cam]
             t = thwc.shape[0]
             image[b, c, t_hist - t : t_hist] = thwc
-            camera_mask[b, c] = True
+            camera_mask[b, c] = _sample_cam_present(samples[b], _camera_names(samples[b]), cam)
 
     actions = [_as_2d(np.asarray(s["action"])) for s in samples]
     t_act = max(a.shape[0] for a in actions)

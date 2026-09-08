@@ -1,4 +1,4 @@
-"""EgoVerse / Aria zarr (JPEG ``images.front_1`` broadcast to three cameras)."""
+"""EgoVerse / Aria zarr (JPEG ``images.front_1`` on cam_high; wrists are black + mask)."""
 
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ def scan(root: Path, spec: CustomSpec, *, max_episodes: int | None = None) -> li
                 path=str(zpath),
                 n_frames=n,
                 lang=lang,
-                extra={"video_key": "images.front_1"},
+                extra={"video_keys": {"cam_high": "images.front_1"}},
             )
         )
     return records
@@ -93,14 +93,27 @@ def read_vectors(
     return state, action
 
 
+def _owns_front(record: EpisodeRecord, spec: CustomSpec, cam: str) -> bool:
+    extra = record.extra or {}
+    keys = extra.get("video_keys")
+    if isinstance(keys, dict):
+        return cam in keys
+    if extra.get("video_key") is not None:
+        return cam == spec.camera_keys[0]
+    return cam == spec.camera_keys[0]
+
+
 def read_frames(record: EpisodeRecord, spec: CustomSpec, cam: str, indices: list[int]) -> np.ndarray:
     import cv2
 
     hw = (spec.image_size, spec.image_size)
+    blank = np.zeros((len(indices),) + hw + (3,), dtype=np.uint8)
+    if not _owns_front(record, spec, cam):
+        return blank
     try:
         stream = _array(Path(record.path), "images.front_1")
     except Exception:
-        return np.zeros((len(indices),) + hw + (3,), dtype=np.uint8)
+        return blank
     from lbm.dataloader.custom.video import contiguous_span
 
     n = int(stream.shape[0])
@@ -122,7 +135,8 @@ def read_frames(record: EpisodeRecord, spec: CustomSpec, cam: str, indices: list
 
 
 def mmap_source_jpegs(record: EpisodeRecord, spec: CustomSpec, cam: str) -> list[bytes] | None:
-    del spec, cam
+    if not _owns_front(record, spec, cam):
+        return None
     try:
         stream = _array(Path(record.path), "images.front_1")
     except Exception:

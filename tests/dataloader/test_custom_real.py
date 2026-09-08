@@ -48,10 +48,17 @@ def test_real_dump_one_sample(name):
     assert np.isfinite(sample["action"]).all()
     assert len(sample["image"]) == len(CUSTOM_SPECS[name].camera_keys)
     live = [int(np.asarray(im).max()) for im in sample["image"]]
-    # das_gripper cam_high is a black placeholder; wrists must still decode.
+    mask = np.asarray(sample["camera_mask"]).tolist()
     if name == "das_gripper":
+        assert mask[0] is False
+        assert True in mask[1:]
         assert max(live[1:]) > 0, live
+    elif name == "egoverse":
+        assert mask == [True, False, False]
+        assert live[0] > 0
+        assert live[1] == live[2] == 0
     else:
+        assert all(mask)
         assert max(live) > 0, live
     print(
         f"{name}: n={len(ds)} state={tuple(sample['state'].shape)} "

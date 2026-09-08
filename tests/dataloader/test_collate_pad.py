@@ -34,6 +34,17 @@ def test_collate_pads_action_and_cameras():
     assert out["embodiment_id"].tolist() == [7, 25]
 
 
+def test_collate_honors_sample_camera_mask():
+    sample = _sample(n_cams=3, t_act=4, d_act=14, tag="egoverse", cams=("cam_high", "cam_left_wrist", "cam_right_wrist"))
+    sample["image"][1][:] = 0
+    sample["image"][2][:] = 0
+    sample["camera_mask"] = np.array([True, False, False])
+    out = collate_fn([sample])
+    assert out["camera_mask"].tolist() == [[True, False, False]]
+    assert int(out["image"][0, 0].max()) == 7
+    assert int(out["image"][0, 1].max()) == 0
+
+
 def test_pad_loader_batch_state():
     a = _sample(n_cams=1, t_act=4, d_act=14, d_state=14)
     b = _sample(n_cams=1, t_act=4, d_act=7, d_state=8)

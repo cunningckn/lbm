@@ -121,6 +121,7 @@ def test_single_dataset_packed_sample():
     assert sample["lang"] == "pick up the cup"
     assert int(sample["embodiment_id"]) == 7
     assert sample["robot_tag"] == "aloha"
+    assert sample["camera_mask"].tolist() == [True, True, True]
     io = infer_policy_io(ds)
     assert io["action_dim"] == 14
     assert io["state_dim"] == 14
@@ -142,6 +143,43 @@ def test_mixture_pads_heterogeneous_custom_specs():
     assert int(batch["embodiment_id"][0]) == 7
     assert int(batch["embodiment_id"][1]) == 26
     assert batch["action_mask"].shape == batch["action"].shape
+
+
+def test_missing_camera_black_frames_keep_history():
+    spec = CUSTOM_SPECS["egoverse"]
+    rng = np.random.default_rng(0)
+    n_frames = 12
+    high = rng.integers(1, 255, size=(n_frames, 8, 8, 3), dtype=np.uint8)
+    episode = Episode(
+        images={"cam_high": high},
+        state=rng.standard_normal((n_frames, spec.state_dim)).astype(np.float32),
+        action=rng.standard_normal((n_frames, spec.action_dim)).astype(np.float32),
+        lang="look",
+    )
+    ds = CustomSingleDataset(
+        spec,
+        [episode],
+        action_length=0.2,
+        history_length=0.2,
+        history_freq=30.0,
+        action_mode=ABS,
+    )
+    sample = ds[5]
+    n_hist = int(ds.history_deltas.shape[0])
+    assert n_hist > 1
+    assert sample["camera_mask"].tolist() == [True, False, False]
+    assert sample["image"][0].shape[0] == n_hist
+    assert sample["image"][1].shape[0] == n_hist
+    assert sample["image"][2].shape[0] == n_hist
+    assert int(sample["image"][0].max()) > 0
+    assert int(sample["image"][1].max()) == 0
+    assert int(sample["image"][2].max()) == 0
+    np.testing.assert_array_equal(sample["image"][1], np.zeros_like(sample["image"][1]))
+    with pytest.raises(AssertionError):
+        np.testing.assert_array_equal(sample["image"][1], sample["image"][0])
+    batch = collate_fn([sample])
+    assert batch["camera_mask"].tolist() == [[True, False, False]]
+    assert int(batch["image"][0, 1].max()) == 0
 
 
 def test_numpy_episode_roundtrip(tmp_path):
@@ -338,7 +376,7 @@ def test_libero_falls_back_to_parquet_images_when_frame_cache_missing(tmp_path):
     assert not list(root.rglob("frames.bin"))
 
 
-def test_libero_missing_camera_raises(tmp_path):
+def test_libero_missing_camera_is_black_masked(tmp_path):
     root = tmp_path / "libero"
     meta = root / "meta"
     data = root / "data" / "chunk-000"
@@ -361,8 +399,11 @@ def test_libero_missing_camera_raises(tmp_path):
         "libero",
         data_cfg=custom_cfg(),
     )
-    with pytest.raises(KeyError, match="camera"):
-        ds[0]
+    sample = ds[0]
+    assert sample["camera_mask"].tolist() == [False, False]
+    assert int(sample["image"][0].max()) == 0
+    assert int(sample["image"][1].max()) == 0
+    assert sample["image"][0].shape[0] == int(ds.history_deltas.shape[0])
 
 
 def test_lerobot_v2_parquet_images_without_video(tmp_path):

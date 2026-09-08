@@ -140,7 +140,6 @@ def _record(
             "task_id": task_id,
             "episode_id": episode_id,
             "videos": videos,
-            "cache_root": str(video_dir),
         },
     )
 

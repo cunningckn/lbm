@@ -106,7 +106,8 @@ def test_agibot_hdf5_layout(tmp_path):
     sample = ds[0]
     assert sample["state"].shape[-1] == 20
     assert sample["action"].shape[-1] == 22
-    assert list(tmp_path.rglob("frames.bin")), "agibot mp4 should land in JPEG mmap"
+    assert list((tmp_path / ".mmap").rglob("frames.bin")), "agibot mp4 should land in dump-root JPEG mmap"
+    assert not list(videos.rglob("frames.bin"))
 
 
 def test_agibot_scan_skips_dot_cache(tmp_path: Path):
@@ -144,7 +145,10 @@ def test_das_hdf5_layout(tmp_path):
     sample = ds[0]
     assert sample["state"].shape[-1] == 16
     assert sample["action"].shape[-1] == 16
-    assert list(ep.rglob("frames.bin")), "das wrist mp4 should land in JPEG mmap"
+    assert sample["camera_mask"].tolist() == [False, True, True]
+    assert int(np.asarray(sample["image"][0]).max()) == 0
+    assert list((tmp_path / ".mmap").rglob("frames.bin")), "das wrist mp4 should land in dump-root JPEG mmap"
+    assert not list(ep.rglob("frames.bin"))
 
 
 def test_map_proc_reads_h5_nrows(tmp_path: Path):
@@ -311,7 +315,11 @@ def test_egoverse_zarr_layout(tmp_path):
     assert sample["state"].shape[-1] == 16
     assert sample["action"].shape[-1] == 16
     assert np.allclose(sample["state"][:7], 0.0)
-    assert list(store.rglob("frames.bin")), "zarr stills should land in JPEG mmap"
+    assert sample["camera_mask"].tolist() == [True, False, False]
+    assert int(np.asarray(sample["image"][1]).max()) == 0
+    assert int(np.asarray(sample["image"][2]).max()) == 0
+    assert list((tmp_path / "aria" / ".mmap").rglob("frames.bin")), "zarr stills should land in dump-root JPEG mmap"
+    assert not list(store.rglob("frames.bin"))
 
 
 def test_hy_lance_layout(tmp_path):
@@ -348,7 +356,8 @@ def test_hy_lance_layout(tmp_path):
     assert abs(float(sample["action"][0, 15]) - 0.8) < 1e-5
     assert sample["image"][0].shape[-1] == 3
     assert int(sample["image"][0].max()) > 0
-    assert list(table_dir.rglob("frames.bin")), "lance stills should land in JPEG mmap"
+    assert list((tmp_path / ".mmap").rglob("frames.bin")), "lance stills should land in dump-root JPEG mmap"
+    assert not list(table_dir.rglob("frames.bin"))
 
 
 def test_hy_lance_parquet_index_and_missing_images(tmp_path):
@@ -412,21 +421,22 @@ def test_mcap_annexb_decode():
 
 
 def test_resolve_mmap_frames_mcap_and_agibot(tmp_path):
-    from lbm.dataloader.custom.mmap_frames import resolve_mmap_frames
+    from lbm.dataloader.custom.mmap_frames import collect_frame_refs, resolve_mmap_frames
     from lbm.dataloader.custom.record import EpisodeRecord
 
-    mcap = tmp_path / "task" / "episode_0" / "episode.mcap"
+    dump = tmp_path / "dump"
+    mcap = dump / "task" / "episode_0" / "episode.mcap"
     mcap.parent.mkdir(parents=True)
     mcap.write_bytes(b"not-a-real-mcap")
     rec = EpisodeRecord(kind="mcap", path=str(mcap), n_frames=8)
-    ref = resolve_mmap_frames(rec, CUSTOM_SPECS["abc"], "cam_high")
+    ref = resolve_mmap_frames(rec, CUSTOM_SPECS["abc"], "cam_high", dump_root=dump)
     assert ref is not None
     assert ref.path == mcap
-    assert ref.cache_root == mcap.parent
+    assert ref.cache_root == dump
     assert ref.video_key == "cam_high"
 
-    h5 = tmp_path / "proprio_stats" / "1" / "2" / "x.h5"
-    videos = tmp_path / "observations" / "1" / "2" / "videos"
+    h5 = dump / "proprio_stats" / "1" / "2" / "x.h5"
+    videos = dump / "observations" / "1" / "2" / "videos"
     videos.mkdir(parents=True)
     _mp4(videos / "head_color.mp4", 3)
     rec = EpisodeRecord(
@@ -438,18 +448,51 @@ def test_resolve_mmap_frames_mcap_and_agibot(tmp_path):
             "task_id": "1",
             "episode_id": "2",
             "videos": {"top_head": str(videos / "head_color.mp4")},
-            "cache_root": str(videos),
         },
     )
-    ref = resolve_mmap_frames(rec, CUSTOM_SPECS["agibot"], "top_head")
+    ref = resolve_mmap_frames(rec, CUSTOM_SPECS["agibot"], "top_head", dump_root=dump)
     assert ref is not None and ref.kind == "mp4"
     assert ref.path.name == "head_color.mp4"
+    assert ref.cache_root == dump
 
-    from lbm.dataloader.custom.mmap_frames import collect_frame_refs
-
-    refs = collect_frame_refs([rec], CUSTOM_SPECS["agibot"])
+    refs = collect_frame_refs([rec], CUSTOM_SPECS["agibot"], dump_root=dump)
     assert [r.path.name for r in refs] == ["head_color.mp4"]
     assert refs[0].trajectory_id == ref.trajectory_id
+    assert {r.cache_root for r in refs} == {dump}
+
+
+def test_mmap_dump_root_groups_stores_and_dedupes_broadcast(tmp_path):
+    from lbm.dataloader.custom.mmap_frames import _traj_id, collect_frame_refs
+    from lbm.dataloader.custom.record import EpisodeRecord
+
+    dump = tmp_path / "egoverse"
+    z0 = dump / "a.zarr"
+    z1 = dump / "b.zarr"
+    z0.mkdir(parents=True)
+    z1.mkdir(parents=True)
+    recs = [
+        EpisodeRecord(kind="zarr", path=str(z0), n_frames=4, extra={"video_key": "images.front_1"}),
+        EpisodeRecord(kind="zarr", path=str(z1), n_frames=5, extra={"video_key": "images.front_1"}),
+    ]
+    refs = collect_frame_refs(recs, CUSTOM_SPECS["egoverse"], dump_root=dump)
+    assert {r.cache_root for r in refs} == {dump}
+    # 2 episodes × 1 shared stream (not 2 × 3 cameras)
+    assert len(refs) == 2
+    assert {r.video_key for r in refs} == {"images.front_1"}
+    assert {r.cam for r in refs} == {"cam_high"}
+    assert len({r.trajectory_id for r in refs}) == 2
+
+    t0 = tmp_path / "table_000" / "table_000.lance"
+    t1 = tmp_path / "table_001" / "table_001.lance"
+    t0.mkdir(parents=True)
+    t1.mkdir(parents=True)
+    a = EpisodeRecord(kind="lance", path=str(t0), n_frames=3, extra={"start": 0, "episode_index": 0})
+    b = EpisodeRecord(kind="lance", path=str(t1), n_frames=3, extra={"start": 0, "episode_index": 0})
+    assert _traj_id(a) != _traj_id(b)
+    lance_refs = collect_frame_refs([a, b], CUSTOM_SPECS["hy_lance"], dump_root=tmp_path)
+    assert {r.cache_root for r in lance_refs} == {tmp_path}
+    assert len(lance_refs) == 6
+
 
 
 def test_contiguous_span():

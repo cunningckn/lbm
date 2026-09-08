@@ -239,16 +239,11 @@ class CustomSingleDataset(Dataset):
         action = self._gather_vector(action_arr, t, self.action_deltas, n)
         state = state_arr[min(t, n - 1)]
         images = []
+        camera_mask = []
         for cam in self.spec.camera_keys:
-            if self.episodes:
-                frames = self.episodes[epi_i].images.get(cam)
-                if frames is None:
-                    raise KeyError(f"camera {cam!r} missing from in-memory episode")
-                gathered = self._gather_frames(frames, t, n)
-            else:
-                idx = np.clip(t + self.history_deltas.astype(np.int64), 0, n - 1).tolist()
-                gathered = self._read_record_frames(self.records[epi_i], cam, idx)
+            gathered, present = self._cam_frames(epi_i, cam, t, n)
             images.append(_resize_u8(gathered, self.image_size))
+            camera_mask.append(present)
         lang = self.episodes[epi_i].lang if self.episodes else self.records[epi_i].lang
         action = action.astype(np.float32, copy=False)
         state = np.asarray(state, dtype=np.float32)
@@ -264,6 +259,7 @@ class CustomSingleDataset(Dataset):
             "state": state,
             "lang": lang,
             "camera_keys": self.spec.camera_keys,
+            "camera_mask": np.asarray(camera_mask, dtype=bool),
             "robot_tag": self.spec.embodiment,
             "embodiment_id": int(self.spec.embodiment_id),
         }
@@ -278,6 +274,30 @@ class CustomSingleDataset(Dataset):
             arr = arr[None]
         idx = np.clip(t + self.history_deltas.astype(np.int64), 0, min(n, arr.shape[0]) - 1)
         return arr[idx]
+
+    def _blank_history(self) -> np.ndarray:
+        n_hist = int(self.history_deltas.shape[0])
+        size = self.image_size
+        return np.zeros((n_hist, size, size, 3), dtype=np.uint8)
+
+    def _cam_frames(self, epi_i: int, cam: str, t: int, n: int) -> tuple[np.ndarray, bool]:
+        """History window for ``cam``. Missing views are black zeros, not copies of another cam."""
+        if self.episodes:
+            frames = self.episodes[epi_i].images.get(cam)
+            if frames is None:
+                return self._blank_history(), False
+            return self._gather_frames(frames, t, n), True
+        record = self.records[epi_i]
+        from lbm.dataloader.custom.mmap_frames import camera_has_source
+
+        if not camera_has_source(record, self.spec, cam):
+            return self._blank_history(), False
+        idx = np.clip(t + self.history_deltas.astype(np.int64), 0, max(n - 1, 0)).tolist()
+        try:
+            gathered = self._read_record_frames(record, cam, idx)
+        except KeyError:
+            return self._blank_history(), False
+        return gathered, True
 
     def _mmap_store(self, cache_root: Path):
         if not self._use_mmap_frames:
@@ -328,7 +348,7 @@ class CustomSingleDataset(Dataset):
     def _frame_mmap_job(self, record, cam: str):
         from lbm.dataloader.custom.mmap_frames import resolve_mmap_frames
 
-        ref = resolve_mmap_frames(record, self.spec, cam)
+        ref = resolve_mmap_frames(record, self.spec, cam, dump_root=self.root)
         if ref is None:
             return None, None, None
         return self._job_from_ref(ref)
@@ -387,7 +407,7 @@ class CustomSingleDataset(Dataset):
         from lbm.dataloader.custom.mmap_frames import collect_frame_refs
 
         grouped: dict[str, tuple[Any, list]] = {}
-        for ref in collect_frame_refs(self.records, self.spec):
+        for ref in collect_frame_refs(self.records, self.spec, dump_root=self.root):
             _ref, store, job = self._job_from_ref(ref)
             if store is None or job is None:
                 continue

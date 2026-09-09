@@ -8,8 +8,8 @@ already reads**. Some dumps need a step (Galaxea tar extract, AgiBot Alpha/Beta
 nesting, RMBench HDF5→LeRobot, DAS sample HDF5→slim); the rest are already that
 layout after download.
 
-Download scripts always print a real URL (HF dataset page or EgoVerse S3 sync).
-Empty `hfd` repo IDs are gone. Official snapshots land in `datasets/raw/<name>`;
-`datasets/<name>` is the dump. `--link-local` is the cluster symlink shortcut.
+One `download.sh` / `process.sh` (same `DATASET=` pattern as `build_scan_index.sh`).
+They always print a real URL. Official snapshots land in `datasets/raw/<name>`;
+`datasets/<name>` is the dump. `LINK_LOCAL=1` is the cluster symlink shortcut.
 
 Catalog: `scripts/data/catalog.py`. Do not fold FK/mmap/norm back into process.

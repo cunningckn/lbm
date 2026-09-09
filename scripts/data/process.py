@@ -4,7 +4,7 @@
 This is not scan / FK / mmap / norm. Those stay in scripts/prebuild_*.py
 and scripts/compute_norm.py.
 
-    ./scripts/data/process.sh galaxea
+    DATASET=galaxea ./scripts/data/process.sh
     uv run python scripts/data/process.py --dataset rmbench
 """
 

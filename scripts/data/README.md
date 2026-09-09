@@ -7,17 +7,15 @@ Training reads `datasets/<name>`. These scripts fetch the **official** corpus, t
 # Hugging Face mirror (default). Override with HF_ENDPOINT=https://huggingface.co
 export HF_ENDPOINT="${HF_ENDPOINT:-https://hf-mirror.com}"
 
-./scripts/data/download.sh droid          # → datasets/raw/droid
-./scripts/data/process.sh droid           # → datasets/droid  (symlink; already LeRobot)
-
-./scripts/data/download_galaxea.sh        # lerobot/*.tar.gz only
-./scripts/data/process.sh galaxea         # extract per-task LeRobot folders
-
-./scripts/data/download_all.sh
-./scripts/data/process_all.sh
+./scripts/data/download.sh                       # every dump in DATASETS
+DATASET=droid ./scripts/data/download.sh         # → datasets/raw/droid
+DATASET=droid ./scripts/data/process.sh          # → datasets/droid
+DATASET=galaxea ./scripts/data/download.sh       # lerobot/*.tar.gz only
+DATASET=galaxea,kai0 ./scripts/data/process.sh
+LINK_LOCAL=1 DATASET=droid ./scripts/data/download.sh
 ```
 
-`--link-local` on download skips Hugging Face and symlinks a processed dump under
+`LINK_LOCAL=1` skips Hugging Face and symlinks a processed dump under
 `/mnt/open_source_data` when that path exists.
 
 `process` is **not** scan / FK / mmap / norm. Those stay:

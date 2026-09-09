@@ -1,18 +1,36 @@
 #!/usr/bin/env bash
 # Official download → LBM dump layout (not scan / FK / mmap / norm).
-#   ./scripts/data/process.sh galaxea
-#   ./scripts/data/process.sh --all
+# Edit DATASETS below (or DATASET=galaxea).
+#
+#   ./scripts/data/process.sh
+#   DATASET=galaxea ./scripts/data/process.sh
+#   DATASET=kai0,libero ./scripts/data/process.sh
+#   FORCE=1 DATASET=rmbench ./scripts/data/process.sh
 set -euo pipefail
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 export PYTHONPATH="${ROOT}/scripts/data${PYTHONPATH:+:${PYTHONPATH}}"
 cd "${ROOT}"
-if [[ "${1:-}" == "--all" ]]; then
-  shift
-  exec uv run python "${ROOT}/scripts/data/process.py" --all "$@"
-fi
-if [[ "${1:-}" == --* || -z "${1:-}" ]]; then
-  exec uv run python "${ROOT}/scripts/data/process.py" "$@"
-fi
-name="$1"
-shift
-exec uv run python "${ROOT}/scripts/data/process.py" --dataset "${name}" "$@"
+
+DATASETS=(
+  abc
+  agibot
+  das_gripper
+  droid
+  egoverse
+  galaxea
+  hifi_umi
+  hy_lance
+  kai0
+  libero
+  rmbench
+  robotwin
+)
+
+DATASET="${DATASET:-$(IFS=,; echo "${DATASETS[*]}")}"
+FORCE="${FORCE:-0}"
+
+exec uv run python "${ROOT}/scripts/data/process.py" \
+  --dataset "${DATASET}" \
+  $([[ "${FORCE}" != "0" ]] && echo --force || true) \
+  "$@"

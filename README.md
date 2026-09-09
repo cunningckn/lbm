@@ -171,6 +171,8 @@ See `simulation/libero/README.md` and `simulation/rmbench/README.md`.
 
 ## 自定义数据集
 
+官方下载和「官方格式 → 当前 dump」转换见 [`scripts/data/README.md`](scripts/data/README.md)（`download.sh` / `process.sh`）。scan / FK / mmap / norm 仍用 `scripts/prebuild_*.py` 和 `scripts/compute_norm.py`。
+
 训练只有一套数据入口：`lbm.dataloader.custom`。每个 dump 一个 `CustomSpec`（`custom/datasets/<name>.py`），不需要 `modality.json`。加 spec 后在 `lbm/datasets/<name>` 放（或软链）数据即可。`--dataset kai0` 用 catalog 名当 spec；裸路径必须加 `--robot-type`。
 
 `embodiment_id` 来自独立表 `lbm.dataloader.embodiment`（整数，须小于 32），`pad.py` 按 `robot_tag` 查表（样本上已有 id 则沿用）。
@@ -245,7 +247,7 @@ my_dataset/
 | `kai0` / `galaxea` / `droid` | LeRobot v2.x | 可嵌套 `task/.../meta/info.json`。galaxea 是拆开的 `observation.state.*` / `action.*` 列；droid 用 packed `observation.state` / `action`（8-D 关节+夹爪） |
 | `hifi_umi` | LeRobot v3 packed | `meta/episodes/*.parquet` + `data/chunk-*/file-*.parquet`；hifi 在 `chunk-*/part-*/` |
 | `agibot` | HDF5 + mp4 | `proprio_stats/{task}/{ep}/proprio_stats.h5`，视频 `observations/.../videos/*_color.mp4` |
-| `das_gripper` | HDF5 + mp4 | `**/episode.hdf5`，腕部 `cam_*_wrist.mp4`；缺的相机（含 `cam_high`）用黑帧 + `camera_mask` |
+| `das_gripper` | HDF5 + mp4 | 顶层 `*/das_gripper_slim_meta.json` 列 `episode.hdf5`（深度不一，勿 walk `[STAGE 3]`）；腕部 `cam_*_wrist.mp4`；缺的相机（含 `cam_high`）用黑帧 + `camera_mask` |
 | `egoverse` | zarr | `*.zarr` 里 `left/right.obs_ee_pose` + JPEG `images.front_1`（只给 `cam_high`；腕部黑帧 + mask） |
 | `hy_lance` | Lance | `table_*/table_*.lance` + `meta/hy_episodes.jsonl`；2 维 action 当作夹爪，EE 用下一帧 state |
 | `abc` | MCAP | `data/train/<task>/episode_*/episode.mcap` |

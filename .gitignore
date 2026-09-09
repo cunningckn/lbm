@@ -6,10 +6,8 @@ __pycache__/
 *.egg-info/
 .python-version
 
-# data and run artifacts (datasets/ is only symlinks + helper scripts)
+# data and run artifacts (datasets/ holds local dumps / symlinks)
 datasets/*
-!datasets/scripts/
-!datasets/scripts/**
 checkpoints/
 outputs/
 **/.mmap/

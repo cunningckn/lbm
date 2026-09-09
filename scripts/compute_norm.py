@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Compute state/action mean/std/min/max/q01/q99 for normalize/unnormalize.
 
-Writes ``norm_stats_{kind}_{rep}_{freq}hz.json`` (file-delta / rel / abs) or
-``norm_stats_{kind}_{rep}_{freq}hz_{length}s.json`` (computed delta) next to each dump.
+Writes ``norm_stats_{kind}_{rep}_{format}_{freq}hz.json`` (abs / delta / file-delta)
+or ``norm_stats_{kind}_{rep}_{format}_{freq}hz_{length}s.json`` (rel) next to each dump.
 Training loads the file that matches that dump's freq / length / mode.
 LeRobot dumps read proprio from parquet mmap (same as training). Pass ``--mmap``
 to also prebuild JPEG frame caches in the same run.
@@ -56,6 +56,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--action-mode", default="delta", help="delta (default), rel, or abs")
     p.add_argument("--action-kind", default=None, help="eef: joint→EEF via FK (aloha, franka)")
     p.add_argument(
+        "--action-format",
+        default=None,
+        help="eef packed pose: default, xyz+rotvec, xyz+rot6d, xyz+quat",
+    )
+    p.add_argument(
         "--output",
         default="",
         help="write this file (single dump only). default: freq/length name next to the dump",
@@ -82,7 +87,10 @@ def _output_path(dataset, explicit: str) -> Path:
     root = getattr(dataset, "root", None)
     if root is not None:
         slices = resolve_action_space(
-            dataset.spec, dataset.action_mode, action_kind=getattr(dataset, "action_kind", None)
+            dataset.spec,
+            dataset.action_mode,
+            action_kind=getattr(dataset, "action_kind", None),
+            action_format=getattr(dataset, "action_format", None),
         )
         return dump_norm_stats_path(root, dataset.action_freq, dataset.action_length, slices)
     raise SystemExit(f"cannot infer dump dir for {dataset.spec.name}; pass --output")
@@ -94,6 +102,7 @@ def main(argv: list[str] | None = None) -> None:
     apply_temporal_args(cfg.model, args)
     cfg.data.action_mode = args.action_mode
     cfg.data.action_kind = args.action_kind
+    cfg.data.action_format = str(getattr(args, "action_format", None) or "")
     if getattr(args, "action_freq", None) is not None:
         cfg.data.override_action_freq = True
     cfg.data.use_mmap = True

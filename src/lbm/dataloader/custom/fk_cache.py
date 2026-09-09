@@ -1,7 +1,8 @@
 """Per-episode joint→EEF cache at ``{dataset_root}/.cache/fk``.
 
-Each record writes ``episode_{i:06d}/{state,action}.npy``. Training loads these
-when ``action_kind=eef``; missing files fall back to live FK.
+Each record writes ``episode_{i:06d}/{state,action}.npy`` as xyz+rotvec per
+converted arm. Training loads these when ``action_kind=eef``; missing files
+fall back to live FK (getitem) or raise in ``compute_norm_stats``.
 """
 
 from __future__ import annotations
@@ -14,7 +15,7 @@ from typing import Any
 
 import numpy as np
 
-from lbm.action_space import EEF, JOINT
+from lbm.action_space import EEF, JOINT, XYZ_ROTVEC
 from lbm.dataloader.custom.common.lerobot import lerobot_of
 from lbm.dataloader.custom.record import EpisodeRecord
 from lbm.dataloader.mmap.mmap_io import atomic_save_npy, atomic_write_text, exclusive_cache_lock, read_manifest
@@ -59,6 +60,8 @@ def is_ready(dest: Path, *, source: str, n_frames: int) -> bool:
         return False
     if int(man.get("n_frames", -1)) != int(n_frames):
         return False
+    if str(man.get("pose_format", "")) != XYZ_ROTVEC:
+        return False
     return (dest / STATE_NPY).is_file() and (dest / ACTION_NPY).is_file()
 
 
@@ -77,6 +80,7 @@ def write_fk_episode(
         "version": VERSION,
         "source": str(source),
         "n_frames": int(n_frames),
+        "pose_format": XYZ_ROTVEC,
         "state_shape": list(st.shape),
         "action_shape": list(act.shape),
     }
@@ -99,6 +103,26 @@ def load_fk_episode(
     state = np.load(dest / STATE_NPY, mmap_mode="r")
     action = np.load(dest / ACTION_NPY, mmap_mode="r")
     return np.asarray(state), np.asarray(action)
+
+
+def require_fk_cache(dataset) -> None:
+    """Raise if ``action_kind=eef`` on-disk records have no rotvec FK cache."""
+    spec = getattr(dataset, "spec", None)
+    if spec is None or getattr(dataset, "action_kind", None) != EEF:
+        return
+    if not needs_joint_fk(spec):
+        return
+    records = getattr(dataset, "records", None) or []
+    root = getattr(dataset, "root", None)
+    if root is None or not records:
+        return
+    for i, rec in enumerate(records):
+        dest = episode_dir(root, i)
+        if not is_ready(dest, source=source_key(rec), n_frames=rec.n_frames):
+            raise RuntimeError(
+                f"{spec.name}: FK cache missing at {dest} (episode {i}). "
+                f"Run: uv run python scripts/prebuild_fk.py --dataset {spec.name}"
+            )
 
 
 def prebuild_fk(dataset, *, workers: int = 0, force: bool = False) -> tuple[int, int]:
@@ -154,6 +178,7 @@ def _write_root_manifest(root: Path | str, spec, n_records: int) -> None:
         "spec": spec.name,
         "embodiment": spec.embodiment,
         "n_records": int(n_records),
+        "pose_format": XYZ_ROTVEC,
         "complete": True,
     }
     atomic_write_text(dest / MANIFEST, json.dumps(payload, indent=2, sort_keys=True) + "\n")
@@ -176,7 +201,9 @@ def _fk_job(job: dict[str, Any]) -> bool:
     if not job.get("force") and is_ready(dest, source=source, n_frames=record.n_frames):
         return False
     state, action = read_vectors(record, spec, action_freq=job.get("action_freq"))
-    st, act, _slices = apply_joint_fk(state, action, spec, job["action_mode"], EEF)
+    st, act, _slices = apply_joint_fk(
+        state, action, spec, job["action_mode"], EEF, action_format=XYZ_ROTVEC
+    )
     write_fk_episode(dest, st, act, source=source, n_frames=record.n_frames)
     return True
 

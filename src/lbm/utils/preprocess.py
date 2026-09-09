@@ -7,7 +7,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from lbm.action_space import apply_action_space_frames, resolve_action_space
+from lbm.action_space import actions_in_train_space, column_scale_mask, uses_rel
 
 IMAGENET_MEAN = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)
 IMAGENET_STD = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
@@ -40,7 +40,7 @@ def format_action_freq_hz(action_freq: float) -> str:
 
 
 def _action_type_tag(slices: tuple) -> str:
-    """``eef_delta`` / ``joint_rel`` from the first non-gripper group."""
+    """``eef_delta_xyz_rotvec`` / ``joint_rel_default`` from the first non-gripper group."""
     from lbm.action_space import GRIPPER
 
     picked = next((sl for sl in slices if sl.kind != GRIPPER), None)
@@ -48,7 +48,8 @@ def _action_type_tag(slices: tuple) -> str:
         picked = slices[0]
     if picked is None:
         return ""
-    return f"{picked.kind}_{picked.rep}"
+    fmt = getattr(picked, "format", "") or "default"
+    return f"{picked.kind}_{picked.rep}_{fmt}"
 
 
 def norm_stats_filename(
@@ -57,12 +58,10 @@ def norm_stats_filename(
     *,
     slices: tuple = (),
 ) -> str:
-    from lbm.action_space import uses_computed_delta
-
     hz = format_action_freq_hz(action_freq)
     tag = _action_type_tag(slices)
     prefix = f"norm_stats_{tag}_" if tag else "norm_stats_"
-    if action_length is not None and uses_computed_delta(slices):
+    if action_length is not None and uses_rel(slices):
         return f"{prefix}{hz}hz_{_format_hz_or_s(action_length)}s.json"
     return f"{prefix}{hz}hz.json"
 
@@ -72,7 +71,7 @@ def dump_norm_stats_path(root, action_freq: float, action_length: float, slices:
 
 
 def load_dump_norm_stats(root, action_freq: float, action_length: float, slices: tuple) -> dict | None:
-    """Matching ``norm_stats_{kind}_{rep}_{freq}hz.json`` (plus length for computed delta)."""
+    """Matching ``norm_stats_{kind}_{rep}_{format}_{freq}hz.json`` (plus length for rel)."""
     if root is None:
         return None
     path = dump_norm_stats_path(root, action_freq, action_length, slices)
@@ -147,11 +146,15 @@ class _Moments:
 
 
 def compute_norm_stats(dataset, *, progress: bool | None = None, leave: bool = True) -> dict:
-    """Mean/std, min/max, and q01/q99 over every frame of ``state`` and ``action``.
+    """Mean/std, min/max, and q01/q99 over training-space state/action rows.
 
-    Output is readable by :func:`parse_norm_stats` / :func:`load_norm_stats`.
-    ``normalize`` maps ``[q01, q99]`` to ``[-1, 1]`` when those keys exist.
+    ``rel`` slides every window (same gather as ``__getitem__``). ``abs`` / ``delta``
+    use the packed episode (consecutive delta is an approximation of chunk stats).
+    Flatten every chunk step as a row ``(N, D)``.
     """
+    from lbm.dataloader.custom.fk_cache import require_fk_cache
+
+    require_fk_cache(dataset)
     state_m = _Moments()
     action_m = _Moments()
     n_episodes = len(dataset.episodes) if dataset.episodes else len(dataset.records)
@@ -163,20 +166,33 @@ def compute_norm_stats(dataset, *, progress: bool | None = None, leave: bool = T
         from lbm.utils.progress import track
 
         indices = track(indices, desc=f"norm {dump}", total=n_episodes, unit="ep", leave=leave)
-    slices = resolve_action_space(spec, dataset.action_mode)
-    hop = int(dataset.action_hop)
+    slide = uses_rel(getattr(dataset, "_space", ()))
     for epi_i in indices:
-        state, action = dataset._vectors(epi_i)
-        action = apply_action_space_frames(action, state, slices, hop=hop)
-        state_m.update(state)
-        action_m.update(action)
+        state, action, slices = dataset._policy_vectors(epi_i)
+        n = int(action.shape[0])
+        if n == 0:
+            continue
+        if slide:
+            deltas = dataset.action_deltas
+            for t in range(n):
+                chunk = dataset._gather_vector(action, t, deltas, n)
+                st = state[min(t, n - 1)]
+                chunk = actions_in_train_space(chunk, st, slices)
+                action_m.update(chunk)
+                state_m.update(st)
+        else:
+            packed = actions_in_train_space(action, state[0], slices)
+            state_m.update(state)
+            action_m.update(packed)
     payload = {
         "norm_stats": {
             "state": state_m.as_dict(),
             "actions": action_m.as_dict(),
         },
-        "action_space": [sl.as_dict() for sl in slices],
+        "action_space": [sl.as_dict() for sl in getattr(dataset, "_space", ())],
         "action_mode": dataset.action_mode,
+        "action_kind": getattr(dataset, "action_kind", None),
+        "action_format": getattr(dataset, "action_format", None),
         "action_freq": float(dataset.action_freq),
         "action_length": float(dataset.action_length),
         "spec": spec.name,
@@ -201,26 +217,54 @@ def _broadcast_stat(x, value):
     return np.asarray(value, dtype=np.float32)
 
 
-def normalize(x, stats):
-    """Map ``x`` into model space. Prefers ``[q01, q99] → [-1, 1]``."""
+def normalize(x, stats, slices=None, *, field: str = "action"):
+    """Map ``x`` into model space. Prefers ``[q01, q99] → [-1, 1]``.
+
+    ``slices`` skip EEF rot6d/quat rotation columns (already in ``[-1, 1]``).
+    """
     if _has_quantiles(stats):
         q01 = _broadcast_stat(x, stats["q01"])
         q99 = _broadcast_stat(x, stats["q99"])
-        return (x - q01) / (q99 - q01 + 1e-6) * 2.0 - 1.0
-    mean = _broadcast_stat(x, stats["mean"])
-    std = _broadcast_stat(x, stats["std"])
-    return (x - mean) / (std + 1e-6)
+        out = (x - q01) / (q99 - q01 + 1e-6) * 2.0 - 1.0
+    else:
+        mean = _broadcast_stat(x, stats["mean"])
+        std = _broadcast_stat(x, stats["std"])
+        out = (x - mean) / (std + 1e-6)
+    if not slices:
+        return out
+    dim = int(np.asarray(stats.get("q01", stats.get("mean"))).reshape(-1).shape[0])
+    mask = column_scale_mask(slices, dim, field=field)
+    return _apply_mask(x, out, mask)
 
 
-def unnormalize(x, stats):
+def unnormalize(x, stats, slices=None, *, field: str = "action"):
     """Inverse of :func:`normalize`."""
     if _has_quantiles(stats):
         q01 = _broadcast_stat(x, stats["q01"])
         q99 = _broadcast_stat(x, stats["q99"])
-        return (x + 1.0) / 2.0 * (q99 - q01 + 1e-6) + q01
-    mean = _broadcast_stat(x, stats["mean"])
-    std = _broadcast_stat(x, stats["std"])
-    return x * (std + 1e-6) + mean
+        out = (x + 1.0) / 2.0 * (q99 - q01 + 1e-6) + q01
+    else:
+        mean = _broadcast_stat(x, stats["mean"])
+        std = _broadcast_stat(x, stats["std"])
+        out = x * (std + 1e-6) + mean
+    if not slices:
+        return out
+    dim = int(np.asarray(stats.get("q01", stats.get("mean"))).reshape(-1).shape[0])
+    mask = column_scale_mask(slices, dim, field=field)
+    return _apply_mask(x, out, mask)
+
+
+def _apply_mask(original, transformed, mask: np.ndarray):
+    mask = np.asarray(mask, dtype=bool)
+    if torch.is_tensor(original):
+        m = torch.as_tensor(mask, device=original.device)
+        while m.ndim < original.ndim:
+            m = m.reshape((1,) * (original.ndim - m.ndim) + m.shape)
+        return torch.where(m, transformed, original)
+    m = mask
+    while m.ndim < original.ndim:
+        m = np.expand_dims(m, axis=0)
+    return np.where(m, transformed, original)
 
 
 def resize_with_pad(img_hwc, target_h=224, target_w=224):

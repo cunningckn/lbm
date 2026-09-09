@@ -12,7 +12,17 @@ from dataclasses import dataclass, replace
 
 import numpy as np
 
-from lbm.action_space import EEF, JOINT, ActionSlice, parse_kind
+from lbm.action_space import (
+    EEF,
+    JOINT,
+    XYZ_QUAT,
+    XYZ_ROT6D,
+    XYZ_ROTVEC,
+    ActionSlice,
+    parse_format,
+    parse_kind,
+    pose_width,
+)
 
 
 @dataclass(frozen=True)
@@ -223,6 +233,223 @@ def transforms_to_pose6(transforms: np.ndarray) -> np.ndarray:
     return np.concatenate([t[:, :3, 3], rotmat_to_rotvec(t[:, :3, :3])], axis=1).astype(np.float32)
 
 
+def rotvec_to_rotmat(vec: np.ndarray) -> np.ndarray:
+    """``(N, 3)`` axis-angle → ``(N, 3, 3)``."""
+    v = np.asarray(vec, dtype=np.float64)
+    squeezed = v.ndim == 1
+    if squeezed:
+        v = v[None]
+    angle = np.linalg.norm(v, axis=-1)
+    out = np.zeros((v.shape[0], 3, 3), dtype=np.float64)
+    small = angle < 1e-8
+    if np.any(small):
+        # R ≈ I + [v]_×
+        vx, vy, vz = v[small, 0], v[small, 1], v[small, 2]
+        eye = np.eye(3, dtype=np.float64)
+        hat = np.zeros((int(np.count_nonzero(small)), 3, 3), dtype=np.float64)
+        hat[:, 0, 1] = -vz
+        hat[:, 0, 2] = vy
+        hat[:, 1, 0] = vz
+        hat[:, 1, 2] = -vx
+        hat[:, 2, 0] = -vy
+        hat[:, 2, 1] = vx
+        out[small] = eye + hat
+    mid = ~small
+    if np.any(mid):
+        th = angle[mid]
+        k = v[mid] / th[:, None]
+        kx, ky, kz = k[:, 0], k[:, 1], k[:, 2]
+        hat = np.zeros((int(np.count_nonzero(mid)), 3, 3), dtype=np.float64)
+        hat[:, 0, 1] = -kz
+        hat[:, 0, 2] = ky
+        hat[:, 1, 0] = kz
+        hat[:, 1, 2] = -kx
+        hat[:, 2, 0] = -ky
+        hat[:, 2, 1] = kx
+        hat2 = hat @ hat
+        c = np.cos(th)[:, None, None]
+        s = np.sin(th)[:, None, None]
+        eye = np.eye(3, dtype=np.float64)
+        out[mid] = eye + s * hat + (1.0 - c) * hat2
+    return out[0] if squeezed else out
+
+
+def rotmat_to_quat_xyzw(rot: np.ndarray) -> np.ndarray:
+    """``(N, 3, 3)`` → ``(N, 4)`` xyzw unit quaternion."""
+    r = np.asarray(rot, dtype=np.float64)
+    squeezed = r.ndim == 2
+    if squeezed:
+        r = r[None]
+    n = r.shape[0]
+    out = np.empty((n, 4), dtype=np.float64)
+    t = r[:, 0, 0] + r[:, 1, 1] + r[:, 2, 2]
+    for i in range(n):
+        tr = t[i]
+        m = r[i]
+        if tr > 0.0:
+            s = np.sqrt(tr + 1.0) * 2.0
+            w = 0.25 * s
+            x = (m[2, 1] - m[1, 2]) / s
+            y = (m[0, 2] - m[2, 0]) / s
+            z = (m[1, 0] - m[0, 1]) / s
+        elif m[0, 0] > m[1, 1] and m[0, 0] > m[2, 2]:
+            s = np.sqrt(1.0 + m[0, 0] - m[1, 1] - m[2, 2]) * 2.0
+            w = (m[2, 1] - m[1, 2]) / s
+            x = 0.25 * s
+            y = (m[0, 1] + m[1, 0]) / s
+            z = (m[0, 2] + m[2, 0]) / s
+        elif m[1, 1] > m[2, 2]:
+            s = np.sqrt(1.0 + m[1, 1] - m[0, 0] - m[2, 2]) * 2.0
+            w = (m[0, 2] - m[2, 0]) / s
+            x = (m[0, 1] + m[1, 0]) / s
+            y = 0.25 * s
+            z = (m[1, 2] + m[2, 1]) / s
+        else:
+            s = np.sqrt(1.0 + m[2, 2] - m[0, 0] - m[1, 1]) * 2.0
+            w = (m[1, 0] - m[0, 1]) / s
+            x = (m[0, 2] + m[2, 0]) / s
+            y = (m[1, 2] + m[2, 1]) / s
+            z = 0.25 * s
+        out[i] = (x, y, z, w)
+    out = out / np.linalg.norm(out, axis=1, keepdims=True)
+    out[out[:, 3] < 0] *= -1.0
+    return out[0] if squeezed else out
+
+
+def quat_xyzw_to_rotmat(quat: np.ndarray) -> np.ndarray:
+    """``(N, 4)`` xyzw → ``(N, 3, 3)``."""
+    q = np.asarray(quat, dtype=np.float64)
+    squeezed = q.ndim == 1
+    if squeezed:
+        q = q[None]
+    q = q / np.maximum(np.linalg.norm(q, axis=1, keepdims=True), 1e-12)
+    x, y, z, w = q[:, 0], q[:, 1], q[:, 2], q[:, 3]
+    xx, yy, zz = x * x, y * y, z * z
+    xy, xz, yz = x * y, x * z, y * z
+    wx, wy, wz = w * x, w * y, w * z
+    out = np.empty((q.shape[0], 3, 3), dtype=np.float64)
+    out[:, 0, 0] = 1.0 - 2.0 * (yy + zz)
+    out[:, 0, 1] = 2.0 * (xy - wz)
+    out[:, 0, 2] = 2.0 * (xz + wy)
+    out[:, 1, 0] = 2.0 * (xy + wz)
+    out[:, 1, 1] = 1.0 - 2.0 * (xx + zz)
+    out[:, 1, 2] = 2.0 * (yz - wx)
+    out[:, 2, 0] = 2.0 * (xz - wy)
+    out[:, 2, 1] = 2.0 * (yz + wx)
+    out[:, 2, 2] = 1.0 - 2.0 * (xx + yy)
+    return out[0] if squeezed else out
+
+
+def rot6d_to_rotmat(rot6d: np.ndarray) -> np.ndarray:
+    """First two rows of R flattened → ``(N, 3, 3)`` via Gram-Schmidt."""
+    v = np.asarray(rot6d, dtype=np.float64)
+    squeezed = v.ndim == 1
+    if squeezed:
+        v = v[None]
+    row1 = v[:, :3]
+    row2 = v[:, 3:6]
+    n1 = np.linalg.norm(row1, axis=1, keepdims=True)
+    row1 = row1 / np.maximum(n1, 1e-12)
+    row2 = row2 - (row1 * row2).sum(axis=1, keepdims=True) * row1
+    n2 = np.linalg.norm(row2, axis=1, keepdims=True)
+    row2 = row2 / np.maximum(n2, 1e-12)
+    row3 = np.cross(row1, row2)
+    out = np.stack([row1, row2, row3], axis=1)
+    return out[0] if squeezed else out
+
+
+def rotmat_to_rot6d(rot: np.ndarray) -> np.ndarray:
+    """``(N, 3, 3)`` → first two rows flattened ``(N, 6)``."""
+    r = np.asarray(rot, dtype=np.float64)
+    squeezed = r.ndim == 2
+    if squeezed:
+        r = r[None]
+    out = r[:, :2, :].reshape(r.shape[0], 6)
+    return out[0] if squeezed else out
+
+
+def invert44(transforms: np.ndarray) -> np.ndarray:
+    """Batched SE3 inverse. ``(4, 4)`` or ``(N, 4, 4)``."""
+    t = np.asarray(transforms, dtype=np.float64)
+    squeezed = t.ndim == 2
+    if squeezed:
+        t = t[None]
+    r = t[:, :3, :3]
+    p = t[:, :3, 3]
+    rt = np.transpose(r, (0, 2, 1))
+    out = np.zeros_like(t)
+    out[:, :3, :3] = rt
+    out[:, :3, 3] = -np.einsum("nij,nj->ni", rt, p)
+    out[:, 3, 3] = 1.0
+    return out[0] if squeezed else out
+
+
+def pose_to_matrix(vec, fmt: str) -> np.ndarray:
+    """Packed xyz+rot ``(..., W)`` → SE3 ``(..., 4, 4)``."""
+    x = np.asarray(vec, dtype=np.float64)
+    squeezed = x.ndim == 1
+    if squeezed:
+        x = x[None]
+    key = parse_format(fmt)
+    xyz = x[:, :3]
+    rot = x[:, 3:]
+    if key == XYZ_ROTVEC:
+        r = rotvec_to_rotmat(rot)
+    elif key == XYZ_QUAT:
+        r = quat_xyzw_to_rotmat(rot)
+    elif key == XYZ_ROT6D:
+        r = rot6d_to_rotmat(rot)
+    else:
+        raise ValueError(f"cannot decode pose format {fmt!r}")
+    out = np.zeros((x.shape[0], 4, 4), dtype=np.float64)
+    out[:, :3, :3] = r
+    out[:, :3, 3] = xyz
+    out[:, 3, 3] = 1.0
+    return out[0] if squeezed else out
+
+
+def matrix_to_pose(transforms, fmt: str) -> np.ndarray:
+    """SE3 ``(..., 4, 4)`` → packed xyz+rot ``(..., W)`` float32."""
+    t = np.asarray(transforms, dtype=np.float64)
+    squeezed = t.ndim == 2
+    if squeezed:
+        t = t[None]
+    key = parse_format(fmt)
+    xyz = t[:, :3, 3]
+    r = t[:, :3, :3]
+    if key == XYZ_ROTVEC:
+        rot = rotmat_to_rotvec(r)
+    elif key == XYZ_QUAT:
+        rot = rotmat_to_quat_xyzw(r)
+    elif key == XYZ_ROT6D:
+        rot = rotmat_to_rot6d(r)
+    else:
+        raise ValueError(f"cannot encode pose format {fmt!r}")
+    out = np.concatenate([xyz, rot], axis=1).astype(np.float32)
+    return out[0] if squeezed else out
+
+
+def splice_last(arr: np.ndarray, replacements: list[tuple[int, int, np.ndarray]]) -> np.ndarray:
+    """Replace ``[..., start:end]`` spans on the last axis (sorted by start)."""
+    if not replacements:
+        return arr
+    reps = sorted(replacements, key=lambda r: r[0])
+    parts: list[np.ndarray] = []
+    cursor = 0
+    dim = int(arr.shape[-1])
+    for start, end, block in reps:
+        if start > cursor:
+            parts.append(arr[..., cursor:start])
+        piece = np.asarray(block, dtype=arr.dtype)
+        if piece.ndim == arr.ndim - 1:
+            piece = piece[None, ...] if arr.ndim > 1 else piece
+        parts.append(piece)
+        cursor = end
+    if cursor < dim:
+        parts.append(arr[..., cursor:])
+    return np.concatenate(parts, axis=-1)
+
+
 def _transforms(joints: np.ndarray, chain: Chain) -> np.ndarray:
     if isinstance(chain, PoEChain):
         return poe_fk(joints, chain)
@@ -382,13 +609,20 @@ def joints_to_eef(joints: np.ndarray, embodiment: str, *, side: str | None = Non
     return pose[0] if squeezed else pose
 
 
-def _write_pose(dst: np.ndarray, start: int, end: int, pose: np.ndarray) -> None:
-    width = int(end - start)
-    if width < 6:
-        raise ValueError(f"joint group width {width} < 6, cannot store xyz+rotvec")
-    dst[..., start : start + 6] = pose
-    if width > 6:
-        dst[..., start + 6 : end] = 0.0
+def _convert_arm(sl: ActionSlice, *, embodiment: str | None, names: frozenset[str] | None) -> bool:
+    convert = sl.kind == JOINT and not sl.stored
+    if convert and names is not None:
+        convert = sl.name in names
+    if convert and embodiment is not None:
+        convert = has_chain(embodiment, sl.width)
+    return convert
+
+
+def _eef_name(sl: ActionSlice) -> str:
+    name = sl.name.replace("_arm", "_eef")
+    if name == sl.name and sl.name == "arm":
+        return "eef"
+    return name
 
 
 def remap_joint_slices_to_eef(
@@ -396,21 +630,33 @@ def remap_joint_slices_to_eef(
     *,
     embodiment: str | None = None,
     names: frozenset[str] | None = None,
+    pose_format: str = XYZ_ROTVEC,
 ) -> tuple[ActionSlice, ...]:
+    from lbm.action_space import _reindex_slice
+
+    fmt = parse_format(pose_format)
+    if fmt == "default":
+        fmt = XYZ_ROTVEC
+    w_pose = pose_width(fmt)
+    act_reps: list[tuple[int, int, int]] = []
+    st_reps: list[tuple[int, int, int]] = []
+    convert_names: set[str] = set()
+    for sl in slices:
+        if not _convert_arm(sl, embodiment=embodiment, names=names):
+            continue
+        convert_names.add(sl.name)
+        act_reps.append((sl.start, sl.end, w_pose))
+        ss, se = sl.state_span()
+        if se > ss:
+            st_reps.append((ss, se, w_pose))
     out: list[ActionSlice] = []
     for sl in slices:
-        convert = sl.kind == JOINT and not sl.stored
-        if convert and names is not None:
-            convert = sl.name in names
-        if convert and embodiment is not None:
-            convert = has_chain(embodiment, sl.width)
-        if not convert:
-            out.append(sl)
-            continue
-        name = sl.name.replace("_arm", "_eef")
-        if name == sl.name and sl.name == "arm":
-            name = "eef"
-        out.append(replace(sl, kind=EEF, name=name))
+        row = sl
+        if sl.name in convert_names:
+            row = replace(sl, kind=EEF, name=_eef_name(sl), format=fmt)
+        if act_reps or st_reps:
+            row = _reindex_slice(row, act_reps, st_reps, fmt if row.kind == EEF else row.format)
+        out.append(row)
     return tuple(out)
 
 
@@ -422,9 +668,14 @@ def apply_joint_fk(
     action_kind: str | None,
     *,
     slices: tuple[ActionSlice, ...] | None = None,
+    action_format: str | None = None,
 ) -> tuple[np.ndarray, np.ndarray, tuple[ActionSlice, ...]]:
-    """If ``action_kind`` is eef, run FK on registered joint groups and relabel them."""
-    from lbm.action_space import resolve_action_space
+    """If ``action_kind`` is eef, run FK on registered joint groups and relabel them.
+
+    Canonical cache layout is xyz+rotvec (6-D per converted arm). Pass
+    ``action_format`` to pack rot6d/quat instead.
+    """
+    from lbm.action_space import convert_pose, resolve_action_space
 
     kind = parse_kind(action_kind) if action_kind else None
     orig = slices if slices is not None else resolve_action_space(spec, action_mode)
@@ -439,21 +690,35 @@ def apply_joint_fk(
     if not arms:
         lookup_chain(spec.embodiment, groups[0].width)  # raises: no convertible arm
         return st, act, orig
+    fmt = parse_format(action_format) if action_format else XYZ_ROTVEC
+    if fmt == "default":
+        fmt = XYZ_ROTVEC
     squeezed = st.ndim == 1
     if squeezed:
         st, act = st[None], act[None]
-    st, act = st.copy(), act.copy()
+    act_reps: list[tuple[int, int, np.ndarray]] = []
+    st_reps: list[tuple[int, int, np.ndarray]] = []
     for sl in arms:
         side = _slice_side(sl.name)
+        pose_act = joints_to_eef(act[:, sl.start : sl.end], spec.embodiment, side=side)
+        pose_act = convert_pose(pose_act, XYZ_ROTVEC, fmt)
+        act_reps.append((sl.start, sl.end, pose_act))
         ss, se = sl.state_span()
         if 0 <= ss < se <= st.shape[-1]:
-            _write_pose(st, ss, se, joints_to_eef(st[:, ss:se], spec.embodiment, side=side))
-        _write_pose(act, sl.start, sl.end, joints_to_eef(act[:, sl.start : sl.end], spec.embodiment, side=side))
-    labeled = remap_joint_slices_to_eef(orig, names=frozenset(sl.name for sl in arms))
+            pose_st = joints_to_eef(st[:, ss:se], spec.embodiment, side=side)
+            pose_st = convert_pose(pose_st, XYZ_ROTVEC, fmt)
+            st_reps.append((ss, se, pose_st))
+    if act_reps:
+        act = splice_last(act, act_reps)
+    if st_reps:
+        st = splice_last(st, st_reps)
+    labeled = remap_joint_slices_to_eef(
+        orig, names=frozenset(sl.name for sl in arms), pose_format=fmt
+    )
     if spec.name not in _FK_LOGGED:
         _FK_LOGGED.add(spec.name)
         chain = lookup_chain(spec.embodiment, arms[0].width, side=_slice_side(arms[0].name))
-        print(f"[data] {spec.name}: joint→eef via {chain.name} FK", flush=True)
+        print(f"[data] {spec.name}: joint→eef via {chain.name} FK ({fmt})", flush=True)
     if squeezed:
         return st[0], act[0], labeled
     return st, act, labeled

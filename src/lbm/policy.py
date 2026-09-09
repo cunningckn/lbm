@@ -287,7 +287,7 @@ class LBMPolicy:
         ref = getattr(self, "_last_raw_state", None)
         if ref is not None and self.action_space:
             fitted = apply_action_space(fitted, ref, self.action_space)
-        out[:n] = normalize(fitted, self.norm_stats["actions"])
+        out[:n] = normalize(fitted, self.norm_stats["actions"], self.action_space)
         return out
 
     @torch.no_grad()
@@ -296,7 +296,7 @@ class LBMPolicy:
             self.reset()
         raw_state = _fit_vector(obs["state"], self.model_config.state_dim)
         self._last_raw_state = raw_state
-        state = normalize(raw_state, self.norm_stats["state"])
+        state = normalize(raw_state, self.norm_stats["state"], self.action_space, field="state")
         prompt = str(obs.get("prompt") or "")
         batch = {
             "state": torch.from_numpy(state).unsqueeze(0).to(device=self.device, dtype=self.dtype),
@@ -307,7 +307,7 @@ class LBMPolicy:
         self.task_vec = batch["task_vec_clip"]
         actions = self.model.sample_actions(batch, num_steps=self.diffusion_steps)
         chunk = actions[0].float().cpu().numpy()
-        chunk = unnormalize(chunk, self.norm_stats["actions"]).astype(np.float32)
+        chunk = unnormalize(chunk, self.norm_stats["actions"], self.action_space).astype(np.float32)
         if self.action_space:
             chunk = invert_action_space(chunk, raw_state, self.action_space)
         return chunk.astype(np.float32)

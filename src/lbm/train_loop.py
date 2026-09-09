@@ -125,7 +125,12 @@ def _log_and_copy_norm_stats(train_ds, output_dir: Path) -> None:
         ds = inner[0]
         root = getattr(ds, "root", None)
         slices = (
-            resolve_action_space(ds.spec, ds.action_mode, action_kind=getattr(ds, "action_kind", None))
+            resolve_action_space(
+                ds.spec,
+                ds.action_mode,
+                action_kind=getattr(ds, "action_kind", None),
+                action_format=getattr(ds, "action_format", None),
+            )
             if hasattr(ds, "spec")
             else ()
         )

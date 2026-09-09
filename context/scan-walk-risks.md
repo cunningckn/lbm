@@ -9,7 +9,7 @@ Checked every on-disk dump under `datasets/` (robotwin missing):
 | dump | how scan lists | dump-root trap dirs | same ABC risk? |
 |---|---|---|---|
 | abc | `iter_named` from `data/` | `.cache` 305k, `meta` 129k | fixed |
-| das_gripper | `iter_named` from dump root | none now; `[STAGE 3]` nlink 2.3M is real data | no cache trap; still unbounded walk |
+| das_gripper | top-level `*/das_gripper_slim_meta.json` only (no tree walk) | `[STAGE 3]` nlink 2.3M is real data | no; listing is the 6 task metas |
 | agibot | `iter_files_at_depth(proprio_stats, .h5/.hdf5)` (skip `.*`, yield as found) | no dump-root `.cache`; used to `sorted(glob)` twice and hang ~3 min with no bar | fixed |
 | egoverse | `glob("*.zarr")+glob("*/*.zarr")` then `sorted` | no `.cache`; ~100k zarrs at root | no; second glob lists inside every zarr before tqdm |
 | hy_lance | `iterdir` `table_*` only | `.hfd` (tiny HF downloader meta) | no |

@@ -121,6 +121,11 @@ def parse_args(
         default=None,
         help="eef: run FK on joint groups (aloha/vx300s, franka). omit to keep spec kinds",
     )
+    p.add_argument(
+        "--action-format",
+        default=None,
+        help="eef packed pose: default, xyz+rotvec, xyz+rot6d, xyz+quat",
+    )
     p.add_argument("--no-mmap", action="store_true")
     p.add_argument(
         "--rescan",
@@ -186,6 +191,7 @@ def build_train_config(args: argparse.Namespace) -> TrainConfig:
     cfg.data.video_backend = args.video_backend
     cfg.data.action_mode = args.action_mode
     cfg.data.action_kind = getattr(args, "action_kind", None)
+    cfg.data.action_format = str(getattr(args, "action_format", None) or "")
     cfg.data.use_mmap = not args.no_mmap
     cfg.data.use_mmap_frames = not args.no_mmap
     cfg.data.mmap_prebuild = bool(args.mmap_prebuild) and not args.no_mmap

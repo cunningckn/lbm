@@ -51,6 +51,8 @@ def make_custom_dataset(
     }
     if "action_kind" in data_cfg and data_cfg["action_kind"]:
         kwargs["action_kind"] = data_cfg["action_kind"]
+    if "action_format" in data_cfg and data_cfg["action_format"]:
+        kwargs["action_format"] = data_cfg["action_format"]
     if "action_freq" in data_cfg:
         kwargs["action_freq"] = data_cfg["action_freq"]
     if "history_freq" in data_cfg:

@@ -11,10 +11,14 @@ import numpy as np
 from torch.utils.data import Dataset
 
 from lbm.action_space import (
+    DEFAULT,
     EEF,
     JOINT,
-    apply_action_space,
-    apply_delta_frames,
+    XYZ_ROTVEC,
+    actions_in_train_space,
+    native_format,
+    pack_to_format,
+    parse_format,
     parse_kind,
     parse_rep,
     resolve_action_space,
@@ -22,7 +26,7 @@ from lbm.action_space import (
 )
 from lbm.dataloader.custom.common.lerobot import lerobot_of, read_lerobot_frames, read_lerobot_vectors
 from lbm.dataloader.custom.spec import CustomSpec
-from lbm.temporal import action_hop_frames, delta_indices, n_steps, native_stride
+from lbm.temporal import delta_indices, n_steps, native_stride
 
 _log = logging.getLogger(__name__)
 _FILE_DELTA_LOGGED: set[str] = set()
@@ -103,6 +107,7 @@ class CustomSingleDataset(Dataset):
         norm_stats: dict[str, Any] | None = None,
         action_mode: str,
         action_kind: str | None = None,
+        action_format: str | None = None,
     ) -> None:
         if not episodes and not records:
             raise ValueError(f"{spec.name}: no episodes")
@@ -117,18 +122,45 @@ class CustomSingleDataset(Dataset):
         freq = float(action_freq or spec.fps)
         freq = _lock_file_delta_action_freq(spec, self.action_mode, freq, requested=action_freq)
         self.action_freq = freq
-        self.action_hop = action_hop_frames(self.action_length, freq, spec.fps)
+        if spec.fps > 0 and freq > 0:
+            ratio = float(spec.fps) / float(freq)
+            if abs(ratio - round(ratio)) > 0.05:
+                msg = (
+                    f"[data] {spec.name}: native fps {spec.fps:g} / action_freq {freq:g} "
+                    f"= {ratio:.4g} is not near an integer; stride={native_stride(spec.fps, freq)}"
+                )
+                _log.warning(msg)
+                print(msg, flush=True)
         if self.action_kind == EEF:
+            fmt = parse_format(action_format) if action_format else XYZ_ROTVEC
+            self.action_format = XYZ_ROTVEC if fmt == DEFAULT else fmt
             from lbm.kinematics import apply_joint_fk
 
-            apply_joint_fk(
+            z_st, z_act, canon = apply_joint_fk(
                 np.zeros((1, spec.state_dim), np.float32),
                 np.zeros((1, spec.action_dim), np.float32),
                 spec,
                 self.action_mode,
                 self.action_kind,
+                action_format=XYZ_ROTVEC,
             )
-        slices = resolve_action_space(spec, self.action_mode, action_kind=self.action_kind)
+            z_st, z_act, slices = pack_to_format(z_st, z_act, canon, self.action_format)
+        else:
+            self.action_format = (
+                parse_format(action_format)
+                if action_format
+                else native_format(tuple(spec.action_space))
+            )
+            native = resolve_action_space(spec, self.action_mode)
+            z_st, z_act, slices = pack_to_format(
+                np.zeros((1, spec.state_dim), np.float32),
+                np.zeros((1, spec.action_dim), np.float32),
+                native,
+                self.action_format,
+            )
+        self._space = slices
+        self._io_state_dim = int(z_st.shape[-1])
+        self._io_action_dim = int(z_act.shape[-1])
         if norm_stats is None and self.root is not None:
             from lbm.utils.preprocess import load_dump_norm_stats
 
@@ -175,7 +207,10 @@ class CustomSingleDataset(Dataset):
 
     @property
     def policy_io(self) -> dict[str, Any]:
-        return self.spec.as_policy_io(chunk_length=self.chunk_length)
+        io = self.spec.as_policy_io(chunk_length=self.chunk_length)
+        io["action_dim"] = int(self._io_action_dim)
+        io["state_dim"] = int(self._io_state_dim)
+        return io
 
     def _parquet_store(self, repo: Path | str):
         key = str(Path(repo).resolve())
@@ -218,24 +253,30 @@ class CustomSingleDataset(Dataset):
         return load_fk_episode(self.root, epi_i, source=source_key(rec), n_frames=rec.n_frames)
 
     def _policy_vectors(self, epi_i: int) -> tuple[np.ndarray, np.ndarray, tuple]:
-        if self.action_kind == EEF:
+        from lbm.dataloader.custom.fk_cache import needs_joint_fk
+
+        if self.action_kind == EEF and needs_joint_fk(self.spec):
             cached = self._fk_cached(epi_i)
             if cached is not None:
-                slices = resolve_action_space(self.spec, self.action_mode, action_kind=self.action_kind)
-                return cached[0], cached[1], slices
-        state, action = self._vectors(epi_i)
-        if self.action_kind != EEF:
-            slices = resolve_action_space(self.spec, self.action_mode)
-            return state, action, slices
-        from lbm.kinematics import apply_joint_fk
+                canon = resolve_action_space(
+                    self.spec, self.action_mode, action_kind=self.action_kind, action_format=XYZ_ROTVEC
+                )
+                return pack_to_format(cached[0], cached[1], canon, self.action_format)
+            state, action = self._vectors(epi_i)
+            from lbm.kinematics import apply_joint_fk
 
-        return apply_joint_fk(state, action, self.spec, self.action_mode, self.action_kind)
+            state, action, canon = apply_joint_fk(
+                state, action, self.spec, self.action_mode, self.action_kind, action_format=XYZ_ROTVEC
+            )
+            return pack_to_format(state, action, canon, self.action_format)
+        state, action = self._vectors(epi_i)
+        native = resolve_action_space(self.spec, self.action_mode)
+        return pack_to_format(state, action, native, self.action_format)
 
     def __getitem__(self, index: int) -> dict[str, Any]:
         epi_i, t = self._locate(index)
         state_arr, action_arr, slices = self._policy_vectors(epi_i)
         n = int(action_arr.shape[0])
-        action_arr = apply_delta_frames(action_arr, slices, self.action_hop)
         action = self._gather_vector(action_arr, t, self.action_deltas, n)
         state = state_arr[min(t, n - 1)]
         images = []
@@ -247,12 +288,14 @@ class CustomSingleDataset(Dataset):
         lang = self.episodes[epi_i].lang if self.episodes else self.records[epi_i].lang
         action = action.astype(np.float32, copy=False)
         state = np.asarray(state, dtype=np.float32)
-        action = apply_action_space(action, state, slices)
+        action = actions_in_train_space(action, state, slices)
         if self.norm_stats is not None:
             from lbm.utils.preprocess import normalize
 
-            action = np.asarray(normalize(action, self.norm_stats["actions"]), dtype=np.float32)
-            state = np.asarray(normalize(state, self.norm_stats["state"]), dtype=np.float32)
+            action = np.asarray(normalize(action, self.norm_stats["actions"], slices), dtype=np.float32)
+            state = np.asarray(
+                normalize(state, self.norm_stats["state"], slices, field="state"), dtype=np.float32
+            )
         return {
             "image": images,
             "action": action,

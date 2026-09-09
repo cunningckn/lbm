@@ -151,6 +151,50 @@ def test_das_hdf5_layout(tmp_path):
     assert not list(ep.rglob("frames.bin"))
 
 
+def _das_episode(folder: Path, t: int = 4) -> Path:
+    h5py = pytest.importorskip("h5py")
+    folder.mkdir(parents=True, exist_ok=True)
+    with h5py.File(folder / "episode.hdf5", "w") as handle:
+        handle.create_dataset("observations/left_eef_pose", data=np.zeros((t, 7), np.float64))
+        handle.create_dataset("observations/right_eef_pose", data=np.zeros((t, 7), np.float64))
+        handle.create_dataset("observations/mag_left", data=np.zeros(t, np.float64))
+        handle.create_dataset("observations/mag_right", data=np.ones(t, np.float64))
+    _mp4(folder / "cam_left_wrist.mp4", t)
+    _mp4(folder / "cam_right_wrist.mp4", t)
+    return folder / "episode.hdf5"
+
+
+def test_das_scan_uses_task_metas_not_dir_depth(tmp_path: Path):
+    from lbm.dataloader.custom.datasets.das_gripper import scan
+
+    clutter = _das_episode(tmp_path / "Clutter Tidy-Up [Stage2]" / "00001" / "01706")
+    cook = _das_episode(tmp_path / "Cooking_and_Kitchen_Clean" / "clean_bowl" / "00001" / "00001")
+    deep = _das_episode(
+        tmp_path / "[STAGE 3]" / "domestic" / "bedroom" / "fold" / "store" / "0001" / "uuid"
+    )
+    orphan = _das_episode(tmp_path / "not_in_any_meta" / "00001" / "01706")
+    nested = tmp_path / "Clutter Tidy-Up [Stage2]" / "00001" / "das_gripper_slim_meta.json"
+    nested.write_text(json.dumps({"version": 1, "episodes": ["01706/episode.hdf5"]}))
+    (tmp_path / "Clutter Tidy-Up [Stage2]" / "das_gripper_slim_meta.json").write_text(
+        json.dumps({"version": 1, "episodes": ["00001/01706/episode.hdf5"]})
+    )
+    (tmp_path / "Cooking_and_Kitchen_Clean" / "das_gripper_slim_meta.json").write_text(
+        json.dumps({"version": 1, "episodes": ["clean_bowl/00001/00001/episode.hdf5"]})
+    )
+    (tmp_path / "[STAGE 3]" / "das_gripper_slim_meta.json").write_text(
+        json.dumps({"version": 1, "episodes": ["domestic/bedroom/fold/store/0001/uuid/episode.hdf5"]})
+    )
+    recs = scan(tmp_path, CUSTOM_SPECS["das_gripper"])
+    assert {rec.path for rec in recs} == {str(clutter), str(cook), str(deep)}
+    assert orphan.as_posix() not in {rec.path for rec in recs}
+    by_path = {rec.path: rec for rec in recs}
+    assert by_path[str(clutter)].lang == "Clutter Tidy-Up [Stage2]"
+    assert by_path[str(cook)].lang == "clean bowl"
+    assert by_path[str(deep)].lang == "store"
+    limited = scan(tmp_path, CUSTOM_SPECS["das_gripper"], max_episodes=1)
+    assert len(limited) == 1
+
+
 def test_map_proc_reads_h5_nrows(tmp_path: Path):
     h5py = pytest.importorskip("h5py")
     from lbm.dataloader.custom.common.fs import h5_nframes, h5_nrows, map_proc

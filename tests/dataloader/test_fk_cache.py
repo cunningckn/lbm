@@ -87,6 +87,8 @@ def test_prebuild_and_policy_vectors_use_cache(tmp_path: Path, monkeypatch: pyte
     man = json.loads((dest / "manifest.json").read_text())
     assert man["source"] == source_key(rec)
     assert man["n_frames"] == rec.n_frames
+    assert man["version"] == 1
+    assert man["pose_format"] == "xyz_rotvec"
     assert (cache_dir(tmp_path) / "manifest.json").is_file()
 
     def boom(*_a, **_k):
@@ -104,3 +106,28 @@ def test_prebuild_reuses_existing_episodes(tmp_path: Path):
     assert prebuild_fk(ds, workers=1) == (1, 0)
     assert prebuild_fk(ds, workers=1) == (0, 1)
     assert prebuild_fk(ds, workers=1, force=True) == (1, 0)
+
+
+def test_fk_v1_rotvec_cache_loads_as_rot6d(tmp_path: Path):
+    from lbm.action_space import XYZ_ROT6D
+
+    spec = CUSTOM_SPECS["kai0"]
+    ds = _numpy_dataset(tmp_path, spec)
+    ds.prebuild_fk_cache(workers=1)
+    ds6 = CustomSingleDataset(
+        spec,
+        records=ds.records,
+        action_mode="delta",
+        action_kind=EEF,
+        action_format=XYZ_ROT6D,
+        root=tmp_path,
+    )
+    st, act, slices = ds6._policy_vectors(0)
+    assert act.shape[-1] == 20
+    assert st.shape[-1] == 20
+    assert slices[0].width == 9
+    assert slices[0].format == XYZ_ROT6D
+    dest = episode_dir(tmp_path, 0)
+    man = json.loads((dest / "manifest.json").read_text())
+    assert man["version"] == 1
+    assert man["pose_format"] == "xyz_rotvec"

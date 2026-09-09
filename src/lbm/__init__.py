@@ -52,6 +52,7 @@ from lbm.action_space import (
     ActionSlice,
     apply_action_space,
     invert_action_space,
+    parse_format,
     parse_rep,
 )
 from lbm.optim import build_adamw, count_trainable
@@ -79,6 +80,7 @@ __all__ = [
     "REL",
     "apply_action_space",
     "invert_action_space",
+    "parse_format",
     "parse_rep",
     "add_encoder_arguments",
     "add_fsdp_wrap_arguments",

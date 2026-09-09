@@ -14,7 +14,7 @@ from lbm.dataloader.custom.record import EpisodeRecord
 from lbm.dataloader.custom.spec import WRISTS, CustomSpec, make_spec
 
 NAME = "egoverse"
-SPEC = make_spec("egoverse", "egoverse", WRISTS, 16, 16, 30.0, 12, kind="zarr", action_space=dual_eef())
+SPEC = make_spec("egoverse", "egoverse", WRISTS, 16, 16, 30.0, 12, kind="zarr", action_space=dual_eef(format="xyz_quat"))
 
 
 def scan(root: Path, spec: CustomSpec, *, max_episodes: int | None = None) -> list[EpisodeRecord]:

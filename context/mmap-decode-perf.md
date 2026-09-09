@@ -40,3 +40,16 @@ Item 1: AV1/H264 still decode native res; `reformat` is extra work vs one `cv2.r
 Item 2: repo0 `head_main` is **1125 episodes in one 7.2GB file**. Per-episode span already avoids re-decoding the whole file; shared-once mainly saves 1125× open/seek on NFS.
 
 Item 3: win is not packing source JPEG as-is (that would stretch). Per-frame imdecode→letterbox→encode avoids a `T×H×W` stack.
+
+## 2026-09-09 — mmap train-path 500+500
+
+`benchmarks/dataloader_throughput.py`, mmap on, batch=4, workers=16, history=0, shuffle=False, `--profile`. Warmup 500 + measure 500. `das_gripper` prebuild x32 was running on the same node (numbers are conservative).
+
+| dump | cams | init | first batch | **samp/s** | parent p50 / p95 (ms) | steps |
+|---|---|---|---|---|---|---|
+| egoverse | 3 | 1.1s | 4.3s | **855** | 0.43 / 25 | 10.1M |
+| kai0 | 3 | 2.2s | 1.2s | **535** | 0.46 / 42 | 23.0M |
+| libero | 2 | 0.4s | <1s | **574** | 0.33 / 50 | 273k |
+| rmbench | 3 | 0.3s | <1s | **529** | 0.43 / 49 | 417k |
+
+Earlier 80+80 mmap (idle node): rmbench 1471, libero 707, egoverse 1112. Longer window + disk contention both pull these down.

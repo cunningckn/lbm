@@ -12,5 +12,5 @@ NAME, SPEC, scan, read_vectors, read_frames = bind_lerobot(
     25.0,
     16,
     kind="lerobot_v3",
-    action_space=dual_eef(eef=9, sides=("right", "left")),
+    action_space=dual_eef(eef=9, sides=("right", "left"), format="xyz_rot6d"),
 )

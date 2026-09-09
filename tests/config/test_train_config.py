@@ -48,6 +48,18 @@ def test_rmbench_on_disk_if_present():
     assert (Path(path) / "meta" / "info.json").is_file()
 
 
+def test_data_cfg_from_train_passes_action_kind_and_format():
+    from lbm.config import TrainConfig, data_cfg_from_train
+
+    cfg = TrainConfig()
+    cfg.data.action_kind = "eef"
+    cfg.data.action_format = "xyz+rotvec"
+    data_cfg = data_cfg_from_train(cfg)
+    assert data_cfg["action_kind"] == "eef"
+    assert data_cfg["action_format"] == "xyz+rotvec"
+    assert data_cfg["action_mode"] == cfg.data.action_mode
+
+
 def test_default_checkpoints_dir():
     root = default_checkpoints_dir()
     assert root.name == "checkpoints"

@@ -1,7 +1,13 @@
-"""DAS gripper slim: episode.hdf5 + wrist mp4 (missing cam_high is black + mask)."""
+"""DAS gripper slim: episode.hdf5 + wrist mp4 (missing cam_high is black + mask).
+
+Listing is the six top-level ``das_gripper_slim_meta.json`` files (or a single
+task folder that has one). Do not walk ``[STAGE 3]`` — 2.3M dirents, mixed depth.
+A dump with no task meta falls back to a full ``episode.hdf5`` walk (unit tests).
+"""
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import numpy as np
@@ -13,42 +19,84 @@ from lbm.dataloader.custom.spec import WRISTS, CustomSpec, make_spec
 from lbm.dataloader.custom.video import read_mp4_indices
 
 NAME = "das_gripper"
-SPEC = make_spec("das_gripper", "das_gripper", WRISTS, 16, 16, 30.0, 13, kind="das", action_space=dual_eef())
+SPEC = make_spec("das_gripper", "das_gripper", WRISTS, 16, 16, 30.0, 13, kind="das", action_space=dual_eef(format="xyz_quat"))
+
+_META = "das_gripper_slim_meta.json"
+_H5 = "episode.hdf5"
+_LEFT = "cam_left_wrist.mp4"
+_RIGHT = "cam_right_wrist.mp4"
+_POSE = "observations/left_eef_pose"
 
 
 def scan(root: Path, spec: CustomSpec, *, max_episodes: int | None = None) -> list[EpisodeRecord]:
     from lbm.dataloader.custom.common.fs import h5_nframes, list_files
 
-    hits = list_files(Path(root), name="episode.hdf5", dir_depth=3, max_files=max_episodes, siblings=True)
-    ns = h5_nframes([path for path, _names in hits], "observations/left_eef_pose", desc=f"scan {spec.name}")
+    root = Path(root)
+    paths = _meta_paths(root, max_episodes)
+    if not paths:
+        paths = list_files(root, name=_H5, max_files=max_episodes)
+    ns = h5_nframes(paths, _POSE, desc=f"scan {spec.name}")
     records: list[EpisodeRecord] = []
-    for (h5, names), n in zip(hits, ns, strict=True):
-        rec = _record(h5, spec, n, names)
+    for path, n in zip(paths, ns, strict=True):
+        rec = _record(path, n)
         if rec is not None:
             records.append(rec)
     return records
 
 
-def _record(h5: Path, spec: CustomSpec, n: int, names: frozenset[str]) -> EpisodeRecord | None:
+def _meta_paths(root: Path, max_episodes: int | None) -> list[Path]:
+    from lbm.dataloader.custom.common.fs import child_dirs, take
+
+    if (root / _META).is_file():
+        metas = [root / _META]
+    else:
+        metas = [p / _META for p in child_dirs(root) if (p / _META).is_file()]
+    metas.sort(key=lambda p: str(p))
+    paths: list[Path] = []
+    for meta in metas:
+        paths.extend(_paths_in_meta(meta))
+        if max_episodes is not None and len(paths) >= max_episodes:
+            break
+    return take(paths, max_episodes)
+
+
+def _paths_in_meta(meta: Path) -> list[Path]:
+    try:
+        data = json.loads(meta.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []
+    episodes = data.get("episodes") if isinstance(data, dict) else None
+    if not isinstance(episodes, list):
+        return []
+    task = meta.parent
+    out: list[Path] = []
+    for rel in episodes:
+        if not isinstance(rel, str):
+            continue
+        rel = rel.replace("\\", "/").lstrip("/")
+        if not rel.endswith(_H5) or ".." in Path(rel).parts:
+            continue
+        out.append(task / rel)
+    return out
+
+
+def _record(h5: Path, n: int) -> EpisodeRecord | None:
     if n <= 0:
         return None
     parent = h5.parent
-    if "cam_left_wrist.mp4" not in names:
+    left = parent / _LEFT
+    if not left.is_file():
         return None
-    cam_paths = {
-        cam: str(parent / fname)
-        for cam, fname in (
-            ("cam_left_wrist", "cam_left_wrist.mp4"),
-            ("cam_right_wrist", "cam_right_wrist.mp4"),
-        )
-        if fname in names
-    }
+    videos = {"cam_left_wrist": str(left)}
+    right = parent / _RIGHT
+    if right.is_file():
+        videos["cam_right_wrist"] = str(right)
     return EpisodeRecord(
         kind="das",
         path=str(h5),
         n_frames=n,
         lang=_lang(parent),
-        extra={"dir": str(parent), "videos": cam_paths},
+        extra={"dir": str(parent), "videos": videos},
     )
 
 
@@ -85,7 +133,7 @@ def read_vectors(
 def _cam_video_path(folder: Path, cam: str) -> Path | None:
     if cam == "cam_high":
         return None
-    fname = "cam_left_wrist.mp4" if cam == "cam_left_wrist" else "cam_right_wrist.mp4"
+    fname = _LEFT if cam == "cam_left_wrist" else _RIGHT
     path = folder / fname
     return path if path.is_file() else None
 

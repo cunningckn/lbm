@@ -2,6 +2,7 @@ import importlib.util
 from pathlib import Path
 
 import numpy as np
+import pytest
 import torch
 
 from lbm.action_space import ABS
@@ -112,9 +113,13 @@ def test_compute_norm_stats_roundtrip_in_memory(tmp_path):
         rtol=1e-5,
         atol=1e-5,
     )
-    from lbm.action_space import apply_action_space_frames, resolve_action_space
-
-    rel_action = apply_action_space_frames(episode.action, episode.state, resolve_action_space(spec, ABS))
+    np.testing.assert_allclose(
+        loaded["state"]["q01"],
+        np.quantile(episode.state, 0.01, axis=0).astype(np.float32),
+        rtol=1e-5,
+        atol=1e-5,
+    )
+    rel_action = episode.action
     np.testing.assert_allclose(
         loaded["actions"]["q99"],
         np.quantile(rel_action, 0.99, axis=0).astype(np.float32),
@@ -138,7 +143,7 @@ def test_compute_norm_script_writes_json(tmp_path):
     cfg = custom_cfg(action_mode="delta", action_length=5.0)
     ds = make_custom_dataset(folder, "abc", data_cfg=cfg)
     path = dump_norm_stats_path(folder, ds.action_freq, ds.action_length, resolve_action_space(spec, ds.action_mode))
-    assert path.name == "norm_stats_joint_delta_10hz_5s.json"
+    assert path.name == "norm_stats_joint_delta_default_10hz.json"
     assert path.is_file()
     stats = load_norm_stats(path)
     assert stats["state"]["mean"].shape == (CUSTOM_SPECS["abc"].state_dim,)
@@ -198,13 +203,16 @@ def test_compute_norm_reads_lerobot_parquet_mmap(tmp_path):
     np.testing.assert_allclose(stats["state"]["mean"], raw_state.mean(axis=0), rtol=1e-5, atol=1e-5)
 
 
-def test_norm_stats_filename_adds_length_only_for_computed_delta():
+def test_norm_stats_filename_adds_length_only_for_rel():
     from lbm.action_space import bimanual_joint, delta_eef, dual_eef
 
-    assert norm_stats_filename(10.0, 5.0, slices=delta_eef()) == "norm_stats_eef_delta_10hz.json"
-    assert norm_stats_filename(10.0, 5.0, slices=dual_eef()) == "norm_stats_eef_delta_10hz_5s.json"
-    assert norm_stats_filename(10.0, 5.0, slices=bimanual_joint()) == "norm_stats_joint_delta_10hz_5s.json"
-    assert norm_stats_filename(10.0, 5.0, slices=bimanual_joint(rep="rel")) == "norm_stats_joint_rel_10hz.json"
+    assert norm_stats_filename(10.0, 5.0, slices=delta_eef()) == "norm_stats_eef_delta_xyz_rotvec_10hz.json"
+    assert norm_stats_filename(10.0, 5.0, slices=dual_eef()) == "norm_stats_eef_delta_xyz_quat_10hz.json"
+    assert norm_stats_filename(10.0, 5.0, slices=bimanual_joint()) == "norm_stats_joint_delta_default_10hz.json"
+    assert (
+        norm_stats_filename(10.0, 5.0, slices=bimanual_joint(rep="rel"))
+        == "norm_stats_joint_rel_default_10hz_5s.json"
+    )
 
 
 def test_progress_disabled_under_pytest():
@@ -212,3 +220,40 @@ def test_progress_disabled_under_pytest():
 
     assert progress_enabled() is False
     assert list(track(range(3), desc="x")) == [0, 1, 2]
+
+
+def test_normalize_skips_rot6d_rotation_columns():
+    from lbm.action_space import XYZ_ROT6D, dual_eef
+    from lbm.utils.preprocess import normalize
+
+    slices = dual_eef(eef=9, format=XYZ_ROT6D)
+    dim = 20
+    x = np.linspace(-0.5, 0.5, dim, dtype=np.float32)
+    stats = {
+        "q01": np.zeros(dim, dtype=np.float32),
+        "q99": np.ones(dim, dtype=np.float32),
+    }
+    out = normalize(x, stats, slices)
+    np.testing.assert_allclose(out[:3], x[:3] * 2.0 - 1.0, atol=1e-5)
+    np.testing.assert_allclose(out[3:9], x[3:9], atol=1e-5)
+    np.testing.assert_allclose(out[9], x[9] * 2.0 - 1.0, atol=1e-5)
+
+
+def test_compute_norm_raises_without_fk_cache(tmp_path):
+    from lbm.action_space import EEF
+    from lbm.dataloader.custom.record import EpisodeRecord
+
+    spec = CUSTOM_SPECS["kai0"]
+    rng = np.random.default_rng(0)
+    ep = Episode(
+        images={cam: rng.integers(0, 255, size=(8, 8, 8, 3), dtype=np.uint8) for cam in spec.camera_keys},
+        state=rng.standard_normal((8, spec.state_dim)).astype(np.float32),
+        action=rng.standard_normal((8, spec.action_dim)).astype(np.float32),
+        lang="test",
+    )
+    path = tmp_path / "ep0.npz"
+    save_numpy_episode(path, ep)
+    rec = EpisodeRecord(kind="numpy", path=str(path), n_frames=8)
+    ds = CustomSingleDataset(spec, records=[rec], action_mode="delta", action_kind=EEF, root=tmp_path)
+    with pytest.raises(RuntimeError, match="FK cache missing"):
+        compute_norm_stats(ds, progress=False)

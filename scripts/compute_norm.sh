@@ -37,6 +37,7 @@ ACTION_FREQ="${ACTION_FREQ:-}"
 ACTION_LENGTH="${ACTION_LENGTH:-}"
 ACTION_MODE="${ACTION_MODE:-}"
 ACTION_KIND="${ACTION_KIND:-}"
+ACTION_FORMAT="${ACTION_FORMAT:-}"
 
 exec uv run python "${ROOT}/scripts/compute_norm.py" \
   --workers "${WORKERS}" \
@@ -46,5 +47,6 @@ exec uv run python "${ROOT}/scripts/compute_norm.py" \
   ${ACTION_LENGTH:+--action-length "${ACTION_LENGTH}"} \
   ${ACTION_MODE:+--action-mode "${ACTION_MODE}"} \
   ${ACTION_KIND:+--action-kind "${ACTION_KIND}"} \
+  ${ACTION_FORMAT:+--action-format "${ACTION_FORMAT}"} \
   $([[ "${MMAP}" != "0" ]] && echo --mmap || true) \
   "$@"

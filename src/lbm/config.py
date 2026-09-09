@@ -399,6 +399,8 @@ class DataConfig:
     video_backend: str = "decord"
     lerobot_version: str = "v2.0"
     action_mode: str = "delta"
+    action_kind: str | None = None
+    action_format: str = ""
     use_mmap: bool = True
     use_mmap_frames: bool = True
     mmap_prebuild: bool = True
@@ -508,6 +510,8 @@ def data_cfg_from_train(config: TrainConfig) -> dict:
         "mmap_prebuild": d.mmap_prebuild,
         "mmap_prebuild_workers": d.mmap_prebuild_workers,
         "action_mode": d.action_mode,
+        "action_kind": d.action_kind,
+        "action_format": d.action_format or None,
         "include_state": d.include_state,
         "action_length": m.action_length,
         "action_freq": m.action_freq if d.override_action_freq else None,

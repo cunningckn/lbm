@@ -73,7 +73,7 @@ def test_kai0_fk_changes_values_and_kind():
     assert {s.kind for s in slices if "eef" in s.name} == {EEF}
     assert not np.allclose(act[:, :6], action[:, :6])
     np.testing.assert_allclose(act[:, 6], action[:, 6])
-    assert norm_stats_filename(10.0, 5.0, slices=slices) == "norm_stats_eef_delta_10hz_5s.json"
+    assert norm_stats_filename(10.0, 5.0, slices=slices) == "norm_stats_eef_delta_xyz_rotvec_10hz.json"
 
 
 def test_resolve_action_kind_eef():
@@ -91,8 +91,10 @@ def test_agibot_fk_converts_arms_keeps_head():
     assert kinds["left_eef"] == EEF
     assert kinds["head"] == "joint"
     assert not np.allclose(act[:, :6], action[:, :6])
-    np.testing.assert_allclose(act[:, 14:16], action[:, 14:16])
-    np.testing.assert_allclose(act[:, 16:22], action[:, 16:22])
+    np.testing.assert_allclose(act[:, 12:14], action[:, 14:16])
+    np.testing.assert_allclose(act[:, 14:20], action[:, 16:22])
+    assert act.shape[-1] == 20
+    assert slices[0].width == 6
 
 
 @pytest.mark.parametrize("name", _CARTESIAN_DUMPS)
@@ -117,6 +119,6 @@ def test_every_spec_supports_action_kind_eef(name):
     state = rng.normal(size=(2, spec.state_dim)).astype(np.float32)
     action = rng.normal(size=(2, spec.action_dim)).astype(np.float32)
     st, act, slices = apply_joint_fk(state, action, spec, DELTA, EEF)
-    assert st.shape == state.shape
-    assert act.shape == action.shape
+    assert st.ndim == act.ndim == 2
+    assert np.isfinite(st).all() and np.isfinite(act).all()
     assert slices

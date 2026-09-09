@@ -13,5 +13,5 @@ NAME, SPEC, scan, read_vectors, read_frames = bind_lerobot(
     kind="lerobot",
     state_columns=("state",),
     action_columns=("actions",),
-    action_space=delta_eef(),
+    action_space=delta_eef(format="xyz_rotvec"),
 )

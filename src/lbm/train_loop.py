@@ -10,7 +10,6 @@ from pathlib import Path
 import numpy as np
 import torch
 import torch.distributed as dist
-import torch.nn.functional as F
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader, DistributedSampler
 
@@ -75,6 +74,15 @@ def _make_loader(
         sampler = DistributedSampler(
             dataset, shuffle=train, seed=config.seed, drop_last=drop_last
         )
+    samples_per_rank = len(sampler) if sampler is not None else len(dataset)
+    if train and (samples_per_rank == 0 or (drop_last and samples_per_rank < config.batch_size)):
+        world_size = sampler.num_replicas if sampler is not None else 1
+        raise ValueError(
+            "Training loader has no batches: "
+            f"dataset_size={len(dataset)}, samples_per_rank={samples_per_rank}, "
+            f"batch_size={config.batch_size}, world_size={world_size}, drop_last={drop_last}. "
+            "Reduce batch_size or world_size, or provide more training samples."
+        )
     kwargs: dict = {
         "batch_size": config.batch_size,
         "sampler": sampler,
@@ -92,6 +100,18 @@ def _make_loader(
 
             kwargs["worker_init_fn"] = dataloader_worker_init_fn
     return DataLoader(dataset, **kwargs), sampler
+
+
+def _action_error_stats(pred, actions, action_mask=None) -> torch.Tensor:
+    """Squared-error sum and valid element count, additive across batches/ranks."""
+    error = (pred.float() - actions.float()).square()
+    if action_mask is None:
+        count = error.new_tensor(error.numel())
+    else:
+        valid = torch.broadcast_to(action_mask.to(device=error.device, dtype=torch.bool), error.shape)
+        error = error.masked_fill(~valid, 0.0)
+        count = valid.sum().to(dtype=error.dtype)
+    return torch.stack((error.sum(), count))
 
 
 def _dump_norm_stats(dataset):
@@ -475,7 +495,7 @@ def main(config: TrainConfig) -> None:
 
             if step % config.val_every == 0:
                 model.eval()
-                rsum, n_batches = 0.0, 0
+                stats = torch.zeros(2, device=device, dtype=torch.float64)
                 if val_loader is not None:
                     for vb in val_loader:
                         vb = to_policy(vb, train=False)
@@ -483,9 +503,7 @@ def main(config: TrainConfig) -> None:
                             pred = module.sample_actions(
                                 vb, num_steps=config.flow.num_diffusion_steps
                             )
-                            rsum += F.mse_loss(pred, vb["actions"]).item()
-                            n_batches += 1
-                stats = torch.tensor([rsum, float(n_batches)], device=device)
+                            stats += _action_error_stats(pred, vb["actions"], vb.get("action_mask"))
                 if distributed:
                     dist.all_reduce(stats, op=dist.ReduceOp.SUM)
                 model.train()
@@ -496,7 +514,7 @@ def main(config: TrainConfig) -> None:
                         if wandb:
                             wandb.log({"val_recon_error": recon}, step=step)
                     else:
-                        print(f"step {step:6d}  val skipped (no full validation batches)")
+                        print(f"step {step:6d}  val skipped (no valid action elements in full validation batches)")
                 t_last = time.monotonic()
 
             if step % config.ckpt_every == 0 and (rank == 0 or fsdp):

@@ -13,8 +13,5 @@ outputs/
 **/.mmap/
 **/.cache/
 
-# vendored trees and sim assets are too large for git
+# vendored trees are too large for git (.venv/ already covers sim envs)
 third_party/
-simulation/libero/
-simulation/rmbench/
-simulation/lerobot/

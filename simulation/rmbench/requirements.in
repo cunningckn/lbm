@@ -1,0 +1,11 @@
+# RMBench client / eval env (data prep uses simulation/lerobot uv).
+h5py
+numpy
+opencv-python
+tyro
+tqdm
+PyYAML
+imageio
+imageio-ffmpeg
+# sapien imports pkg_resources; removed in setuptools>=82
+setuptools<82

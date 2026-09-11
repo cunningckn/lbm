@@ -1,10 +1,9 @@
 import pytest
 import torch
-import torch.distributed as dist
 
 from lbm import train_loop
 from lbm.config import TrainConfig
-from lbm.train_loop import _action_error_stats, _make_loader
+from lbm.train_loop import _action_error_stats
 
 
 def test_validation_ignores_padded_dimensions_and_timesteps():
@@ -52,47 +51,6 @@ def test_validation_accumulates_low_precision_inputs_in_float32():
     pred = torch.full((1, 2, 3), 300.0, dtype=torch.float16)
     stats = _action_error_stats(pred, torch.zeros_like(pred))
     torch.testing.assert_close(stats, torch.tensor([540000.0, 6.0]))
-
-
-@pytest.mark.parametrize("size", [0, 3, 4])
-def test_training_loader_rejects_insufficient_single_rank_data(size):
-    config = TrainConfig(batch_size=4, num_workers=0)
-    if size < 4:
-        with pytest.raises(ValueError, match="Training loader has no batches.*batch_size=4"):
-            _make_loader(range(size), config=config, distributed=False, train=True, collate_fn=None)
-    else:
-        loader, _ = _make_loader(range(size), config=config, distributed=False, train=True, collate_fn=None)
-        assert len(list(loader)) == 1
-
-
-@pytest.mark.parametrize("rank", [0, 1])
-@pytest.mark.parametrize("size", [0, 1, 7, 8])
-def test_training_loader_checks_distributed_samples_per_rank(monkeypatch, rank, size):
-    monkeypatch.setattr(dist, "get_world_size", lambda: 2)
-    monkeypatch.setattr(dist, "get_rank", lambda: rank)
-    config = TrainConfig(batch_size=4, num_workers=0)
-    if size < 8:
-        with pytest.raises(ValueError, match="Training loader has no batches.*world_size=2"):
-            _make_loader(range(size), config=config, distributed=True, train=True, collate_fn=None)
-    else:
-        loader, _ = _make_loader(range(size), config=config, distributed=True, train=True, collate_fn=None)
-        assert len(list(loader)) == 1
-
-
-def test_validation_loader_can_be_empty():
-    loader, _ = _make_loader(
-        range(0), config=TrainConfig(batch_size=4, num_workers=0),
-        distributed=False, train=False, collate_fn=None,
-    )
-    assert len(loader) == 0
-
-
-def test_training_loader_allows_explicit_partial_batches():
-    loader, _ = _make_loader(
-        range(1), config=TrainConfig(batch_size=4, num_workers=0),
-        distributed=False, train=True, collate_fn=None, drop_last=False,
-    )
-    assert len(list(loader)) == 1
 
 
 @pytest.mark.parametrize("all_masked", [False, True])
@@ -161,31 +119,3 @@ def test_training_rejects_invalid_prefetch_before_initialization(monkeypatch, fa
     monkeypatch.setattr(torch, "set_float32_matmul_precision", unexpected_initialization)
     with pytest.raises(ValueError, match="prefetch_factor"):
         train_loop.main(config)
-
-
-@pytest.mark.parametrize("workers", [-1, 1.5, True, "2"])
-def test_loader_rejects_invalid_worker_count(workers):
-    config = TrainConfig(fake_data=True, num_workers=workers)
-    with pytest.raises(ValueError, match="num_workers must be a non-negative integer"):
-        _make_loader(range(4), config=config, distributed=False, train=True, collate_fn=None)
-
-
-@pytest.mark.parametrize("factor", [0, None])
-def test_single_process_loader_ignores_worker_only_settings(factor):
-    config = TrainConfig(fake_data=True, num_workers=0)
-    config.data.prefetch_factor = factor
-    config.data.persistent_workers = True
-    config.data.pin_memory = False
-    loader, _ = _make_loader(range(4), config=config, distributed=False, train=True, collate_fn=None)
-    assert loader.prefetch_factor is None
-    assert not loader.persistent_workers
-    assert sorted(next(iter(loader)).tolist()) == list(range(4))
-
-
-@pytest.mark.parametrize("factor", [1, 2, 32, None])
-def test_multiworker_loader_accepts_supported_prefetch(factor):
-    config = TrainConfig(fake_data=True, num_workers=2)
-    config.data.prefetch_factor = factor
-    config.data.persistent_workers = False
-    loader, _ = _make_loader(range(4), config=config, distributed=False, train=True, collate_fn=None)
-    assert loader.prefetch_factor == (2 if factor is None else factor)

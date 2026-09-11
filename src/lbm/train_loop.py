@@ -12,7 +12,6 @@ import numpy as np
 import torch
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.utils.data import DataLoader, DistributedSampler
 
 from lbm.batch import infer_policy_io, policy_batch_from_loader
 from lbm.checkpoint import capture_rng_state, load_checkpoint, restore_rng_state, save_checkpoint
@@ -29,6 +28,7 @@ from lbm.models.clip import CLIPTextEmbedder
 from lbm.models.dit import DiTPolicy, load_pretrained
 from lbm.models.encoders import load_encoder_weights
 from lbm.optim import build_adamw, count_trainable
+from lbm.training_loader import make_loader
 from lbm.utils.fake_data import FakeActionDataset, collate_samples, move_batch_to_device
 
 
@@ -59,55 +59,6 @@ def _t5_tokenize_fn(max_length: int):
         return encoded["input_ids"], encoded["attention_mask"].float()
 
     return _tokenize
-
-
-def _make_loader(
-    dataset,
-    *,
-    config: TrainConfig,
-    distributed: bool,
-    train: bool,
-    collate_fn,
-    drop_last: bool = True,
-    num_workers: int | None = None,
-) -> tuple[DataLoader, DistributedSampler | None]:
-    sampler = None
-    workers = config.num_workers if num_workers is None else num_workers
-    errors = validate_loader_config(config.data, num_workers=workers)
-    if errors:
-        raise ValueError("Invalid loader config: " + "; ".join(errors))
-    if distributed:
-        sampler = DistributedSampler(
-            dataset, shuffle=train, seed=config.seed, drop_last=drop_last
-        )
-    samples_per_rank = len(sampler) if sampler is not None else len(dataset)
-    if train and (samples_per_rank == 0 or (drop_last and samples_per_rank < config.batch_size)):
-        world_size = sampler.num_replicas if sampler is not None else 1
-        raise ValueError(
-            "Training loader has no batches: "
-            f"dataset_size={len(dataset)}, samples_per_rank={samples_per_rank}, "
-            f"batch_size={config.batch_size}, world_size={world_size}, drop_last={drop_last}. "
-            "Reduce batch_size or world_size, or provide more training samples."
-        )
-    kwargs: dict = {
-        "batch_size": config.batch_size,
-        "sampler": sampler,
-        "shuffle": sampler is None and train,
-        "num_workers": workers,
-        "collate_fn": collate_fn,
-        "pin_memory": config.data.pin_memory,
-        "drop_last": drop_last,
-    }
-    if train:
-        kwargs["generator"] = torch.Generator().manual_seed(config.seed)
-    if workers > 0:
-        kwargs["persistent_workers"] = config.data.persistent_workers
-        kwargs["prefetch_factor"] = config.data.prefetch_factor
-        if not config.fake_data:
-            from lbm.dataloader.pad import dataloader_worker_init_fn
-
-            kwargs["worker_init_fn"] = dataloader_worker_init_fn
-    return DataLoader(dataset, **kwargs), sampler
 
 
 def _action_error_stats(pred, actions, action_mask=None) -> torch.Tensor:
@@ -315,7 +266,7 @@ def main(config: TrainConfig) -> None:
             distributed=distributed,
         )
 
-    train_loader, train_sampler = _make_loader(
+    train_loader, train_sampler = make_loader(
         train_ds, config=config, distributed=distributed, train=True, collate_fn=collate_fn
     )
     val_indices = list(
@@ -323,7 +274,7 @@ def main(config: TrainConfig) -> None:
     )
     if val_indices:
         val_subset = torch.utils.data.Subset(val_ds, val_indices)
-        val_loader, _ = _make_loader(
+        val_loader, _ = make_loader(
             val_subset,
             config=config,
             distributed=False,

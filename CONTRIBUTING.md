@@ -44,3 +44,12 @@ that module automatically; use `dataset_spec()` and `dataset_module()` from
 `lbm.dataloader.custom` instead of adding name branches elsewhere. Add a focused
 fixture/test and update a named mixture only when the dataset should be part of
 that mixture.
+
+## Training loader changes
+
+`src/lbm/training_loader.py` owns train/validation DataLoader construction,
+sampler selection, worker initialization and empty-loader checks. The runner
+in `src/lbm/train_loop.py` owns dataset creation, epoch advancement and resume
+replay. Keep loader construction changes in `make_loader()` and run
+`tests/config/test_training_loader.py`, `tests/config/test_train_loop.py` and
+`tests/config/test_checkpoint_resume.py` to check sampling and resume behavior.

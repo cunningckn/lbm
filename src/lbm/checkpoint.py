@@ -78,3 +78,19 @@ def load_checkpoint(path, model, optimizer, scheduler, *, signature):
     optimizer.load_state_dict(payload["optimizer"])
     scheduler.load_state_dict(payload["scheduler"])
     return payload
+
+
+def standard_checkpoint_paths(output_dir: str | Path, step: int) -> tuple[Path, Path]:
+    """Return the numbered and rolling paths for a standard training checkpoint."""
+    root = Path(output_dir)
+    return root / f"{step}.pt", root / "last.pt"
+
+
+def save_standard_checkpoint(output_dir: str | Path, model, optimizer, scheduler, *, step: int,
+                             epoch: int, batch_in_epoch: int, epoch_rng, signature) -> Path:
+    """Atomically save both the numbered and rolling standard checkpoints."""
+    numbered, rolling = standard_checkpoint_paths(output_dir, step)
+    for path in (numbered, rolling):
+        save_checkpoint(path, model, optimizer, scheduler, step=step, epoch=epoch,
+                        batch_in_epoch=batch_in_epoch, epoch_rng=epoch_rng, signature=signature)
+    return numbered

@@ -70,7 +70,9 @@ def cuda_ms(fn, *, device: torch.device, warmup: int, iters: int) -> float:
     return start.elapsed_time(end) / iters
 
 
-def profile_train_step(model, optimizer, batch, device: torch.device, *, warmup: int = 2, iters: int = 3) -> dict[str, float]:
+def profile_train_step(
+    model, optimizer, batch, device: torch.device, *, warmup: int = 2, iters: int = 3
+) -> dict[str, float]:
     """CUDA-event split of one train step: fwd / bwd / optimizer."""
     for _ in range(warmup):
         optimizer.zero_grad(set_to_none=True)

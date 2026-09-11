@@ -14,7 +14,9 @@ from lbm.dataloader.custom.record import EpisodeRecord
 from lbm.dataloader.custom.spec import WRISTS, CustomSpec, make_spec
 
 NAME = "hy_lance"
-SPEC = make_spec("hy_lance", "hy_lance", WRISTS, 16, 16, 30.0, 14, kind="lance", action_space=dual_eef(format="xyz_quat"))
+SPEC = make_spec(
+    "hy_lance", "hy_lance", WRISTS, 16, 16, 30.0, 14, kind="lance", action_space=dual_eef(format="xyz_quat")
+)
 
 _CAM = {
     "cam_high": "observation_images_cam_high",

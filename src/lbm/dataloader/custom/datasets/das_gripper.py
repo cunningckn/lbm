@@ -19,7 +19,9 @@ from lbm.dataloader.custom.spec import WRISTS, CustomSpec, make_spec
 from lbm.dataloader.custom.video import read_mp4_indices
 
 NAME = "das_gripper"
-SPEC = make_spec("das_gripper", "das_gripper", WRISTS, 16, 16, 30.0, 13, kind="das", action_space=dual_eef(format="xyz_quat"))
+SPEC = make_spec(
+    "das_gripper", "das_gripper", WRISTS, 16, 16, 30.0, 13, kind="das", action_space=dual_eef(format="xyz_quat")
+)
 
 _META = "das_gripper_slim_meta.json"
 _H5 = "episode.hdf5"

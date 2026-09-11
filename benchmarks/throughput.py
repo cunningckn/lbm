@@ -10,7 +10,6 @@ from __future__ import annotations
 import argparse
 
 import torch
-
 from _common import parse_ints, peak_mem_mb, reset_peak, resolve_device, try_oom
 
 from lbm import DiTConfig, DiTPolicy, make_fake_batch, validate_model_config

@@ -15,3 +15,6 @@ outputs/
 
 # vendored trees are too large for git (.venv/ already covers sim envs)
 third_party/
+
+.DS_Store
+**/.DS_Store

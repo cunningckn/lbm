@@ -208,7 +208,7 @@ def test_eef_relative_roundtrip(fmt):
 
 
 def test_eef_consecutive_delta_differs_from_joint_and_rel():
-    from lbm.action_space import ActionSlice, EEF, GRIPPER, QUANTILE
+    from lbm.action_space import EEF, GRIPPER, QUANTILE, ActionSlice
     from lbm.kinematics import invert44, matrix_to_pose, pose_to_matrix
 
     n = 6

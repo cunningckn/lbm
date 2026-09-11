@@ -12,7 +12,6 @@ from __future__ import annotations
 import argparse
 
 import torch
-
 from _common import peak_mem_mb, reset_peak, resolve_device
 
 from lbm import DiTConfig, DiTPolicy, make_fake_batch

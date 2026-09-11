@@ -7,11 +7,11 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from tests.fixtures.custom_cfg import custom_cfg
 
 from lbm.dataloader.custom import CUSTOM_SPECS, make_custom_dataset
 from lbm.dataloader.custom.scan_index import cache_dir
 from lbm.dataloader.paths import resolve_dataset
-from tests.fixtures.custom_cfg import custom_cfg
 
 _DIMS = {
     "kai0": (14, 14),

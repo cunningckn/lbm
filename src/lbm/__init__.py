@@ -1,5 +1,15 @@
 """LBM (Large Behavior Cloning Model): flow-matching DiT, DINOv3 vision, CLIP text."""
 
+from lbm.action_space import (
+    ABS,
+    DELTA,
+    REL,
+    ActionSlice,
+    apply_action_space,
+    invert_action_space,
+    parse_format,
+    parse_rep,
+)
 from lbm.config import (
     ClipConfig,
     DataConfig,
@@ -44,16 +54,6 @@ from lbm.models import (
     resolve_siglip_path,
     resolve_t5_path,
     task_name_to_prompt,
-)
-from lbm.action_space import (
-    ABS,
-    DELTA,
-    REL,
-    ActionSlice,
-    apply_action_space,
-    invert_action_space,
-    parse_format,
-    parse_rep,
 )
 from lbm.optim import build_adamw, count_trainable
 from lbm.utils import (

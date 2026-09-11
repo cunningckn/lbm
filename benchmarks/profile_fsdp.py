@@ -20,7 +20,6 @@ import argparse
 from dataclasses import dataclass
 
 import torch
-
 from _common import parse_result, torchrun_fsdp
 
 from lbm import DiTConfig, DiTPolicy, validate_model_config

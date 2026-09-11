@@ -35,7 +35,9 @@ def test_collate_pads_action_and_cameras():
 
 
 def test_collate_honors_sample_camera_mask():
-    sample = _sample(n_cams=3, t_act=4, d_act=14, tag="egoverse", cams=("cam_high", "cam_left_wrist", "cam_right_wrist"))
+    sample = _sample(
+        n_cams=3, t_act=4, d_act=14, tag="egoverse", cams=("cam_high", "cam_left_wrist", "cam_right_wrist")
+    )
     sample["image"][1][:] = 0
     sample["image"][2][:] = 0
     sample["camera_mask"] = np.array([True, False, False])

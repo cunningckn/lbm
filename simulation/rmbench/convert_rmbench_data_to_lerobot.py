@@ -32,8 +32,7 @@ import cv2
 import h5py
 import numpy as np
 import tqdm
-from lerobot.common.datasets.lerobot_dataset import HF_LEROBOT_HOME
-from lerobot.common.datasets.lerobot_dataset import LeRobotDataset
+from lerobot.common.datasets.lerobot_dataset import HF_LEROBOT_HOME, LeRobotDataset
 
 _SIMULATION_DIR = Path(__file__).resolve().parents[1]
 if str(_SIMULATION_DIR) not in sys.path:

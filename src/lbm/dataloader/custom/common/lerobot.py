@@ -78,7 +78,9 @@ class LerobotDump:
                 if key in seen:
                     continue
                 seen.add(key)
-                path = self._format_video(key, chunk=meta.chunk, episode_index=self.episode_index, file_index=meta.file_index)
+                path = self._format_video(
+                    key, chunk=meta.chunk, episode_index=self.episode_index, file_index=meta.file_index
+                )
                 if path is not None and path.is_file():
                     return path, key
             return None
@@ -266,18 +268,14 @@ def _parquet_hits(root: Path) -> list[Path]:
     return paths or list_files(root, suffixes=(".parquet",))
 
 
-def _v2_locate_parquet(
-    repo: Path, data_tmpl: str, epi: int, chunk: int, explicit: str | None
-) -> tuple[Path, int]:
+def _v2_locate_parquet(repo: Path, data_tmpl: str, epi: int, chunk: int, explicit: str | None) -> tuple[Path, int]:
     if explicit:
         path = Path(explicit)
         return path if path.is_absolute() else repo / path, chunk
     try:
         path = repo / data_tmpl.format(episode_chunk=chunk, episode_index=epi, chunk_index=chunk)
     except (KeyError, ValueError):
-        path = repo / V2_DATA_PATH.format(
-            episode_chunk=int(chunk), episode_index=int(epi), chunk_index=int(chunk)
-        )
+        path = repo / V2_DATA_PATH.format(episode_chunk=int(chunk), episode_index=int(epi), chunk_index=int(chunk))
     return path, chunk
 
 
@@ -483,10 +481,32 @@ def read_lerobot_frames(
     if frames is not None:
         return frames
     if dump.resolve_mp4(cam) is None:
-        raise KeyError(
-            f"camera {cam!r} is not in features and has neither a parquet image column nor an mp4"
-        )
+        raise KeyError(f"camera {cam!r} is not in features and has neither a parquet image column nor an mp4")
     return _read_lerobot_mp4(dump, spec, cam, indices, progress=progress)
+
+
+class _SizedIterator:
+    """Lazy iterator retaining the cheap known item count for compatibility."""
+    def __init__(self, iterator, size: int):
+        self._iterator = iter(iterator)
+        self._size = int(size)
+    def __iter__(self):
+        return self
+    def __next__(self):
+        return next(self._iterator)
+    def __len__(self):
+        return self._size
+    def __getitem__(self, index):
+        if not isinstance(index, int):
+            raise TypeError("lazy image iterator accepts integer indices only")
+        if index < 0:
+            index += self._size
+        if index < 0 or index >= self._size:
+            raise IndexError(index)
+        for i, value in enumerate(self):
+            if i == index:
+                return value
+        raise IndexError(index)
 
 
 def lerobot_source_jpegs(dump: LerobotDump, cam: str, n_frames: int) -> Iterator[bytes] | None:
@@ -519,7 +539,7 @@ def lerobot_source_jpegs(dump: LerobotDump, cam: str, n_frames: int) -> Iterator
         if count != n_frames:
             raise ValueError(f"expected {n_frames} images, got {count}: {dump.parquet}, camera={cam}")
 
-    return blobs()
+    return _SizedIterator(blobs(), n_frames)
 
 
 def _read_lerobot_mp4(
@@ -644,9 +664,7 @@ def _read_episode_parquet(path: Path, episode_index: int, columns: list[str] | N
     try:
         import pyarrow.parquet as pq
 
-        table = pq.read_table(
-            path, columns=columns, filters=[("episode_index", "=", int(episode_index))]
-        )
+        table = pq.read_table(path, columns=columns, filters=[("episode_index", "=", int(episode_index))])
         frame = table.to_pandas()
     except Exception:
         frame = pd.read_parquet(path, columns=columns)

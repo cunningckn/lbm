@@ -1,8 +1,8 @@
 """Bounded memory and failure recovery for JPEG cache construction."""
 
-from concurrent.futures import Future
 import json
 import tracemalloc
+from concurrent.futures import Future
 
 import numpy as np
 import pytest

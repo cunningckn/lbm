@@ -10,7 +10,8 @@ def test_cli_and_config_share_training_defaults():
     assert cfg.batch_size == TRAIN_DEFAULTS.batch_size
     assert cfg.num_workers == TRAIN_DEFAULTS.num_workers
     assert cfg.seed == TRAIN_DEFAULTS.seed
-    assert cfg.log_every == TRAIN_DEFAULTS.log_every
+    assert args.log_every == TRAIN_DEFAULTS.log_every
+    assert cfg.log_every == 1  # fake-data mode keeps its fast logging cadence
     assert cfg.val_every == TRAIN_DEFAULTS.val_every
     assert cfg.val_batches == TRAIN_DEFAULTS.val_batches
     assert cfg.ckpt_every == TRAIN_DEFAULTS.train_steps_fake + 1

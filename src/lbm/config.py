@@ -428,6 +428,7 @@ class TrainConfig:
     fake_data: bool = False
 
     load_pretrained: str = ""
+    resume: str = ""
     pretrained_encoders: bool = True
     compile: bool = False
     bf16: bool = True

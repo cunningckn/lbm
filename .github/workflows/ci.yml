@@ -1,0 +1,39 @@
+name: Code checks
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: code-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Ruff from the project lockfile
+        run: |
+          python - <<'PY'
+          import pathlib
+          import subprocess
+          import sys
+          import tomllib
+
+          lock = tomllib.loads(pathlib.Path('uv.lock').read_text())
+          ruff = next(package for package in lock['package'] if package['name'] == 'ruff')
+          subprocess.check_call([sys.executable, '-m', 'pip', 'install', f"ruff=={ruff['version']}"])
+          PY
+      - name: Lint
+        run: ruff check .
+      - name: Check Python syntax
+        run: python -m compileall -q src tests scripts examples benchmarks simulation

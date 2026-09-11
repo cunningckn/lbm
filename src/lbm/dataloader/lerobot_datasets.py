@@ -1,7 +1,7 @@
 # Copyright 2025 NVIDIA Corp. and affiliates. All rights reserved.
-# Modified by [Fangjing Wang/ SUST University] in [2025]. 
+# Modified by [Fangjing Wang/ SUST University] in [2025].
 # Modification: [return raw data and suport multi-dataset mixture].
-# Modified by [Jinhui YE/ HKUST University] in [2025]. 
+# Modified by [Jinhui YE/ HKUST University] in [2025].
 # Modification: [suport topdowm processing, suport param from config].
 
 import logging
@@ -11,10 +11,10 @@ import numpy as np
 import torch
 from omegaconf import OmegaConf
 
-from lbm.dataloader.gr00t_lerobot.datasets import LeRobotSingleDataset, LeRobotMixtureDataset
+from lbm.dataloader.gr00t_lerobot.datasets import LeRobotMixtureDataset, LeRobotSingleDataset
 from lbm.dataloader.gr00t_lerobot.registry import (
-    ROBOT_TYPE_CONFIG_MAP,
     DATASET_NAMED_MIXTURES,
+    ROBOT_TYPE_CONFIG_MAP,
     EmbodimentTag,
 )
 
@@ -121,16 +121,19 @@ def make_LeRobotSingleDataset(
     :param crop_obs_camera: Whether to crop the observation camera images.
     :return: A LeRobotSingleDataset object.
     """
-    
+
     data_config = ROBOT_TYPE_CONFIG_MAP[robot_type]
     modality_config = data_config.modality_config()
     transforms = data_config.transform()
     dataset_path = data_root_dir / data_name
     embodiment_tag = getattr(data_config, "embodiment_tag", None)
     if embodiment_tag is None:
-        print(f"Warning: DataConfig for robot_type={robot_type!r} has no embodiment_tag, using {EmbodimentTag.NEW_EMBODIMENT} as default")
+        print(
+            f"Warning: DataConfig for robot_type={robot_type!r} has no embodiment_tag, "
+            f"using {EmbodimentTag.NEW_EMBODIMENT} as default"
+        )
         embodiment_tag = EmbodimentTag.NEW_EMBODIMENT
-    
+
     video_backend = data_cfg.get("video_backend", "decord") if data_cfg else "torchvision_av"
 
     # Opt-in factory hook: a DataConfig may define ``make_dataset(dataset_name=..., **ds_kwargs)``
@@ -153,10 +156,11 @@ def make_LeRobotSingleDataset(
         modality_configs=modality_config,
         transforms=transforms,
         embodiment_tag=embodiment_tag,
-        video_backend=video_backend, # decord is more efficiency | torchvision_av for video.av1
+        video_backend=video_backend,  # decord is more efficiency | torchvision_av for video.av1
         delete_pause_frame=delete_pause_frame,
         data_cfg=data_cfg,
     )
+
 
 def get_vla_dataset(
     data_cfg: dict,
@@ -175,8 +179,8 @@ def get_vla_dataset(
     mixture_spec = DATASET_NAMED_MIXTURES[data_mix]
     logger.info(f"[dataloader] Using mixture '{data_mix}': {[(d, w, r) for d, w, r in mixture_spec]}")
     included_datasets, filtered_mixture_spec = set(), []
-    for d_name, d_weight, robot_type in mixture_spec:  
-        dataset_key = (d_name, robot_type)  
+    for d_name, d_weight, robot_type in mixture_spec:
+        dataset_key = (d_name, robot_type)
         if dataset_key in included_datasets:
             print(f"Skipping Duplicate Dataset: `{(d_name, d_weight, robot_type)}`")
             continue
@@ -186,7 +190,14 @@ def get_vla_dataset(
 
     dataset_mixture = []
     for d_name, d_weight, robot_type in filtered_mixture_spec:
-        dataset_mixture.append((make_LeRobotSingleDataset(Path(data_root_dir), d_name, robot_type, delete_pause_frame=delete_pause_frame, data_cfg=data_cfg), d_weight))
+        dataset_mixture.append(
+            (
+                make_LeRobotSingleDataset(
+                    Path(data_root_dir), d_name, robot_type, delete_pause_frame=delete_pause_frame, data_cfg=data_cfg
+                ),
+                d_weight,
+            )
+        )
 
     return LeRobotMixtureDataset(
         dataset_mixture,
@@ -199,19 +210,24 @@ def get_vla_dataset(
     )
 
 
-
 if __name__ == "__main__":
     import argparse
     import os
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config_yaml", type=str, default="./examples/simBenchmarks/LIBERO/train_files/bar/starvla_cotrain_libero.yaml", help="Path to YAML config")
+    parser.add_argument(
+        "--config_yaml",
+        type=str,
+        default="./examples/simBenchmarks/LIBERO/train_files/bar/starvla_cotrain_libero.yaml",
+        help="Path to YAML config",
+    )
     parser.add_argument("--data_mix", type=str, default=None, help="Override data_mix from config")
     parser.add_argument("--data_root_dir", type=str, default=None, help="Override data_root_dir from config")
     args = parser.parse_args()
 
     if os.getenv("DEBUGPY_ENABLE", "0") == "1":
         import debugpy
+
         debugpy.listen(("0.0.0.0", 10092))
         print("Rank 0 waiting for debugger attach on port 10092...")
         debugpy.wait_for_client()
@@ -226,10 +242,11 @@ if __name__ == "__main__":
 
     dataset = get_vla_dataset(data_cfg=vla_dataset_cfg)
     from torch.utils.data import DataLoader
+
     train_dataloader = DataLoader(
         dataset,
         batch_size=2,
-        num_workers=1, # For Debug
+        num_workers=1,  # For Debug
         collate_fn=collate_fn,
     )
 
@@ -238,6 +255,7 @@ if __name__ == "__main__":
     dataset.save_dataset_statistics(output_dir / "dataset_statistics.json")
 
     from tqdm import tqdm
+
     count = 0
     for batch in tqdm(train_dataloader, desc="Processing Batches"):
         if count > 3:

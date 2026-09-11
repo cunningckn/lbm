@@ -8,11 +8,11 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import pytest
+from tests.fixtures.custom_cfg import custom_cfg
+from tests.fixtures.lerobot_tree import lerobot_info
 
 from lbm.dataloader.custom import CUSTOM_SPECS, make_custom_dataset
 from lbm.dataloader.custom.scan import scan_root
-from tests.fixtures.custom_cfg import custom_cfg
-from tests.fixtures.lerobot_tree import lerobot_info
 
 
 def _mp4(path: Path, n: int = 4, size: int = 16) -> None:
@@ -74,9 +74,7 @@ def test_custom_lerobot_writes_shared_mmap(tmp_path):
         action_col="action",
         n=4,
     )
-    ds = make_custom_dataset(
-        tmp_path, "kai0", data_cfg=custom_cfg(use_mmap_frames=True, max_episodes=1)
-    )
+    ds = make_custom_dataset(tmp_path, "kai0", data_cfg=custom_cfg(use_mmap_frames=True, max_episodes=1))
     sample = ds[0]
     assert sample["image"][0].shape[-1] == 3
     caches = list(tmp_path.rglob("frames.bin"))
@@ -169,9 +167,7 @@ def test_das_scan_uses_task_metas_not_dir_depth(tmp_path: Path):
 
     clutter = _das_episode(tmp_path / "Clutter Tidy-Up [Stage2]" / "00001" / "01706")
     cook = _das_episode(tmp_path / "Cooking_and_Kitchen_Clean" / "clean_bowl" / "00001" / "00001")
-    deep = _das_episode(
-        tmp_path / "[STAGE 3]" / "domestic" / "bedroom" / "fold" / "store" / "0001" / "uuid"
-    )
+    deep = _das_episode(tmp_path / "[STAGE 3]" / "domestic" / "bedroom" / "fold" / "store" / "0001" / "uuid")
     orphan = _das_episode(tmp_path / "not_in_any_meta" / "00001" / "01706")
     nested = tmp_path / "Clutter Tidy-Up [Stage2]" / "00001" / "das_gripper_slim_meta.json"
     nested.write_text(json.dumps({"version": 1, "episodes": ["01706/episode.hdf5"]}))
@@ -279,9 +275,7 @@ def test_galaxea_split_columns(tmp_path):
     meta.mkdir(parents=True)
     data.mkdir(parents=True)
     n = 5
-    (meta / "info.json").write_text(
-        json.dumps(lerobot_info(version="v2.1", fps=15, robot_type="r1lite"))
-    )
+    (meta / "info.json").write_text(json.dumps(lerobot_info(version="v2.1", fps=15, robot_type="r1lite")))
     (meta / "episodes.jsonl").write_text(json.dumps({"episode_index": 0, "tasks": ["arrange"], "length": n}) + "\n")
     rows = {
         "observation.state.left_ee_pose": [np.ones(7, np.float32) for _ in range(n)],
@@ -352,9 +346,7 @@ def test_egoverse_zarr_layout(tmp_path):
     zarr.create_array(str(store), name="left.obs_ee_pose", data=np.zeros((t, 7), np.float32))
     group = zarr.open(str(store), mode="r+")
     group["right.obs_ee_pose"] = np.ones((t, 7), np.float32)
-    ds = make_custom_dataset(
-        tmp_path / "aria", "egoverse", data_cfg=custom_cfg(use_mmap=True, use_mmap_frames=True)
-    )
+    ds = make_custom_dataset(tmp_path / "aria", "egoverse", data_cfg=custom_cfg(use_mmap=True, use_mmap_frames=True))
     sample = ds[0]
     assert sample["state"].shape[-1] == 16
     assert sample["action"].shape[-1] == 16
@@ -538,7 +530,6 @@ def test_mmap_dump_root_groups_stores_and_dedupes_broadcast(tmp_path):
     assert len(lance_refs) == 6
 
 
-
 def test_contiguous_span():
     from lbm.dataloader.custom.video import contiguous_span
 
@@ -561,7 +552,9 @@ def test_max_episodes_stops_scan(tmp_path):
     assert len(recs) == 1
 
 
-def _write_abc_mcap(path: Path, *, t0: int, t1: int, camera_t0: int | None = None, camera_t1: int | None = None) -> None:
+def _write_abc_mcap(
+    path: Path, *, t0: int, t1: int, camera_t0: int | None = None, camera_t1: int | None = None
+) -> None:
     from mcap.writer import Writer
 
     from lbm.dataloader.custom.datasets.abc import _SCALAR_TOPICS
@@ -586,7 +579,7 @@ def _write_abc_mcap(path: Path, *, t0: int, t1: int, camera_t0: int | None = Non
 
 
 def test_abc_resampled_n_frames_matches_arange():
-    from lbm.dataloader.custom.datasets.abc import _resampled_n_frames, _resample_ticks
+    from lbm.dataloader.custom.datasets.abc import _resample_ticks, _resampled_n_frames
 
     t0, t1, fps = 1775547359793520000, 1775547470908381696, 10.0
     ticks = _resample_ticks(t0, t1, fps)

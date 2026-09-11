@@ -18,7 +18,6 @@ import argparse
 import os
 
 import torch
-
 from _common import parse_ints, peak_mem_mb, profile_train_step, try_oom
 
 from lbm import DiTConfig, DiTPolicy, ParallelConfig, make_fake_batch, validate_model_config
@@ -172,7 +171,7 @@ def main() -> None:
         batch = make_fake_batch(config, bs, device=device, dtype=dtype)
         torch.cuda.reset_peak_memory_stats(device)
         oom = all_ranks_oom(
-            try_oom(lambda: train_step(model, optimizer, batch)),
+            try_oom(lambda batch=batch: train_step(model, optimizer, batch)),
             device,
             used_dist,
         )
@@ -196,7 +195,7 @@ def main() -> None:
         if sampler is not None:
             sampler.start()
         stats = time_calls(
-            lambda: train_step(model, optimizer, batch),
+            lambda batch=batch: train_step(model, optimizer, batch),
             warmup=args.warmup,
             iters=args.iters,
             batch_size=bs,

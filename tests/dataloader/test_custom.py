@@ -8,6 +8,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import pytest
+from tests.fixtures.custom_cfg import custom_cfg
+from tests.fixtures.lerobot_tree import lerobot_info
 
 from lbm.action_space import ABS
 from lbm.batch import infer_policy_io, merge_policy_io
@@ -23,8 +25,6 @@ from lbm.dataloader.custom import (
 )
 from lbm.dataloader.custom.spec import CustomSpec
 from lbm.dataloader.pad import collate_fn
-from tests.fixtures.custom_cfg import custom_cfg
-from tests.fixtures.lerobot_tree import lerobot_info
 
 _EXPECTED = {
     "agibot": ("agibot_genie1", ("top_head", "hand_left", "hand_right"), 20, 22, 30.0, 26),
@@ -44,10 +44,7 @@ _EXPECTED = {
 
 def _episode(spec: CustomSpec, n_frames: int = 12, *, seed: int = 0) -> Episode:
     rng = np.random.default_rng(seed)
-    images = {
-        cam: rng.integers(0, 255, size=(n_frames, 8, 8, 3), dtype=np.uint8)
-        for cam in spec.camera_keys
-    }
+    images = {cam: rng.integers(0, 255, size=(n_frames, 8, 8, 3), dtype=np.uint8) for cam in spec.camera_keys}
     return Episode(
         images=images,
         state=rng.standard_normal((n_frames, spec.state_dim)).astype(np.float32),
@@ -130,8 +127,12 @@ def test_single_dataset_packed_sample():
 
 
 def test_mixture_pads_heterogeneous_custom_specs():
-    kai0 = CustomSingleDataset(CUSTOM_SPECS["kai0"], [_episode(CUSTOM_SPECS["kai0"], seed=1)], action_length=0.2, action_mode=ABS)
-    agi = CustomSingleDataset(CUSTOM_SPECS["agibot"], [_episode(CUSTOM_SPECS["agibot"], seed=2)], action_length=0.2, action_mode=ABS)
+    kai0 = CustomSingleDataset(
+        CUSTOM_SPECS["kai0"], [_episode(CUSTOM_SPECS["kai0"], seed=1)], action_length=0.2, action_mode=ABS
+    )
+    agi = CustomSingleDataset(
+        CUSTOM_SPECS["agibot"], [_episode(CUSTOM_SPECS["agibot"], seed=2)], action_length=0.2, action_mode=ABS
+    )
     mix = CustomMixtureDataset([(kai0, 1.0), (agi, 1.0)])
     io = infer_policy_io(mix)
     assert io["action_dim"] == 22
@@ -210,9 +211,7 @@ def test_lerobot_tree_without_modality_json(tmp_path):
     (meta / "info.json").write_text(
         json.dumps(lerobot_info(version="v2.1", fps=30, robot_type="agilex", total_episodes=1))
     )
-    (meta / "episodes.jsonl").write_text(
-        '{"episode_index":0,"tasks":["pick"],"length":10}\n'
-    )
+    (meta / "episodes.jsonl").write_text('{"episode_index":0,"tasks":["pick"],"length":10}\n')
     (meta / "tasks.jsonl").write_text('{"task_index":0,"task":"pick"}\n')
     rows = {
         "observation.state": [np.ones(14, dtype=np.float32) * i for i in range(n)],
@@ -529,8 +528,9 @@ def test_unknown_spec_raises():
 
 
 def test_lerobot_v2_chunk_from_episode_index(tmp_path):
-    from lbm.dataloader.custom.common.lerobot import lerobot_of, resolve_lerobot_video, scan_lerobot
     from tests.fixtures.lerobot_tree import _write_dummy_mp4
+
+    from lbm.dataloader.custom.common.lerobot import lerobot_of, resolve_lerobot_video, scan_lerobot
 
     spec = CUSTOM_SPECS["kai0"]
     root = tmp_path / "kai0"
@@ -542,14 +542,11 @@ def test_lerobot_v2_chunk_from_episode_index(tmp_path):
         "chunks_size": 1000,
         "data_path": "data/chunk-{episode_chunk:03d}/episode_{episode_index:06d}.parquet",
         "video_path": "videos/chunk-{episode_chunk:03d}/{video_key}/episode_{episode_index:06d}.mp4",
-        "features": {
-            f"observation.images.{cam}": {"dtype": "video", "shape": [3, 16, 16]} for cam in spec.camera_keys
-        },
+        "features": {f"observation.images.{cam}": {"dtype": "video", "shape": [3, 16, 16]} for cam in spec.camera_keys},
     }
     (meta / "info.json").write_text(json.dumps(info))
     (meta / "episodes.jsonl").write_text(
-        '{"episode_index":0,"tasks":["first"],"length":2}\n'
-        '{"episode_index":1000,"tasks":["second"],"length":2}\n'
+        '{"episode_index":0,"tasks":["first"],"length":2}\n{"episode_index":1000,"tasks":["second"],"length":2}\n'
     )
     for epi, chunk in ((0, 0), (1000, 1)):
         data = root / "data" / f"chunk-{chunk:03d}"
@@ -577,9 +574,10 @@ def test_lerobot_v2_chunk_from_episode_index(tmp_path):
 
 
 def test_lerobot_v3_packed_video_from_timestamp(tmp_path):
+    from tests.fixtures.lerobot_tree import _write_dummy_mp4
+
     from lbm.dataloader.custom.common.lerobot import lerobot_of
     from lbm.dataloader.custom.mmap_frames import decode_kwargs, resolve_mmap_frames
-    from tests.fixtures.lerobot_tree import _write_dummy_mp4
 
     spec = CUSTOM_SPECS["hifi_umi"]
     root = tmp_path / "hifi"

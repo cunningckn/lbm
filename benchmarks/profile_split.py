@@ -16,7 +16,6 @@ from __future__ import annotations
 import argparse
 
 import torch
-
 from _common import cuda_ms, profile_train_step, resolve_device
 
 from lbm import DiTConfig, DiTPolicy, make_fake_batch, validate_model_config

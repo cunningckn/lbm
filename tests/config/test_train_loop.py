@@ -148,3 +148,44 @@ def test_main_rejects_empty_loader_before_initializing_model(monkeypatch, tmp_pa
     config = TrainConfig(fake_data=True, batch_size=4, num_workers=0, output_dir=str(tmp_path))
     with pytest.raises(ValueError, match="Training loader has no batches"):
         train_loop.main(config)
+
+
+@pytest.mark.parametrize("factor", [0, -1, 1.5, True, "2"])
+def test_training_rejects_invalid_prefetch_before_initialization(monkeypatch, factor):
+    config = TrainConfig(fake_data=True, num_workers=2)
+    config.data.prefetch_factor = factor
+
+    def unexpected_initialization(*args, **kwargs):
+        pytest.fail("training runtime must not initialize for invalid loader settings")
+
+    monkeypatch.setattr(torch, "set_float32_matmul_precision", unexpected_initialization)
+    with pytest.raises(ValueError, match="prefetch_factor"):
+        train_loop.main(config)
+
+
+@pytest.mark.parametrize("workers", [-1, 1.5, True, "2"])
+def test_loader_rejects_invalid_worker_count(workers):
+    config = TrainConfig(fake_data=True, num_workers=workers)
+    with pytest.raises(ValueError, match="num_workers must be a non-negative integer"):
+        _make_loader(range(4), config=config, distributed=False, train=True, collate_fn=None)
+
+
+@pytest.mark.parametrize("factor", [0, None])
+def test_single_process_loader_ignores_worker_only_settings(factor):
+    config = TrainConfig(fake_data=True, num_workers=0)
+    config.data.prefetch_factor = factor
+    config.data.persistent_workers = True
+    config.data.pin_memory = False
+    loader, _ = _make_loader(range(4), config=config, distributed=False, train=True, collate_fn=None)
+    assert loader.prefetch_factor is None
+    assert not loader.persistent_workers
+    assert sorted(next(iter(loader)).tolist()) == list(range(4))
+
+
+@pytest.mark.parametrize("factor", [1, 2, 32, None])
+def test_multiworker_loader_accepts_supported_prefetch(factor):
+    config = TrainConfig(fake_data=True, num_workers=2)
+    config.data.prefetch_factor = factor
+    config.data.persistent_workers = False
+    loader, _ = _make_loader(range(4), config=config, distributed=False, train=True, collate_fn=None)
+    assert loader.prefetch_factor == (2 if factor is None else factor)

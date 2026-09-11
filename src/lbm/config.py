@@ -430,12 +430,28 @@ class DataConfig:
     include_state: bool = True
     pin_memory: bool = TRAIN_DEFAULTS.pin_memory
     persistent_workers: bool = TRAIN_DEFAULTS.persistent_workers
-    prefetch_factor: int = TRAIN_DEFAULTS.prefetch_factor
+    prefetch_factor: int | None = TRAIN_DEFAULTS.prefetch_factor
     max_action_dim: int | None = None
     max_state_dim: int | None = None
     override_action_freq: bool = False
     max_episodes: int | None = None
     rescan: bool = False
+
+
+def validate_loader_config(data: DataConfig, *, num_workers: int) -> list[str]:
+    """Check active loader settings before datasets, caches or workers are created.
+
+    With no workers, prefetch and persistent-worker settings are ignored by
+    the training loader. None uses PyTorch's default prefetch factor.
+    """
+    if not isinstance(num_workers, int) or isinstance(num_workers, bool) or num_workers < 0:
+        return ["num_workers must be a non-negative integer"]
+    factor = data.prefetch_factor
+    if num_workers > 0 and factor is not None and (
+        not isinstance(factor, int) or isinstance(factor, bool) or factor < 1
+    ):
+        return ["prefetch_factor must be a positive integer or None when num_workers > 0"]
+    return []
 
 
 @dataclass

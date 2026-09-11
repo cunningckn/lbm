@@ -10,6 +10,25 @@ from pathlib import Path
 from lbm.temporal import n_steps
 
 
+@dataclass(frozen=True)
+class TrainDefaults:
+    """Shared defaults used by the train config and command-line parser."""
+    batch_size: int = 4
+    num_workers: int = 8
+    train_steps_real: int = 75_000
+    train_steps_fake: int = 4
+    learning_rate: float = 1e-4
+    seed: int = 123
+    log_every: int = 20
+    val_every: int = 2500
+    val_batches: int = 4
+    ckpt_every: int = 5000
+    video_backend: str = "decord"
+    action_mode: str = "delta"
+
+TRAIN_DEFAULTS = TrainDefaults()
+
+
 def lbm_repo_root() -> Path:
     """Repo root that contains ``src/lbm`` (this file lives in ``src/lbm``)."""
     here = Path(__file__).resolve()
@@ -396,9 +415,9 @@ class DataConfig:
     dataset: str = ""
     val_dataset: str = ""
     robot_type: str = ""
-    video_backend: str = "decord"
+    video_backend: str = TRAIN_DEFAULTS.video_backend
     lerobot_version: str = "v2.0"
-    action_mode: str = "delta"
+    action_mode: str = TRAIN_DEFAULTS.action_mode
     action_kind: str | None = None
     action_format: str = ""
     use_mmap: bool = True
@@ -420,10 +439,10 @@ class DataConfig:
 class TrainConfig:
     """End-to-end LBM training: real LeRobot data or synthetic batches."""
 
-    seed: int = 123
-    batch_size: int = 4
-    num_workers: int = 8
-    train_steps: int = 75_000
+    seed: int = TRAIN_DEFAULTS.seed
+    batch_size: int = TRAIN_DEFAULTS.batch_size
+    num_workers: int = TRAIN_DEFAULTS.num_workers
+    train_steps: int = TRAIN_DEFAULTS.train_steps_real
     output_dir: str = field(default_factory=lambda: str(default_checkpoints_dir()))
     fake_data: bool = False
 
@@ -434,10 +453,10 @@ class TrainConfig:
     bf16: bool = True
     fsdp: bool = False
 
-    log_every: int = 20
-    val_every: int = 2500
-    val_batches: int = 4
-    ckpt_every: int = 5000
+    log_every: int = TRAIN_DEFAULTS.log_every
+    val_every: int = TRAIN_DEFAULTS.val_every
+    val_batches: int = TRAIN_DEFAULTS.val_batches
+    ckpt_every: int = TRAIN_DEFAULTS.ckpt_every
     log_wandb: bool = False
     wandb_project: str = "lbm"
     # Rank-0 dump of the first real loader batch under ``output_dir/first_batch``.

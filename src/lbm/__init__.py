@@ -11,6 +11,7 @@ from lbm.action_space import (
     parse_rep,
 )
 from lbm.config import (
+    TRAIN_DEFAULTS,
     ClipConfig,
     DataConfig,
     DiTConfig,
@@ -102,6 +103,7 @@ __all__ = [
     "FlowConfig",
     "OptimConfig",
     "ParallelConfig",
+    "TRAIN_DEFAULTS",
     "TrainConfig",
     "add_temporal_arguments",
     "apply_temporal_args",

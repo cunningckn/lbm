@@ -14,9 +14,10 @@ from __future__ import annotations
 import json
 import multiprocessing
 import os
+import tempfile
 import weakref
 from collections.abc import Iterable, Iterator
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
+from concurrent.futures import FIRST_COMPLETED, ProcessPoolExecutor, ThreadPoolExecutor, wait
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -34,7 +35,6 @@ from lbm.dataloader.mmap.jpeg_io import (
 from lbm.dataloader.mmap.mmap_io import (
     MMAP_DIRNAME,
     atomic_save_npy,
-    atomic_write_bytes,
     atomic_write_text,
     cache_files_present,
     exclusive_cache_lock,
@@ -47,7 +47,6 @@ FRAMES_SUBDIR = "frames"
 MANIFEST = "manifest.json"
 JPEG_FILES = ("frames.bin", "offset.npy", "length.npy", MANIFEST)
 LAYOUT_JPEG = "jpeg_pack"
-_RECLAIM_EVERY = 64
 
 
 def get_all_frames(
@@ -89,6 +88,29 @@ def _decode_from_job(job: dict):
     import importlib
 
     return getattr(importlib.import_module(str(mod)), str(name))
+
+
+def _run_bounded(pool, tasks, *, limit: int):
+    """Keep at most ``limit`` payloads/futures queued, including completed work."""
+    iterator = iter(tasks)
+    pending = set()
+    try:
+        exhausted = False
+        while pending or not exhausted:
+            while len(pending) < limit and not exhausted:
+                task = next(iterator, None)
+                if task is None:
+                    exhausted = True
+                else:
+                    fn, payload = task
+                    pending.add(pool.submit(fn, payload))
+            if pending:
+                done, pending = wait(pending, return_when=FIRST_COMPLETED)
+                for future in done:
+                    yield future.result()
+    finally:
+        for future in pending:
+            future.cancel()
 
 
 def _default_decode_workers() -> int:
@@ -182,23 +204,39 @@ def _encode_rgb_jpeg(
     return encode_jpeg_rgb(rgb, quality=jpeg_quality), (int(rgb.shape[0]), int(rgb.shape[1]))
 
 
-def _append_jpeg(
-    jpegs: list[bytes],
-    frame: np.ndarray,
-    *,
-    jpeg_quality: int,
-    image_size: int | None,
-) -> tuple[int, int]:
-    blob, hw = _encode_rgb_jpeg(frame, jpeg_quality=jpeg_quality, image_size=image_size)
-    jpegs.append(blob)
-    if len(jpegs) % _RECLAIM_EVERY == 0:
-        reclaim_if_over()
-    return hw
+class _JpegSpool:
+    """Disk-backed encoded frames for overlapping spans in a shared video."""
+
+    def __init__(self):
+        self.file = None
+        self.lengths: list[int] = []
+
+    def append(self, blob: bytes, *, directory: Path) -> None:
+        if self.file is None:
+            directory.mkdir(parents=True, exist_ok=True)
+            self.file = tempfile.TemporaryFile(dir=directory)
+        self.file.write(blob)
+        self.lengths.append(len(blob))
+
+    def __len__(self) -> int:
+        return len(self.lengths)
+
+    def __iter__(self):
+        if self.file is not None:
+            self.file.seek(0)
+            for length in self.lengths:
+                yield self.file.read(length)
+
+    def clear(self) -> None:
+        if self.file is not None:
+            self.file.close()
+            self.file = None
+        self.lengths.clear()
 
 
 def _commit_jpeg_pack(
     cache_dir: Path,
-    jpegs: list[bytes],
+    jpegs: Iterable[bytes],
     *,
     source_tag: str,
     jpeg_quality: int,
@@ -206,34 +244,56 @@ def _commit_jpeg_pack(
     height: int,
     width: int,
 ) -> None:
-    if not jpegs:
-        raise ValueError("write_frame_cache got no frames")
+    """Stream payload to disk; publish the manifest only after all files exist.
+
+    Memory is one JPEG plus the small offset/length index, not the full blob.
+    The caller holds the cache lock when concurrent builders are possible.
+    """
     cache_dir.mkdir(parents=True, exist_ok=True)
     _drop_manifest(cache_dir)
-    blob, offset, length = pack_jpeg_frames(jpegs)
-    atomic_write_bytes(cache_dir / "frames.bin", blob)
-    atomic_save_npy(cache_dir / "offset.npy", offset)
-    atomic_save_npy(cache_dir / "length.npy", length)
-    atomic_write_text(
-        cache_dir / MANIFEST,
-        json.dumps(
-            {
-                "source": source_tag,
-                "layout": LAYOUT_JPEG,
-                "num_frames": int(len(jpegs)),
-                "jpeg_quality": int(jpeg_quality),
-                "height": int(height),
-                "width": int(width),
-                "image_size": int(image_size) if image_size is not None else None,
-            },
-            indent=2,
-        ),
-    )
+    # A stable temporary name is overwritten on retry after a killed worker.
+    tmp = cache_dir / "frames.bin.tmp"
+    offsets: list[int] = []
+    lengths: list[int] = []
+    pos = 0
+    try:
+        with tmp.open("wb") as out:
+            for blob in jpegs:
+                if not 0 < len(blob) <= np.iinfo(np.uint32).max:
+                    raise ValueError("invalid encoded frame length")
+                offsets.append(pos)
+                lengths.append(len(blob))
+                out.write(blob)
+                pos += len(blob)
+            if not lengths:
+                raise ValueError("write_frame_cache got no frames")
+            out.flush()
+            os.fsync(out.fileno())
+        tmp.replace(cache_dir / "frames.bin")
+        atomic_save_npy(cache_dir / "offset.npy", np.asarray(offsets, dtype=np.int64))
+        atomic_save_npy(cache_dir / "length.npy", np.asarray(lengths, dtype=np.uint32))
+        atomic_write_text(
+            cache_dir / MANIFEST,
+            json.dumps(
+                {
+                    "source": source_tag,
+                    "layout": LAYOUT_JPEG,
+                    "num_frames": len(lengths),
+                    "jpeg_quality": int(jpeg_quality),
+                    "height": int(height),
+                    "width": int(width),
+                    "image_size": int(image_size) if image_size is not None else None,
+                },
+                indent=2,
+            ),
+        )
+    finally:
+        tmp.unlink(missing_ok=True)
 
 
 def _iter_rgb_source(
     frames: np.ndarray | None,
-    source_jpegs: list[bytes] | None,
+    source_jpegs: Iterable[bytes] | None,
     frame_iter: Iterable[np.ndarray] | None,
 ) -> Iterator[np.ndarray]:
     if source_jpegs is not None:
@@ -253,7 +313,7 @@ def write_frame_cache(
     *,
     source_tag: str,
     frames: np.ndarray | None = None,
-    source_jpegs: list[bytes] | None = None,
+    source_jpegs: Iterable[bytes] | None = None,
     frame_iter: Iterable[np.ndarray] | None = None,
     jpeg_quality: int = 85,
     image_size: int | None = None,
@@ -268,22 +328,35 @@ def write_frame_cache(
         from lbm.utils.progress import track
 
         items = track(items, desc=desc or "mmap-frames jpeg", unit="f", leave=False)
-    jpegs: list[bytes] = []
-    hw: tuple[int, int] | None = None
-    for frame in items:
-        hw = _append_jpeg(jpegs, frame, jpeg_quality=jpeg_quality, image_size=image_size)
-    if hw is None:
-        raise ValueError("write_frame_cache got no frames")
-    _commit_jpeg_pack(
-        cache_dir,
-        jpegs,
-        source_tag=source_tag,
-        jpeg_quality=jpeg_quality,
-        image_size=image_size,
-        height=hw[0],
-        width=hw[1],
-    )
-    jpegs.clear()
+    iterator = iter(items)
+    try:
+        first = next(iterator, None)
+        if first is None:
+            raise ValueError("write_frame_cache got no frames")
+        first_blob, hw = _encode_rgb_jpeg(first, jpeg_quality=jpeg_quality, image_size=image_size)
+        del first
+
+        def encoded():
+            yield first_blob
+            for i, frame in enumerate(iterator, start=1):
+                blob, _ = _encode_rgb_jpeg(frame, jpeg_quality=jpeg_quality, image_size=image_size)
+                yield blob
+                if i % 64 == 0:
+                    reclaim_if_over()
+
+        _commit_jpeg_pack(
+            cache_dir,
+            encoded(),
+            source_tag=source_tag,
+            jpeg_quality=jpeg_quality,
+            image_size=image_size,
+            height=hw[0],
+            width=hw[1],
+        )
+    finally:
+        close = getattr(iterator, "close", None)
+        if close is not None:
+            close()
     reclaim_if_over()
 
 
@@ -421,7 +494,7 @@ def partition_shared_frame_jobs(jobs: list[dict]) -> tuple[list[list[dict]], lis
     return shared, solo
 
 
-def _source_jpegs_of(decode_fn, kwargs: dict) -> list[bytes] | None:
+def _source_jpegs_of(decode_fn, kwargs: dict) -> Iterable[bytes] | None:
     if decode_fn is None:
         return None
     import importlib
@@ -505,7 +578,7 @@ def _rgb_for_cache(
 def _write_encoded_job(
     store: MmapFrameStore,
     job: dict,
-    jpegs: list[bytes],
+    jpegs: Iterable[bytes],
     hw: tuple[int, int],
 ) -> None:
     cache_dir = store.cache_dir_for(int(job["trajectory_id"]), str(job["video_key"]))
@@ -533,16 +606,17 @@ class _SharedSpan:
     job: dict
     start: int
     stop: int
-    jpegs: list[bytes] = field(default_factory=list)
+    jpegs: _JpegSpool = field(default_factory=_JpegSpool)
     hw: tuple[int, int] | None = None
 
     def accept(self, file_i: int, frame: np.ndarray, store: MmapFrameStore) -> bool:
         """Encode this file index if it belongs here. False once the span is written."""
         if not (self.start <= file_i < self.stop):
             return True
-        self.hw = _append_jpeg(
-            self.jpegs, frame, jpeg_quality=store.jpeg_quality, image_size=store.image_size
+        blob, self.hw = _encode_rgb_jpeg(
+            frame, jpeg_quality=store.jpeg_quality, image_size=store.image_size
         )
+        self.jpegs.append(blob, directory=store.dataset_path / MMAP_DIRNAME)
         if len(self.jpegs) < self.stop - self.start:
             return True
         assert self.hw is not None
@@ -570,13 +644,20 @@ def write_shared_mp4_caches(store: MmapFrameStore, jobs: list[dict], *, progress
     file_i = spans[0].start
     max_stop = max(item.stop for item in spans)
     pending = list(spans)
-    for frame in iter_mp4_span(path, file_i, max_stop, progress=progress):
-        pending = [item for item in pending if item.accept(file_i, frame, store)]
-        file_i += 1
-        if not pending:
-            break
-    for item in pending:
-        _prebuild_frame_job({**item.job, "progress": progress})
+    stream = iter_mp4_span(path, file_i, max_stop, progress=progress)
+    try:
+        for frame in stream:
+            pending = [item for item in pending if item.accept(file_i, frame, store)]
+            file_i += 1
+            if not pending:
+                break
+        for item in pending:
+            item.jpegs.clear()
+            _prebuild_frame_job({**item.job, "progress": progress})
+    finally:
+        stream.close()
+        for item in spans:
+            item.jpegs.clear()
 
 
 def _shared_payload(
@@ -785,7 +866,6 @@ class MmapFrameStore:
         nproc = max(1, min(int(nproc), n_units))
         rss_limit = worker_rss_limit_bytes(nproc)
         set_worker_rss_limit(rss_limit)
-        solo = [{**job, "rss_limit": rss_limit} for job in solo]
         from lbm.utils.progress import track
 
         if nproc == 1:
@@ -793,19 +873,21 @@ class MmapFrameStore:
                 write_shared_mp4_caches(self, group, progress=True)
                 reclaim_if_over()
             for job in track(solo, desc="prebuild mmap-frames", unit="vid") if solo else ():
-                _prebuild_frame_job({**job, "progress": True})
+                _prebuild_frame_job({**job, "progress": True, "rss_limit": rss_limit})
             return len(pending), skipped
         ctx = multiprocessing.get_context("spawn")
         with ProcessPoolExecutor(max_workers=nproc, mp_context=ctx) as pool:
-            futures = [
-                pool.submit(_prebuild_shared_file_job, _shared_payload(self, group, rss_limit=rss_limit))
-                for group in shared
-            ]
-            futures += [pool.submit(_prebuild_frame_job, job) for job in solo]
-            for fut in track(
-                as_completed(futures), total=len(futures), desc=f"prebuild mmap-frames x{nproc}", unit="vid"
+            def tasks():
+                for group in shared:
+                    yield _prebuild_shared_file_job, _shared_payload(self, group, rss_limit=rss_limit)
+                for job in solo:
+                    yield _prebuild_frame_job, {**job, "rss_limit": rss_limit}
+
+            for _ in track(
+                _run_bounded(pool, tasks(), limit=2 * nproc),
+                total=n_units, desc=f"prebuild mmap-frames x{nproc}", unit="vid",
             ):
-                fut.result()
+                pass
         return len(pending), skipped
 
     def get_frames(

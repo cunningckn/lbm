@@ -292,7 +292,7 @@ class TestFrameMmap:
         def _boom(*_a, **_k):
             raise RuntimeError("fail after unlink")
 
-        monkeypatch.setattr("lbm.dataloader.mmap.frame_mmap_io.atomic_write_bytes", _boom)
+        monkeypatch.setattr("lbm.dataloader.mmap.frame_mmap_io.atomic_save_npy", _boom)
         with pytest.raises(RuntimeError, match="fail after unlink"):
             write_frame_cache(cache_dir, source_tag="t", frames=frames, jpeg_quality=85)
         assert not (cache_dir / "manifest.json").exists()

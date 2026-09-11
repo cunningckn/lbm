@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import Path
 
 from lbm.dataloader.custom.record import EpisodeRecord
@@ -90,7 +91,7 @@ def decode_custom_mmap(
     raise ValueError(f"unknown mmap decode mode {mode!r}")
 
 
-def source_jpegs_for_mmap(kw: dict) -> list[bytes] | None:
+def source_jpegs_for_mmap(kw: dict) -> Iterable[bytes] | None:
     """Packed JPEG/PNG bytes for mmap, if the source is already stills.
 
     Caller imdecodes one frame at a time and letterboxes. Do not pack the

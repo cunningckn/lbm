@@ -489,24 +489,37 @@ def read_lerobot_frames(
     return _read_lerobot_mp4(dump, spec, cam, indices, progress=progress)
 
 
-def lerobot_source_jpegs(dump: LerobotDump, cam: str, n_frames: int) -> list[bytes] | None:
-    """Per-frame JPEG/PNG bytes from a parquet image column. None if this cam is video."""
+def lerobot_source_jpegs(dump: LerobotDump, cam: str, n_frames: int) -> Iterator[bytes] | None:
+    """Read bounded parquet batches instead of materializing an episode's images."""
     if dump.cam_dtype(cam) == "video":
         return None
     col = _parquet_cam_column(dump.parquet, cam)
     if col is None:
         return None
-    if dump.is_v3:
-        frame = _read_episode_parquet(dump.parquet, dump.episode_index, columns=[col])
-    else:
-        frame = pd.read_parquet(dump.parquet, columns=[col])
-    blobs: list[bytes] = []
-    for i in range(int(n_frames)):
-        raw = _parquet_image_bytes(_cell_at(frame, col, i), repo=dump.repo)
-        if not raw:
-            return None
-        blobs.append(raw)
-    return blobs
+
+    def blobs():
+        import pyarrow.parquet as pq
+
+        columns = [col, "episode_index"] if dump.is_v3 else [col]
+        count = 0
+        with pq.ParquetFile(dump.parquet) as parquet:
+            for batch in parquet.iter_batches(batch_size=32, columns=columns, use_threads=False):
+                for row in batch.to_pylist():
+                    if dump.is_v3 and int(row["episode_index"]) != dump.episode_index:
+                        continue
+                    if count >= n_frames:
+                        return
+                    blob = _parquet_image_bytes(row[col], repo=dump.repo)
+                    if not blob:
+                        raise ValueError(f"invalid image: {dump.parquet}, camera={cam}, frame={count}")
+                    count += 1
+                    yield blob
+                if count >= n_frames:
+                    return
+        if count != n_frames:
+            raise ValueError(f"expected {n_frames} images, got {count}: {dump.parquet}, camera={cam}")
+
+    return blobs()
 
 
 def _read_lerobot_mp4(

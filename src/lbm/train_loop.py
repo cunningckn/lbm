@@ -29,6 +29,7 @@ from lbm.models.dit import DiTPolicy, load_pretrained
 from lbm.models.encoders import load_encoder_weights
 from lbm.optim import build_adamw, count_trainable
 from lbm.training_loader import make_loader
+from lbm.training_metrics import action_error_stats
 from lbm.utils.fake_data import FakeActionDataset, collate_samples, move_batch_to_device
 
 
@@ -59,18 +60,6 @@ def _t5_tokenize_fn(max_length: int):
         return encoded["input_ids"], encoded["attention_mask"].float()
 
     return _tokenize
-
-
-def _action_error_stats(pred, actions, action_mask=None) -> torch.Tensor:
-    """Squared-error sum and valid element count, additive across batches/ranks."""
-    error = (pred.float() - actions.float()).square()
-    if action_mask is None:
-        count = error.new_tensor(error.numel())
-    else:
-        valid = torch.broadcast_to(action_mask.to(device=error.device, dtype=torch.bool), error.shape)
-        error = error.masked_fill(~valid, 0.0)
-        count = valid.sum().to(dtype=error.dtype)
-    return torch.stack((error.sum(), count))
 
 
 def _dump_norm_stats(dataset):
@@ -487,7 +476,7 @@ def main(config: TrainConfig) -> None:
                             pred = module.sample_actions(
                                 vb, num_steps=config.flow.num_diffusion_steps
                             )
-                            stats += _action_error_stats(pred, vb["actions"], vb.get("action_mask"))
+                            stats += action_error_stats(pred, vb["actions"], vb.get("action_mask"))
                 if distributed:
                     dist.all_reduce(stats, op=dist.ReduceOp.SUM)
                 model.train()

@@ -3,20 +3,20 @@ import torch
 
 from lbm import train_loop
 from lbm.config import TrainConfig
-from lbm.train_loop import _action_error_stats
+from lbm.training_metrics import action_error_stats
 
 
 def test_validation_ignores_padded_dimensions_and_timesteps():
     pred = torch.tensor([[[2.0, 100.0], [100.0, 100.0]], [[1.0, 3.0], [100.0, 100.0]]])
     mask = torch.tensor([[[1, 0], [0, 0]], [[1, 1], [0, 0]]], dtype=torch.bool)
-    stats = _action_error_stats(pred, torch.zeros_like(pred), mask)
+    stats = action_error_stats(pred, torch.zeros_like(pred), mask)
     torch.testing.assert_close(stats, torch.tensor([14.0, 3.0]))
 
 
 def test_validation_without_mask_matches_mse():
     pred = torch.arange(12, dtype=torch.float32).reshape(2, 3, 2)
     target = torch.ones_like(pred)
-    stats = _action_error_stats(pred, target)
+    stats = action_error_stats(pred, target)
     torch.testing.assert_close(stats[0] / stats[1], (pred - target).square().mean())
 
 
@@ -25,17 +25,17 @@ def test_validation_aggregates_by_valid_elements_across_batches_and_ranks():
     pred = torch.tensor([[[2.0, 99.0, 99.0]], [[1.0, 1.0, 1.0]]])
     mask = torch.tensor([[[1, 0, 0]], [[1, 1, 1]]])
     parts = [
-        _action_error_stats(p, torch.zeros_like(p), m)
+        action_error_stats(p, torch.zeros_like(p), m)
         for p, m in zip(pred.split(1), mask.split(1), strict=True)
     ]
     summed = torch.stack(parts).sum(0)
-    torch.testing.assert_close(summed, _action_error_stats(pred, torch.zeros_like(pred), mask))
+    torch.testing.assert_close(summed, action_error_stats(pred, torch.zeros_like(pred), mask))
     assert (summed[0] / summed[1]).item() == pytest.approx(1.75)
 
 
 def test_validation_all_masked_contributes_no_error_or_count():
     pred = torch.full((1, 2, 3), float("nan"))
-    stats = _action_error_stats(pred, torch.zeros_like(pred), torch.zeros_like(pred))
+    stats = action_error_stats(pred, torch.zeros_like(pred), torch.zeros_like(pred))
     torch.testing.assert_close(stats, torch.zeros(2))
 
 
@@ -43,13 +43,13 @@ def test_validation_broadcast_mask_counts_expanded_elements():
     pred = torch.ones(2, 3, 4)
     mask = torch.tensor([[[1]], [[0]]])
     torch.testing.assert_close(
-        _action_error_stats(pred, torch.zeros_like(pred), mask), torch.tensor([12.0, 12.0])
+        action_error_stats(pred, torch.zeros_like(pred), mask), torch.tensor([12.0, 12.0])
     )
 
 
 def test_validation_accumulates_low_precision_inputs_in_float32():
     pred = torch.full((1, 2, 3), 300.0, dtype=torch.float16)
-    stats = _action_error_stats(pred, torch.zeros_like(pred))
+    stats = action_error_stats(pred, torch.zeros_like(pred))
     torch.testing.assert_close(stats, torch.tensor([540000.0, 6.0]))
 
 

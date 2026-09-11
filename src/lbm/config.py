@@ -25,6 +25,9 @@ class TrainDefaults:
     ckpt_every: int = 5000
     video_backend: str = "decord"
     action_mode: str = "delta"
+    pin_memory: bool = True
+    persistent_workers: bool = True
+    prefetch_factor: int = 2
 
 TRAIN_DEFAULTS = TrainDefaults()
 
@@ -425,9 +428,9 @@ class DataConfig:
     mmap_prebuild: bool = True
     mmap_prebuild_workers: int = 0
     include_state: bool = True
-    pin_memory: bool = True
-    persistent_workers: bool = True
-    prefetch_factor: int = 2
+    pin_memory: bool = TRAIN_DEFAULTS.pin_memory
+    persistent_workers: bool = TRAIN_DEFAULTS.persistent_workers
+    prefetch_factor: int = TRAIN_DEFAULTS.prefetch_factor
     max_action_dim: int | None = None
     max_state_dim: int | None = None
     override_action_freq: bool = False

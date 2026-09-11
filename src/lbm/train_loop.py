@@ -194,28 +194,44 @@ def _prebuild_mmap_caches(
                 dataset.set_mmap_allow_build(False)
 
 
-def _save_checkpoint(
-    path: Path,
-    model: torch.nn.Module,
-    optimizer: torch.optim.Optimizer,
-    step: int,
-    *,
-    fsdp: bool,
-) -> None:
+def _rng_state() -> dict:
+    state = {"python": __import__("random").getstate(), "numpy": np.random.get_state(), "torch": torch.get_rng_state()}
+    if torch.cuda.is_available():
+        state["cuda"] = torch.cuda.get_rng_state_all()
+    return state
+
+
+def _restore_rng_state(state: dict) -> None:
+    import random
+    random.setstate(state["python"])
+    np.random.set_state(state["numpy"])
+    torch.set_rng_state(state["torch"])
+    if torch.cuda.is_available() and "cuda" in state:
+        torch.cuda.set_rng_state_all(state["cuda"])
+
+
+def _save_checkpoint(path, model, optimizer, scheduler, step, epoch, *, fsdp: bool) -> None:
+    path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     if fsdp:
         from lbm.distributed import save_fsdp_checkpoint
-
         save_fsdp_checkpoint(path, model, optimizer)
         return
-    torch.save(
-        {
-            "model": _unwrap(model).state_dict(),
-            "optimizer": optimizer.state_dict(),
-            "step": step,
-        },
-        path,
-    )
+    torch.save({
+        "model": _unwrap(model).state_dict(), "optimizer": optimizer.state_dict(),
+        "scheduler": scheduler.state_dict(), "step": step, "epoch": epoch, "rng_state": _rng_state(),
+    }, path)
+
+
+def _load_checkpoint(path, model, optimizer, scheduler) -> tuple[int, int]:
+    payload = torch.load(path, map_location="cpu", weights_only=False)
+    _unwrap(model).load_state_dict(payload["model"])
+    optimizer.load_state_dict(payload["optimizer"])
+    if "scheduler" in payload:
+        scheduler.load_state_dict(payload["scheduler"])
+    if "rng_state" in payload:
+        _restore_rng_state(payload["rng_state"])
+    return int(payload.get("step", 0)), int(payload.get("epoch", 0))
 
 
 def main(config: TrainConfig) -> None:
@@ -340,6 +356,12 @@ def main(config: TrainConfig) -> None:
         optimizer, lambda step: min((step + 1) / max(config.optim.lr_warmup_steps, 1), 1.0)
     )
 
+    step, epoch = 0, 0
+    if config.resume:
+        step, epoch = _load_checkpoint(config.resume, model, optimizer, scheduler)
+        if rank == 0:
+            print(f"resumed {config.resume} at step={step} epoch={epoch}")
+
     if config.compile:
         model = torch.compile(model, fullgraph=True)
         if rank == 0:
@@ -427,7 +449,6 @@ def main(config: TrainConfig) -> None:
             _log_and_copy_norm_stats(train_ds, output_dir)
 
     model.train()
-    step, epoch = 0, 0
     t_last = time.monotonic()
     dumped_batch = False
     while step < config.train_steps:
@@ -520,13 +541,13 @@ def main(config: TrainConfig) -> None:
             if step % config.ckpt_every == 0 and (rank == 0 or fsdp):
                 ckpt_dir = output_dir / f"{step}"
                 if fsdp:
-                    _save_checkpoint(ckpt_dir, model, optimizer, step, fsdp=True)
+                    _save_checkpoint(ckpt_dir, model, optimizer, scheduler, step, epoch, fsdp=True)
                     if rank == 0:
                         print(f"saved {ckpt_dir}")
                 elif rank == 0:
                     path = output_dir / f"{step}.pt"
-                    _save_checkpoint(path, model, optimizer, step, fsdp=False)
-                    _save_checkpoint(output_dir / "last.pt", model, optimizer, step, fsdp=False)
+                    _save_checkpoint(path, model, optimizer, scheduler, step, epoch, fsdp=False)
+                    _save_checkpoint(output_dir / "last.pt", model, optimizer, scheduler, step, epoch, fsdp=False)
                     print(f"saved {path}")
         epoch += 1
 

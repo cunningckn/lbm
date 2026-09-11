@@ -96,6 +96,7 @@ def parse_args(
     p.add_argument("--num-workers", type=int, default=8)
     p.add_argument("--output-dir", default=str(default_checkpoints_dir()))
     p.add_argument("--ckpt", default="", help="optional pretrained policy checkpoint")
+    p.add_argument("--resume", default="", help="resume full training state from a checkpoint")
     p.add_argument("--compile", action="store_true")
     p.add_argument("--fsdp", action="store_true")
     p.add_argument("--bf16", default=True, action=argparse.BooleanOptionalAction)
@@ -173,6 +174,7 @@ def build_train_config(args: argparse.Namespace) -> TrainConfig:
         output_dir=args.output_dir,
         fake_data=not real,
         load_pretrained=args.ckpt,
+        resume=args.resume,
         pretrained_encoders=bool(args.pretrained_encoders),
         compile=bool(args.compile),
         bf16=bool(args.bf16),

@@ -21,6 +21,7 @@ from lbm.config import (
     encoder_train_summary,
     fsdp_wrap_summary,
     temporal_summary,
+    validate_loader_config,
     validate_model_config,
     validate_parallel_config,
 )
@@ -72,6 +73,9 @@ def _make_loader(
 ) -> tuple[DataLoader, DistributedSampler | None]:
     sampler = None
     workers = config.num_workers if num_workers is None else num_workers
+    errors = validate_loader_config(config.data, num_workers=workers)
+    if errors:
+        raise ValueError("Invalid loader config: " + "; ".join(errors))
     if distributed:
         sampler = DistributedSampler(
             dataset, shuffle=train, seed=config.seed, drop_last=drop_last
@@ -217,15 +221,15 @@ def _resume_signature(config, train_loader, device):
 
 def main(config: TrainConfig) -> None:
     errors = validate_model_config(config.model)
+    errors.extend(validate_loader_config(config.data, num_workers=config.num_workers))
     if config.fsdp:
         errors.extend(validate_parallel_config(config.parallel))
     if (
         min(config.batch_size, config.train_steps, config.log_every, config.val_every, config.ckpt_every)
         <= 0
-        or config.num_workers < 0
         or config.val_batches < 0
     ):
-        errors.append("batch size, step intervals must be positive; num_workers/val_batches >= 0")
+        errors.append("batch size, step intervals must be positive; val_batches >= 0")
     if config.resume:
         if config.load_pretrained:
             errors.append("--resume and --ckpt are mutually exclusive")

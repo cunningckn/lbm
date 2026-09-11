@@ -14,7 +14,7 @@ import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 from lbm.batch import infer_policy_io, policy_batch_from_loader
-from lbm.checkpoint import capture_rng_state, load_checkpoint, restore_rng_state, save_checkpoint
+from lbm.checkpoint import capture_rng_state, load_checkpoint, restore_rng_state, save_standard_checkpoint
 from lbm.config import (
     TrainConfig,
     encoder_train_summary,
@@ -499,13 +499,11 @@ def main(config: TrainConfig) -> None:
                     if rank == 0:
                         print(f"saved {ckpt_dir}")
                 elif rank == 0:
-                    path = output_dir / f"{step}.pt"
-                    for checkpoint_path in (path, output_dir / "last.pt"):
-                        save_checkpoint(
-                            checkpoint_path, _unwrap(model), optimizer, scheduler,
-                            step=step, epoch=epoch, batch_in_epoch=batch_index + 1,
-                            epoch_rng=epoch_rng, signature=signature,
-                        )
+                    path = save_standard_checkpoint(
+                        output_dir, _unwrap(model), optimizer, scheduler,
+                        step=step, epoch=epoch, batch_in_epoch=batch_index + 1,
+                        epoch_rng=epoch_rng, signature=signature,
+                    )
                     print(f"saved {path}")
         epoch += 1
         batch_cursor = 0

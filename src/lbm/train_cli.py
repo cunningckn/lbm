@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 
 from lbm.config import (
+    TRAIN_DEFAULTS,
     TrainConfig,
     add_encoder_arguments,
     add_fsdp_wrap_arguments,
@@ -89,11 +90,11 @@ def parse_args(
     if default_dataset is None:
         default_dataset = ""
     p = argparse.ArgumentParser(description="Train LBM on LeRobot data (or synthetic batches).")
-    p.add_argument("--batch-size", type=int, default=4)
+    p.add_argument("--batch-size", type=int, default=TRAIN_DEFAULTS.batch_size)
     p.add_argument("--steps", type=int, default=None, help="train steps (default: 4 if fake, 75000 if real)")
-    p.add_argument("--lr", type=float, default=1e-4)
-    p.add_argument("--seed", type=int, default=123)
-    p.add_argument("--num-workers", type=int, default=8)
+    p.add_argument("--lr", type=float, default=TRAIN_DEFAULTS.learning_rate)
+    p.add_argument("--seed", type=int, default=TRAIN_DEFAULTS.seed)
+    p.add_argument("--num-workers", type=int, default=TRAIN_DEFAULTS.num_workers)
     p.add_argument("--output-dir", default=str(default_checkpoints_dir()))
     initialization = p.add_mutually_exclusive_group()
     initialization.add_argument("--ckpt", default="", help="optional pretrained policy checkpoint")
@@ -101,9 +102,9 @@ def parse_args(
     p.add_argument("--compile", action="store_true")
     p.add_argument("--fsdp", action="store_true")
     p.add_argument("--bf16", default=True, action=argparse.BooleanOptionalAction)
-    p.add_argument("--log-every", type=int, default=20)
-    p.add_argument("--val-every", type=int, default=2500)
-    p.add_argument("--val-batches", type=int, default=4)
+    p.add_argument("--log-every", type=int, default=TRAIN_DEFAULTS.log_every)
+    p.add_argument("--val-every", type=int, default=TRAIN_DEFAULTS.val_every)
+    p.add_argument("--val-batches", type=int, default=TRAIN_DEFAULTS.val_batches)
     p.add_argument("--ckpt-every", type=int, default=None, help="checkpoint interval (default: 5000 for real data)")
     p.add_argument("--wandb", action="store_true")
     p.add_argument("--wandb-project", default="lbm")
@@ -116,8 +117,8 @@ def parse_args(
 
     add_dataset_location_arguments(p, dataset_default=default_dataset)
     p.add_argument("--val-dataset", default="")
-    p.add_argument("--video-backend", default="decord")
-    p.add_argument("--action-mode", default="delta", help="delta (default), rel, or abs")
+    p.add_argument("--video-backend", default=TRAIN_DEFAULTS.video_backend)
+    p.add_argument("--action-mode", default=TRAIN_DEFAULTS.action_mode, help="delta (default), rel, or abs")
     p.add_argument(
         "--action-kind",
         default=None,
@@ -171,7 +172,10 @@ def build_train_config(args: argparse.Namespace) -> TrainConfig:
         seed=args.seed,
         batch_size=args.batch_size,
         num_workers=args.num_workers,
-        train_steps=int(args.steps if args.steps is not None else (75_000 if real else 4)),
+        train_steps=int(
+            args.steps if args.steps is not None
+            else (TRAIN_DEFAULTS.train_steps_real if real else TRAIN_DEFAULTS.train_steps_fake)
+        ),
         output_dir=args.output_dir,
         fake_data=not real,
         load_pretrained=args.ckpt,
@@ -183,7 +187,7 @@ def build_train_config(args: argparse.Namespace) -> TrainConfig:
         log_every=args.log_every,
         val_every=args.val_every,
         val_batches=args.val_batches,
-        ckpt_every=args.ckpt_every if args.ckpt_every is not None else 5000,
+        ckpt_every=args.ckpt_every if args.ckpt_every is not None else TRAIN_DEFAULTS.ckpt_every,
         log_wandb=bool(args.wandb),
         wandb_project=args.wandb_project,
         dump_batch=bool(args.dump_batch),

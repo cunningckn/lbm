@@ -134,7 +134,7 @@ def read_frames(record: EpisodeRecord, spec: CustomSpec, cam: str, indices: list
     return np.stack(frames, axis=0)
 
 
-def mmap_source_jpegs(record: EpisodeRecord, spec: CustomSpec, cam: str) -> list[bytes] | None:
+def mmap_source_jpegs(record: EpisodeRecord, spec: CustomSpec, cam: str):
     if not _owns_front(record, spec, cam):
         return None
     try:
@@ -145,10 +145,11 @@ def mmap_source_jpegs(record: EpisodeRecord, spec: CustomSpec, cam: str) -> list
     n = min(n, int(stream.shape[0]))
     if n <= 0:
         return None
-    blobs: list[bytes] = []
-    for cell in stream[:n]:
-        blob = jpeg_bytes(cell)
-        if not blob:
-            return None
-        blobs.append(blob)
-    return blobs
+    def blobs():
+        for i in range(n):
+            blob = jpeg_bytes(stream[i])
+            if not blob:
+                raise ValueError(f"invalid image: {record.path}, camera={cam}, frame={i}")
+            yield blob
+
+    return blobs()

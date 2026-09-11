@@ -48,3 +48,23 @@ def uses_custom_backend(*, robot_type: str = "", data_mix: str = "", dataset: st
         return True
     name = str(dataset).rstrip("/").rsplit("/", 1)[-1]
     return bool(name) and name in CUSTOM_SPECS
+
+
+def dataset_names() -> tuple[str, ...]:
+    """Return registered dataset names in stable order."""
+    return tuple(sorted(MODULES))
+
+
+def dataset_spec(name: str):
+    """Resolve one registered dataset's immutable IO specification."""
+    return module_for(name).SPEC
+
+
+def dataset_module(name: str) -> ModuleType:
+    """Resolve one registered dataset adapter module."""
+    return module_for(name)
+
+
+def dataset_mixes() -> dict[str, list[tuple[str, float, str]]]:
+    """Return a copy of named mixtures so callers cannot mutate the registry."""
+    return {name: list(rows) for name, rows in CUSTOM_MIXTURES.items()}

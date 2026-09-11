@@ -10,8 +10,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from lbm.dataloader.custom.datasets import dataset_names
 from lbm.dataloader.custom.datasets.mixes import NAMED_MIXES
-from lbm.dataloader.custom.spec import CUSTOM_SPECS
 
 CATALOG_CONCAT_MIXES = frozenset(NAMED_MIXES)
 
@@ -32,7 +32,7 @@ class DatasetEntry:
             object.__setattr__(self, "robot_type", self.name)
 
 
-DATASETS: dict[str, DatasetEntry] = {name: DatasetEntry(name=name) for name in CUSTOM_SPECS}
+DATASETS: dict[str, DatasetEntry] = {name: DatasetEntry(name=name) for name in dataset_names()}
 
 
 def lookup(name: str) -> DatasetEntry | None:
@@ -139,6 +139,6 @@ def backend_for(*, dataset: str = "", robot_type: str = "", data_mix: str = "") 
             return "custom"
         return ""
     entry = lookup(robot_type) or lookup(dataset)
-    if entry is not None or robot_type in CUSTOM_SPECS:
+    if entry is not None or robot_type in DATASETS:
         return "custom"
     return ""

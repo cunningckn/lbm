@@ -6,7 +6,15 @@ from pathlib import Path
 from typing import Any
 
 from lbm.dataloader.custom.dataset import CustomMixtureDataset, CustomSingleDataset, Episode
-from lbm.dataloader.custom.datasets import CUSTOM_MIXTURES, CUSTOM_SPECS, uses_custom_backend
+from lbm.dataloader.custom.datasets import (
+    CUSTOM_MIXTURES,
+    CUSTOM_SPECS,
+    dataset_mixes,
+    dataset_module,
+    dataset_names,
+    dataset_spec,
+    uses_custom_backend,
+)
 from lbm.dataloader.custom.sources import load_episodes, save_numpy_episode
 from lbm.dataloader.custom.spec import CustomSpec
 
@@ -16,6 +24,10 @@ __all__ = [
     "CustomMixtureDataset",
     "CustomSingleDataset",
     "CustomSpec",
+    "dataset_module",
+    "dataset_mixes",
+    "dataset_names",
+    "dataset_spec",
     "Episode",
     "get_custom_dataset",
     "load_episodes",

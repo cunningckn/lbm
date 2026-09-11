@@ -35,3 +35,12 @@ datasets or pretrained weights require those resources to be available.
 For training or performance changes, also record the model configuration,
 batch size, hardware, warmup, measurement duration, peak memory and throughput.
 Compare the same workload before and after the change.
+
+## Adding a dataset
+
+Add one adapter module under `src/lbm/dataloader/custom/datasets/` exposing
+`NAME`, `SPEC`, `scan`, `read_vectors` and `read_frames`. The registry discovers
+that module automatically; use `dataset_spec()` and `dataset_module()` from
+`lbm.dataloader.custom` instead of adding name branches elsewhere. Add a focused
+fixture/test and update a named mixture only when the dataset should be part of
+that mixture.

@@ -95,15 +95,16 @@ def parse_args(
     p.add_argument("--seed", type=int, default=123)
     p.add_argument("--num-workers", type=int, default=8)
     p.add_argument("--output-dir", default=str(default_checkpoints_dir()))
-    p.add_argument("--ckpt", default="", help="optional pretrained policy checkpoint")
-    p.add_argument("--resume", default="", help="resume full training state from a checkpoint")
+    initialization = p.add_mutually_exclusive_group()
+    initialization.add_argument("--ckpt", default="", help="optional pretrained policy checkpoint")
+    initialization.add_argument("--resume", default="", help="resume a trusted replay checkpoint; use --num-workers 0")
     p.add_argument("--compile", action="store_true")
     p.add_argument("--fsdp", action="store_true")
     p.add_argument("--bf16", default=True, action=argparse.BooleanOptionalAction)
     p.add_argument("--log-every", type=int, default=20)
     p.add_argument("--val-every", type=int, default=2500)
     p.add_argument("--val-batches", type=int, default=4)
-    p.add_argument("--ckpt-every", type=int, default=5000)
+    p.add_argument("--ckpt-every", type=int, default=None, help="checkpoint interval (default: 5000 for real data)")
     p.add_argument("--wandb", action="store_true")
     p.add_argument("--wandb-project", default="lbm")
     p.add_argument(
@@ -182,7 +183,7 @@ def build_train_config(args: argparse.Namespace) -> TrainConfig:
         log_every=args.log_every,
         val_every=args.val_every,
         val_batches=args.val_batches,
-        ckpt_every=args.ckpt_every,
+        ckpt_every=args.ckpt_every if args.ckpt_every is not None else 5000,
         log_wandb=bool(args.wandb),
         wandb_project=args.wandb_project,
         dump_batch=bool(args.dump_batch),
@@ -206,6 +207,7 @@ def build_train_config(args: argparse.Namespace) -> TrainConfig:
         cfg.data.override_action_freq = True
     if not real:
         cfg.log_every = 1
-        cfg.val_every = cfg.train_steps
-        cfg.ckpt_every = cfg.train_steps + 1
+        cfg.val_every = args.val_every
+        if args.ckpt_every is None:
+            cfg.ckpt_every = cfg.train_steps + 1
     return cfg

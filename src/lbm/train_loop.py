@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import random
 import time
 from dataclasses import asdict
 from pathlib import Path
@@ -14,6 +15,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader, DistributedSampler
 
 from lbm.batch import infer_policy_io, policy_batch_from_loader
+from lbm.checkpoint import capture_rng_state, load_checkpoint, restore_rng_state, save_checkpoint
 from lbm.config import (
     TrainConfig,
     encoder_train_summary,
@@ -92,6 +94,8 @@ def _make_loader(
         "pin_memory": config.data.pin_memory,
         "drop_last": drop_last,
     }
+    if train:
+        kwargs["generator"] = torch.Generator().manual_seed(config.seed)
     if workers > 0:
         kwargs["persistent_workers"] = config.data.persistent_workers
         kwargs["prefetch_factor"] = config.data.prefetch_factor
@@ -194,44 +198,21 @@ def _prebuild_mmap_caches(
                 dataset.set_mmap_allow_build(False)
 
 
-def _rng_state() -> dict:
-    state = {"python": __import__("random").getstate(), "numpy": np.random.get_state(), "torch": torch.get_rng_state()}
-    if torch.cuda.is_available():
-        state["cuda"] = torch.cuda.get_rng_state_all()
-    return state
-
-
-def _restore_rng_state(state: dict) -> None:
-    import random
-    random.setstate(state["python"])
-    np.random.set_state(state["numpy"])
-    torch.set_rng_state(state["torch"])
-    if torch.cuda.is_available() and "cuda" in state:
-        torch.cuda.set_rng_state_all(state["cuda"])
-
-
-def _save_checkpoint(path, model, optimizer, scheduler, step, epoch, *, fsdp: bool) -> None:
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    if fsdp:
-        from lbm.distributed import save_fsdp_checkpoint
-        save_fsdp_checkpoint(path, model, optimizer)
-        return
-    torch.save({
-        "model": _unwrap(model).state_dict(), "optimizer": optimizer.state_dict(),
-        "scheduler": scheduler.state_dict(), "step": step, "epoch": epoch, "rng_state": _rng_state(),
-    }, path)
-
-
-def _load_checkpoint(path, model, optimizer, scheduler) -> tuple[int, int]:
-    payload = torch.load(path, map_location="cpu", weights_only=False)
-    _unwrap(model).load_state_dict(payload["model"])
-    optimizer.load_state_dict(payload["optimizer"])
-    if "scheduler" in payload:
-        scheduler.load_state_dict(payload["scheduler"])
-    if "rng_state" in payload:
-        _restore_rng_state(payload["rng_state"])
-    return int(payload.get("step", 0)), int(payload.get("epoch", 0))
+def _resume_signature(config, train_loader, device):
+    # Output paths and total steps may change when extending a run. Settings
+    # affecting samples, optimization or validation RNG consumption may not.
+    fields = (
+        "model", "optim", "flow", "data", "seed", "batch_size", "num_workers", "fake_data",
+        "bf16", "compile", "val_every", "val_batches", "dump_batch",
+    )
+    values = asdict(config)
+    return {
+        **{key: values[key] for key in fields},
+        "batches_per_epoch": len(train_loader),
+        "dataset_length": len(train_loader.dataset),
+        "device_type": device.type,
+        "distributed": _is_distributed(),
+    }
 
 
 def main(config: TrainConfig) -> None:
@@ -245,6 +226,15 @@ def main(config: TrainConfig) -> None:
         or config.val_batches < 0
     ):
         errors.append("batch size, step intervals must be positive; num_workers/val_batches >= 0")
+    if config.resume:
+        if config.load_pretrained:
+            errors.append("--resume and --ckpt are mutually exclusive")
+        if config.fsdp or _is_distributed():
+            errors.append("--resume currently requires single-process training (no DDP/FSDP)")
+        if config.num_workers != 0:
+            errors.append("--resume requires --num-workers 0; worker RNG/prefetch state is not checkpointed")
+        if not Path(config.resume).is_file():
+            errors.append(f"resume checkpoint is not a file: {config.resume}")
     if errors:
         raise ValueError("Invalid training config:\n  - " + "\n  - ".join(errors))
 
@@ -262,6 +252,7 @@ def main(config: TrainConfig) -> None:
         if fsdp:
             raise ValueError("--fsdp requires torchrun / RANK")
 
+    random.seed(config.seed + rank)
     torch.manual_seed(config.seed + rank)
     np.random.seed(config.seed + rank)
 
@@ -343,7 +334,7 @@ def main(config: TrainConfig) -> None:
     model = DiTPolicy(config.model)
     if config.load_pretrained:
         load_pretrained(model, config.load_pretrained)
-    elif config.pretrained_encoders:
+    elif config.pretrained_encoders and not config.resume:
         loaded = load_encoder_weights(model, download=True)
         if rank == 0 and loaded:
             print("pretrained:", ", ".join(f"{name}={path}" for name, path in loaded.items()))
@@ -356,11 +347,16 @@ def main(config: TrainConfig) -> None:
         optimizer, lambda step: min((step + 1) / max(config.optim.lr_warmup_steps, 1), 1.0)
     )
 
-    step, epoch = 0, 0
+    step, epoch, batch_cursor = 0, 0, 0
+    signature = _resume_signature(config, train_loader, device)
+    resume_payload = None
     if config.resume:
-        step, epoch = _load_checkpoint(config.resume, model, optimizer, scheduler)
+        resume_payload = load_checkpoint(config.resume, model, optimizer, scheduler, signature=signature)
+        step, epoch, batch_cursor = (resume_payload[key] for key in ("step", "epoch", "batch_in_epoch"))
+        if config.train_steps < step:
+            raise ValueError("--steps is the total target and cannot be less than the saved step")
         if rank == 0:
-            print(f"resumed {config.resume} at step={step} epoch={epoch}")
+            print(f"resumed {config.resume} at step={step} epoch={epoch} batch={batch_cursor}")
 
     if config.compile:
         model = torch.compile(model, fullgraph=True)
@@ -450,13 +446,25 @@ def main(config: TrainConfig) -> None:
 
     model.train()
     t_last = time.monotonic()
-    dumped_batch = False
+    dumped_batch = bool(config.resume and step > 0)
     while step < config.train_steps:
         if train_sampler is not None:
             train_sampler.set_epoch(epoch)
         if hasattr(train_ds, "set_epoch"):
             train_ds.set_epoch(epoch)
-        for raw in train_loader:
+        train_loader.generator.manual_seed(config.seed + epoch)
+        epoch_rng = resume_payload["epoch_rng"] if resume_payload else capture_rng_state()
+        if resume_payload:
+            restore_rng_state(epoch_rng)
+        iterator = iter(train_loader)
+        # Replay data reads up to the saved cursor, then restore training RNG
+        # after all setup and skipped reads, before obtaining the next batch.
+        for _ in range(batch_cursor):
+            next(iterator)
+        if resume_payload:
+            restore_rng_state(resume_payload["rng_state"])
+            resume_payload = None
+        for batch_index, raw in enumerate(iterator, start=batch_cursor):
             if step >= config.train_steps:
                 break
             if (
@@ -541,15 +549,22 @@ def main(config: TrainConfig) -> None:
             if step % config.ckpt_every == 0 and (rank == 0 or fsdp):
                 ckpt_dir = output_dir / f"{step}"
                 if fsdp:
-                    _save_checkpoint(ckpt_dir, model, optimizer, scheduler, step, epoch, fsdp=True)
+                    from lbm.distributed import save_fsdp_checkpoint
+
+                    save_fsdp_checkpoint(ckpt_dir, model, optimizer)
                     if rank == 0:
                         print(f"saved {ckpt_dir}")
                 elif rank == 0:
                     path = output_dir / f"{step}.pt"
-                    _save_checkpoint(path, model, optimizer, scheduler, step, epoch, fsdp=False)
-                    _save_checkpoint(output_dir / "last.pt", model, optimizer, scheduler, step, epoch, fsdp=False)
+                    for checkpoint_path in (path, output_dir / "last.pt"):
+                        save_checkpoint(
+                            checkpoint_path, _unwrap(model), optimizer, scheduler,
+                            step=step, epoch=epoch, batch_in_epoch=batch_index + 1,
+                            epoch_rng=epoch_rng, signature=signature,
+                        )
                     print(f"saved {path}")
         epoch += 1
+        batch_cursor = 0
 
     if distributed:
         dist.barrier()

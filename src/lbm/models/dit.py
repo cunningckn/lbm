@@ -30,6 +30,17 @@ def gate_residual(gate, residual):
     return gate * residual
 
 
+def conditioning_chunks(layer, conditioning, count):
+    """Project repeated prefix/non-prefix conditions once per sample."""
+    if isinstance(conditioning, tuple):
+        normal, prefix, mask = conditioning
+        normal = layer(normal).chunk(count, dim=-1)
+        prefix = layer(prefix).chunk(count, dim=-1)
+        return tuple(torch.where(mask[..., None], p[:, None], n[:, None])
+                     for n, p in zip(normal, prefix))
+    return layer(conditioning).chunk(count, dim=-1)
+
+
 def get_1d_sincos_pos_embed(embed_dim, length):
     omega = np.arange(embed_dim // 2, dtype=np.float64)
     omega /= embed_dim / 2.0
@@ -121,7 +132,7 @@ class DiTBlock(nn.Module):
             shift_msa, scale_msa, gate_msa,
             shift_xattn, scale_xattn, gate_xattn,
             shift_mlp, scale_mlp, gate_mlp,
-        ) = self.adaLN_modulation(c).chunk(9, dim=-1)
+        ) = conditioning_chunks(self.adaLN_modulation, c, 9)
 
         x = x + gate_residual(gate_msa, self.attn(modulate(self.norm1(x), shift_msa, scale_msa)))
 
@@ -163,7 +174,7 @@ class FinalLayer(nn.Module):
         )
 
     def forward(self, x, c):
-        shift, scale = self.adaLN_modulation(c).chunk(2, dim=-1)
+        shift, scale = conditioning_chunks(self.adaLN_modulation, c, 2)
         return self.linear(modulate(self.norm_final(x), shift, scale))
 
 
@@ -458,6 +469,7 @@ class DiTPolicy(nn.Module):
         max_action_prefix=0,
         prefix_conditioning_prob=1.0,
         prefix_noise_scale=0.0,
+        compact_prefix_conditioning=True,
     ):
         """Flow-matching training loss with optional action-prefix conditioning.
         batch: state (B,14), images dict, actions (B,50,14), task_vec_clip (B,512),
@@ -491,8 +503,16 @@ class DiTPolicy(nn.Module):
         vision_tokens = self.build_vision_tokens(
             batch.get("images"), batch.get("camera_mask"), features=batch.get("vision_features")
         )
-        t_cond = t_per_pos.squeeze(-1) if prefix_mask_expanded is not None else t[:, 0, 0]
-        c = self.compute_cond(state, self.encode_task(batch), t_cond, batch.get("embodiment_id"))
+        task = self.encode_task(batch)
+        embodiment = batch.get("embodiment_id")
+        if prefix_mask_expanded is not None and compact_prefix_conditioning:
+            sample_t = t[:, 0, 0]
+            c = (self.compute_cond(state, task, sample_t, embodiment),
+                 self.compute_cond(state, task, torch.zeros_like(sample_t), embodiment),
+                 prefix_mask)
+        else:
+            t_cond = t_per_pos.squeeze(-1) if prefix_mask_expanded is not None else t[:, 0, 0]
+            c = self.compute_cond(state, task, t_cond, embodiment)
         v_t = self.predict_velocity(x_t, c, vision_tokens)
 
         u_t = noise - actions

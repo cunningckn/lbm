@@ -11,7 +11,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
 ```bash
-uv sync --extra dev --extra data
+uv sync --locked --extra dev --extra data
 ```
 
 Optional PyPI mirror:
@@ -35,9 +35,10 @@ uv add /path/to/lbm
 | --- | --- |
 | `lbm.config` | `DiTConfig`, `TrainConfig`, `ClipConfig`, `FlowConfig`, `OptimConfig` |
 | `lbm.models` | `DiTPolicy`, DINOv3, CLIP text |
-| `lbm.train_loop` | train / val / DDP / FSDP loop (`main(TrainConfig)`) |
+| `lbm.train_loop` | training orchestration / DDP / FSDP (`main(TrainConfig)`) |
+| `lbm.training_validation` / `lbm.training_metrics` | validation lifecycle, metric aggregation and logging |
 | `lbm.utils` | preprocess, fake data, CUDA-graph inference, benches |
-| `lbm.dataloader` | `custom` dump specs + `mmap`（JPEG / parquet 缓存）。训练在 `train_loop` 里组 loader。 |
+| `lbm.dataloader` | `custom` dump specs + `mmap`（JPEG / parquet 缓存）。DataLoader 策略集中在 `training_loader`。 |
 
 ## Dataloader (`lbm.dataloader`)
 
@@ -64,10 +65,10 @@ Config knobs in `data_cfg`:
 | `use_mmap_frames` | same as `use_mmap` | letterbox + JPEG pack + mmap for video frames |
 | `image_size` | spec default (`224`) | square letterbox size before JPEG |
 | `mmap_jpeg_quality` | `85` | JPEG quality |
-| `action_length` | `1.0` | action window duration in seconds |
+| `action_length` | `5.0` | action window duration in seconds |
 | `action_freq` | dump fps | action sampling frequency in Hz (`chunk_length = round(length × freq)`) |
 | `history_length` | `0` | image history duration in seconds (`0` = current frame only) |
-| `history_freq` | dump fps | image history sampling frequency in Hz |
+| `history_freq` | `10.0` | image history sampling frequency in Hz |
 
 Native-fps stride is `round(dataset_fps / freq)`. Disable mmap with `use_mmap: false` / `use_mmap_frames: false`.
 
@@ -84,7 +85,7 @@ Native-fps stride is `round(dataset_fps / freq)`. Disable mmap with `use_mmap: f
 | `lbm.utils.fake_data` | synthetic batches / `FakeActionDataset` |
 | `lbm.utils.bench` | `time_calls`, CUDA-graph capture for `sample_actions` |
 
-Default `DiTConfig` (`hidden_size=1536`, `depth=32`, `num_heads=24`, `action_length=1s` × `action_freq=50Hz` → 50 action steps).
+Default `DiTConfig` (`hidden_size=1536`, `depth=32`, `num_heads=24`, `action_length=5s` × `action_freq=10Hz` → 50 action steps).
 
 ## Usage
 
@@ -133,25 +134,29 @@ Override temporal windows with `ACTION_FREQ` / `--action-freq` (default: each da
 
 Rank 0 prebuilds the JPEG mmap cache (``datasets/.../.mmap/frames``) with multiple processes before the first step; DataLoader workers only read it. Pass ``--no-mmap-prebuild`` to keep the old lazy build, or ``--mmap-prebuild-workers N`` to set process count. With mmap on, frames are already letterboxed. Pass ``--no-mmap`` to decode video live.
 
-Preprocess without training (same ``--dataset`` / ``--data-mix`` / ``--data-root`` / ``--robot-type`` as ``train.py``):
+Preprocess without training (`--dataset` accepts a comma list; `--data-root` sets its parent directory). An empty selection uses the registry, with missing folders skipped:
 
 ```bash
 # JPEG mmap under each dump's .mmap/frames/
 uv run python scripts/prebuild_mmap.py --dataset kai0
-uv run python scripts/prebuild_mmap.py --data-mix robotwin --workers 16
+uv run python scripts/prebuild_mmap.py --dataset robotwin --workers 16
 DATASET=kai0 ./scripts/prebuild_mmap.sh
 
 # state/action mean/std/min/max/q01/q99 JSON next to each dump
-uv run python scripts/compute_norm.py --dataset kai0          # datasets/kai0/norm_stats.json
+uv run python scripts/compute_norm.py --dataset kai0          # writes the action-type/frequency-specific stats file
 uv run python scripts/compute_norm.py --dataset kai0 --mmap   # same + JPEG frame mmap
-uv run python scripts/compute_norm.py --data-mix robotwin     # one file per task folder
+uv run python scripts/compute_norm.py --dataset robotwin     # one file per task folder
 DATASET=kai0 ./scripts/compute_norm.sh
 MMAP=1 WORKERS=16 DATASET=kai0 ./scripts/compute_norm.sh
 ```
 
-LeRobot proprio is read through parquet mmap (``.mmap/*.npy``) so stats match training. If a dump has no action columns, actions are the next proprio at ``round(native_fps / action_freq)``. Each spec's action space (GR00T-style ``rel`` arms / ``abs`` grippers; LIBERO stays absolute) is applied before stats and before train/infer norm: ``rel`` groups are current-state deltas, then ``[q01, q99]`` maps to ``[-1, 1]``. Inference inverts that after unnormalize. ``--mmap`` also runs the JPEG frame prebuild. A mix writes one ``norm_stats.json`` per inner dump (dims are not merged). Pass ``--output PATH`` only for a single dump.
+LeRobot proprio is read through parquet mmap (``.mmap/*.npy``) so stats match training. If a dump has no action columns, actions are the next proprio at ``round(native_fps / action_freq)``. Each spec's action space (GR00T-style ``rel`` arms / ``abs`` grippers; LIBERO stays absolute) is applied before stats and before train/infer norm: ``rel`` groups are current-state deltas, then ``[q01, q99]`` maps to ``[-1, 1]``. Inference inverts that after unnormalize. ``--mmap`` also runs the JPEG frame prebuild. A mix writes a separate `norm_stats_{kind}_{rep}_{format}_{freq}hz.json` per dump (with a length suffix for `rel`; dimensions are not merged). Pass ``--output PATH`` only for a single dump.
+
+New statistics include a fallback for equal q01/q99 in sparse dimensions; old statistics keep their original mapping. Use the same action mode, kind, format, frequency and length for statistics and training.
 
 `chunk_length` is derived: `round(action_length * action_freq)`. Image history similarly uses `history_length` × `history_freq`. Fake-data smoke test: `PYTHONPATH=src python examples/train.py`.
+
+多数据集准备、恢复训练、吞吐测试和验证边界见 [验证与复现指南](context/validation/README.md)；贡献及 CI 约定见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ## Simulation eval (LIBERO / RMBench)
 
@@ -210,7 +215,7 @@ read_vectors = read_lerobot_vectors
 read_frames = read_lerobot_frames
 ```
 
-放进 `custom/datasets/<name>.py` 即可（`pkgutil` 会自动发现）。公共读写在 `custom/common/`（LeRobot / numpy / JPEG）。
+放进 `custom/datasets/<name>.py` 即可（`pkgutil` 会自动发现并检查接口、重名及 SPEC）。`all` 混合和通用预处理脚本自动包含新数据集；自选配方写在 `mixes.py` 的 `EXTRA_MIXES`，无需重复维护通用脚本名单。公共读写在 `custom/common/`（LeRobot / numpy / JPEG）。
 
 已有 spec（相机 / state×action / fps / id）：
 

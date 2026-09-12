@@ -87,30 +87,15 @@ def _log_and_copy_norm_stats(train_ds, output_dir: Path) -> None:
     else:
         kind = "q01/q99→[-1,1]" if quantile else "mean/std"
         print(f"norm={kind} dumps={len(inner)}")
-    if len(inner) == 1:
-        from lbm.action_space import resolve_action_space
-        from lbm.utils.preprocess import dump_norm_stats_path
+    from lbm.utils.preprocess import save_norm_stats
 
-        ds = inner[0]
-        root = getattr(ds, "root", None)
-        slices = (
-            resolve_action_space(
-                ds.spec,
-                ds.action_mode,
-                action_kind=getattr(ds, "action_kind", None),
-                action_format=getattr(ds, "action_format", None),
-            )
-            if hasattr(ds, "spec")
-            else ()
-        )
-        src = (
-            dump_norm_stats_path(root, ds.action_freq, ds.action_length, slices)
-            if root is not None
-            else None
-        )
-        if src is not None and src.is_file():
-            dest = output_dir / "norm_stats.json"
-            dest.write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
+    for ds in inner:
+        if ds.norm_stats is None:
+            continue
+        payload = dict(norm_stats=ds.norm_stats, action_space=[sl.as_dict() for sl in ds._space])
+        save_norm_stats(output_dir / 'normalization' / f'{ds.spec.name}.json', payload)
+        if len(inner) == 1:
+            save_norm_stats(output_dir / 'norm_stats.json', payload)
 
 
 def _prebuild_mmap_caches(
@@ -163,6 +148,10 @@ def _resume_signature(config, train_loader, device):
 
 def main(config: TrainConfig) -> None:
     errors = validate_model_config(config.model)
+    if not 0 <= config.data.val_fraction < 1:
+        errors.append("val_fraction must be in [0, 1)")
+    if config.data.val_fraction and (config.data.val_dataset or config.feature_cache):
+        errors.append("val_fraction requires online data without an explicit val_dataset")
     errors.extend(validate_loader_config(config.data, num_workers=config.num_workers))
     if config.fsdp:
         errors.extend(validate_parallel_config(config.parallel))
@@ -217,8 +206,11 @@ def main(config: TrainConfig) -> None:
 
         train_ds = FeatureDataset(config.feature_cache)
         train_ds.apply_config(config)
-        val_ds = FeatureDataset(config.data.val_dataset) if config.data.val_dataset else train_ds
-        train_ds.check_validation(val_ds)
+        val_ds = FeatureDataset(config.data.val_dataset) if config.data.val_dataset else ()
+        if val_ds:
+            train_ds.check_validation(val_ds)
+            if train_ds.root.resolve() == val_ds.root.resolve():
+                raise ValueError("training and validation feature cache must differ")
         collate_fn = torch.utils.data.default_collate
     elif config.fake_data:
         n_train = max(config.batch_size * world * 8, 64)
@@ -229,7 +221,6 @@ def main(config: TrainConfig) -> None:
         from lbm.dataloader.pad import collate_fn as dump_collate
 
         collate_fn = dump_collate
-        from lbm.dataloader.custom import CustomMixtureDataset
         from lbm.dataloader.mixture import load_dataset
 
         train_ds = load_dataset(config, mode="train")
@@ -238,11 +229,10 @@ def main(config: TrainConfig) -> None:
                 config, mode="val", dataset_path=config.data.val_dataset
             )
         else:
-            val_ds = CustomMixtureDataset(
-                [(ds, 1.0) for ds in train_ds.datasets],
-                mode="val",
-                seed=config.seed,
-            )
+            val_ds = ()
+        from lbm.training_split import prepare_validation
+
+        train_ds, val_ds = prepare_validation(train_ds, val_ds, config)
         io = infer_policy_io(train_ds)
         config.model.camera_keys = io["camera_keys"]
         action_dim = int(io["action_dim"])
@@ -269,22 +259,11 @@ def main(config: TrainConfig) -> None:
     train_loader, train_sampler = make_loader(
         train_ds, config=config, distributed=distributed, train=True, collate_fn=collate_fn
     )
-    val_indices = list(
-        range(rank, min(len(val_ds), max(config.val_batches, 1) * config.batch_size * world), world)
-    )
-    if val_indices:
-        val_subset = torch.utils.data.Subset(val_ds, val_indices)
-        val_loader, _ = make_loader(
-            val_subset,
-            config=config,
-            distributed=False,
-            train=False,
-            collate_fn=collate_fn,
-            drop_last=True,
-            num_workers=min(2, config.num_workers),
-        )
-    else:
-        val_loader = None
+    from lbm.training_split import validation_loaders
+
+    val_loader = validation_loaders(val_ds, config, collate_fn, rank=rank, world=world)
+    if not val_loader and rank == 0:
+        print("validation disabled: provide --val-dataset or --val-fraction; training data is never reused")
 
     model = DiTPolicy(config.model)
     if config.load_pretrained:
@@ -315,7 +294,7 @@ def main(config: TrainConfig) -> None:
 
     if feature_mode:
         train_ds.check_backbone(model)
-        if val_ds is not train_ds:
+        if val_ds:
             val_ds.check_backbone(model)
 
     if config.compile:

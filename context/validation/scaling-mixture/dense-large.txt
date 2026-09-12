@@ -1,0 +1,8 @@
+world=1 mode=dense fsdp=0 batch_sizes=[128, 256] bf16=True unit=block group=1 overlap_ag=1 overlap_rs=1 double_buffer=1 maxpool=auto independent_ag=0 fine_gather=0 prefetch=auto vision=dino language=none train_vision_encoder=0 train_language_encoder=0
+  bs    per_rank      unique        Hz     ms/call  peak_MiB    gpu%     sm%   wave%
+ 128      235.37      235.37     1.839      543.83     29282       —       —       —
+     profile_ms fwd=267.51 bwd=225.01 step=54.23
+RESULT world=1 mode=dense fsdp=0 bs=128 per_rank=235.3688 unique=235.3688 peak_mib=29281.9 ms=543.828 unit=block group=1 overlap=1 double_buffer=1 independent_ag=0 fine_gather=0 n_units=0 prefetch=auto maxpool=0 fwd_ms=267.509 bwd_ms=225.014 step_ms=54.227
+ 256      255.31      255.31     0.997     1002.71     47344       —       —       —
+     profile_ms fwd=519.32 bwd=431.83 step=54.31
+RESULT world=1 mode=dense fsdp=0 bs=256 per_rank=255.3086 unique=255.3086 peak_mib=47344.0 ms=1002.708 unit=block group=1 overlap=1 double_buffer=1 independent_ag=0 fine_gather=0 n_units=0 prefetch=auto maxpool=0 fwd_ms=519.315 bwd_ms=431.833 step_ms=54.309

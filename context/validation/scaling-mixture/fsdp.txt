@@ -1,0 +1,12 @@
+/mnt/kpfs/workspace/jinaoqun/Projects/lbm/.venv/lib/python3.12/site-packages/megatron_fsdp/mixed_precision.py:115: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+  warnings.warn(
+/mnt/kpfs/workspace/jinaoqun/Projects/lbm/.venv/lib/python3.12/site-packages/megatron_fsdp/mixed_precision.py:115: UserWarning: Transformer Engine and Apex are not installed. Falling back to local implementations of multi_tensor_applier and multi_tensor_scale
+  warnings.warn(
+world=2 mode=fsdp fsdp=1 batch_sizes=[128, 256] bf16=True unit=block group=1 overlap_ag=1 overlap_rs=1 double_buffer=1 maxpool=auto independent_ag=0 fine_gather=0 prefetch=auto vision=dino language=none train_vision_encoder=0 train_language_encoder=0
+  bs    per_rank      unique        Hz     ms/call  peak_MiB    gpu%     sm%   wave%
+ 128      216.42      432.84     1.691      591.44     33792       —       —       —
+     profile_ms fwd=285.04 bwd=260.90 step=53.53
+RESULT world=2 mode=fsdp fsdp=1 bs=128 per_rank=216.4212 unique=432.8424 peak_mib=33791.6 ms=591.439 unit=block group=1 overlap=1 double_buffer=1 independent_ag=0 fine_gather=0 n_units=33 prefetch=500000000 maxpool=1 gpu=nan sm=nan wave=nan mem=nan pwr=nan gfx=nan sclk=nan membw=nan nfast=0 nsm=0 fwd_ms=285.043 bwd_ms=260.897 step_ms=53.531
+ 256      244.55      489.09     0.955     1046.84     51873       —       —       —
+     profile_ms fwd=541.15 bwd=463.53 step=53.55
+RESULT world=2 mode=fsdp fsdp=1 bs=256 per_rank=244.5462 unique=489.0924 peak_mib=51873.4 ms=1046.837 unit=block group=1 overlap=1 double_buffer=1 independent_ag=0 fine_gather=0 n_units=33 prefetch=500000000 maxpool=1 gpu=nan sm=nan wave=nan mem=nan pwr=nan gfx=nan sclk=nan membw=nan nfast=0 nsm=0 fwd_ms=541.147 bwd_ms=463.534 step_ms=53.548

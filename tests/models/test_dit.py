@@ -58,14 +58,12 @@ def test_dino_encodes_image_tokens(model, config, batch):
     assert torch.isfinite(tokens).all()
 
 
-def test_load_dinov3_hf_safetensors(config):
-    from lbm import load_dinov3, resolve_dinov3_path
+def test_load_dinov3_hf_safetensors(config, dinov3_path):
+    from lbm import load_dinov3
     from lbm.models.dino import DinoVisionBackbone
 
-    path = resolve_dinov3_path()
-    assert path is not None
     backbone = DinoVisionBackbone(config)
-    load_dinov3(backbone, path)
+    load_dinov3(backbone, dinov3_path)
     qkv_bias = backbone.dinov3_model.blocks[0].attn.qkv.bias.detach()
     dim = config.vit_embed_dim
     assert torch.count_nonzero(qkv_bias[dim : 2 * dim]) == 0

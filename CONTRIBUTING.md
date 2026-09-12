@@ -53,3 +53,13 @@ in `src/lbm/train_loop.py` owns dataset creation, epoch advancement and resume
 replay. Keep loader construction changes in `make_loader()` and run
 `tests/config/test_training_loader.py`, `tests/config/test_train_loop.py` and
 `tests/config/test_checkpoint_resume.py` to check sampling and resume behavior.
+
+## Pretrained assets in tests
+
+Tests do not download CLIP assets implicitly. With missing CLIP or DINOv3
+weights, dependent tests skip with the required paths; unrelated tests still
+run. Supply CLIP model and BPE files under `LBM_CHECKPOINTS/clip` and set
+`LBM_DINO` to the DINOv3 checkpoint to exercise pretrained tests.
+For an environment expected to have those assets, use
+`pytest --require-pretrained-assets` to make missing files a failure.
+A run with skipped pretrained/GPU/data tests is not full integration coverage.

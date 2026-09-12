@@ -1,11 +1,34 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 import torch
 
 from lbm import ClipConfig, CLIPTextEmbedder, DiTConfig, DiTPolicy, load_dinov3, make_fake_batch, resolve_dinov3_path
 
 PROMPT = "put the bottles in the bin"
+
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--require-pretrained-assets", action="store_true",
+        help="Fail instead of skip when pretrained test assets are missing (never downloads).",
+    )
+
+
+def _missing_assets(request, message):
+    if request.config.getoption("--require-pretrained-assets"):
+        pytest.fail(message)
+    pytest.skip(message)
+
+
+@pytest.fixture(scope="session")
+def dinov3_path(request):
+    path = resolve_dinov3_path()
+    if path is None:
+        _missing_assets(request, "DINOv3 checkpoint missing; set LBM_DINO or populate checkpoints/dinov3")
+    return path
 
 
 def pytest_configure(config: pytest.Config) -> None:
@@ -29,8 +52,13 @@ def dtype(device: torch.device) -> torch.dtype:
 
 
 @pytest.fixture(scope="session")
-def clip(device: torch.device) -> CLIPTextEmbedder:
-    embedder = CLIPTextEmbedder(ClipConfig(), device=device)
+def clip(device: torch.device, request) -> CLIPTextEmbedder:
+    cfg = ClipConfig()
+    root = Path(cfg.cache_dir).expanduser()
+    missing = [str(root / name) for name in (cfg.model_name, cfg.bpe_name) if not (root / name).is_file()]
+    if missing:
+        _missing_assets(request, "CLIP test assets missing: " + ", ".join(missing))
+    embedder = CLIPTextEmbedder(cfg, device=device)
     if device.type == "cuda":
         embedder.set_bfloat16(True)
     return embedder
@@ -42,16 +70,10 @@ def task_vec(clip: CLIPTextEmbedder) -> torch.Tensor:
 
 
 @pytest.fixture(scope="session")
-def model(device: torch.device, config: DiTConfig, dtype: torch.dtype) -> DiTPolicy:
-    ckpt = resolve_dinov3_path()
-    if ckpt is None:
-        pytest.skip(
-            "DINOv3 checkpoint not found. Set LBM_DINO / lbm_DINO or place "
-            "weights in lbm/checkpoints/dinov3."
-        )
+def model(device: torch.device, config: DiTConfig, dtype: torch.dtype, dinov3_path) -> DiTPolicy:
     torch.set_float32_matmul_precision("high")
     policy = DiTPolicy(config).to(device=device, dtype=dtype)
-    load_dinov3(policy.img_backbone, ckpt)
+    load_dinov3(policy.img_backbone, dinov3_path)
     if device.type == "cuda":
         policy.img_backbone.set_bfloat16(True)
     return policy

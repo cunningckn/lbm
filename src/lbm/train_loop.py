@@ -218,8 +218,7 @@ def main(config: TrainConfig) -> None:
         train_ds = FeatureDataset(config.feature_cache)
         train_ds.apply_config(config)
         val_ds = FeatureDataset(config.data.val_dataset) if config.data.val_dataset else train_ds
-        if val_ds.metadata['model'] != train_ds.metadata['model']:
-            raise ValueError("training and validation feature cache configurations differ")
+        train_ds.check_validation(val_ds)
         collate_fn = torch.utils.data.default_collate
     elif config.fake_data:
         n_train = max(config.batch_size * world * 8, 64)
@@ -414,8 +413,9 @@ def main(config: TrainConfig) -> None:
 
                 norms = train_ds.metadata.get('normalization', {})
                 print(f"feature_cache={config.feature_cache} sources={len(norms)}")
-                if len(norms) == 1 and next(iter(norms.values())) is not None:
-                    save_norm_stats(output_dir / 'norm_stats.json', next(iter(norms.values())))
+                inference_norm = train_ds.inference_normalization()
+                if inference_norm is not None:
+                    save_norm_stats(output_dir / 'norm_stats.json', inference_norm)
             else:
                 _log_and_copy_norm_stats(train_ds, output_dir)
 

@@ -128,3 +128,23 @@ def test_encoder_fingerprint_rejects_changed_weights(tmp_path):
         next(model.img_backbone.parameters()).add_(1)
     with pytest.raises(ValueError, match='different encoder'):
         dataset.check_backbone(model)
+
+
+def test_cache_preserves_action_semantics_and_rejects_validation_scale_mismatch():
+    from copy import deepcopy
+    train = FeatureDataset.__new__(FeatureDataset)
+    train.metadata = dict(model={}, normalization={'demo': {'state': {}, 'actions': {}}},
+                          action_spaces={'demo': [{'kind': 'eef', 'rep': 'rel'}]})
+    validation = FeatureDataset.__new__(FeatureDataset)
+    validation.metadata = deepcopy(train.metadata)
+    train.check_validation(validation)
+    payload = train.inference_normalization()
+    assert payload['action_space'] == train.metadata['action_spaces']['demo']
+    assert payload['norm_stats'] == train.metadata['normalization']['demo']
+    validation.metadata['normalization']['demo']['state']['mean'] = [1.]
+    with pytest.raises(ValueError, match='normalization'):
+        train.check_validation(validation)
+    validation.metadata = deepcopy(train.metadata)
+    validation.metadata['action_spaces']['demo'][0]['rep'] = 'delta'
+    with pytest.raises(ValueError, match='action_spaces'):
+        train.check_validation(validation)

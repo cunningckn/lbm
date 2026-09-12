@@ -37,11 +37,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--device", default="auto")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--compile", action="store_true")
+    parser.add_argument("--optimizer-step", default=True, action=argparse.BooleanOptionalAction,
+                        help="include optimizer update; disable for forward/backward-only timing")
     parser.add_argument("--json", action="store_true", help="emit one JSON object per batch size")
     parser.add_argument("--attn", choices=("auto", "flash", "math"), default="auto")
     parser.add_argument("--bf16", default=True, action=argparse.BooleanOptionalAction)
     add_encoder_arguments(parser)
     args = parser.parse_args(argv)
+    if args.image_size <= 0 or args.image_size % 16:
+        parser.error("--image-size must be a positive multiple of 16")
     if args.warmup < 0 or args.iters <= 0:
         parser.error("--warmup must be >= 0 and --iters must be positive")
     if any(batch_size <= 0 for batch_size in parse_ints(args.batch_sizes)):
@@ -54,32 +58,35 @@ def _sync(device: torch.device) -> None:
         torch.cuda.synchronize(device)
 
 
-def _step(model, optimizer, batch):
+def _step(model, optimizer, batch, *, optimizer_step: bool = True):
     optimizer.zero_grad(set_to_none=True)
     loss = model(batch)
     loss.backward()
-    optimizer.step()
+    if optimizer_step:
+        optimizer.step()
     return loss
 
 
 def measure_batch(config: DiTConfig, *, batch_size: int, device: torch.device, dtype: torch.dtype,
-                  warmup: int, iters: int, compile: bool) -> dict[str, Any]:
+                  warmup: int, iters: int, compile: bool, optimizer_step: bool = True,
+                  image_size: int = 224) -> dict[str, Any]:
     model = DiTPolicy(config).to(device=device, dtype=dtype)
     if compile:
         model = torch.compile(model)
     optimizer = build_adamw(model, OptimConfig())
     model.train()
     for _ in range(warmup):
-        _step(model, optimizer, make_fake_batch(config, batch_size, device=device, dtype=dtype))
+        _step(model, optimizer, make_fake_batch(config, batch_size, device=device, dtype=dtype, image_size=image_size),
+              optimizer_step=optimizer_step)
     _sync(device)
     reset_peak(device)
-    reused = make_fake_batch(config, batch_size, device=device, dtype=dtype)
+    reused = make_fake_batch(config, batch_size, device=device, dtype=dtype, image_size=image_size)
     for _ in range(warmup):
-        _step(model, optimizer, reused)
+        _step(model, optimizer, reused, optimizer_step=optimizer_step)
     _sync(device)
     compute_start = time.perf_counter()
     for _ in range(iters):
-        _step(model, optimizer, reused)
+        _step(model, optimizer, reused, optimizer_step=optimizer_step)
     _sync(device)
     compute_s = time.perf_counter() - compute_start
     data_s = 0.0
@@ -87,16 +94,18 @@ def measure_batch(config: DiTConfig, *, batch_size: int, device: torch.device, d
     end_to_end_start = time.perf_counter()
     for _ in range(iters):
         data_start = time.perf_counter()
-        batch = make_fake_batch(config, batch_size, device=device, dtype=dtype)
+        batch = make_fake_batch(config, batch_size, device=device, dtype=dtype, image_size=image_size)
         _sync(device)
         data_s += time.perf_counter() - data_start
-        _step(model, optimizer, batch)
+        _step(model, optimizer, batch, optimizer_step=optimizer_step)
     _sync(device)
     end_to_end_s = time.perf_counter() - end_to_end_start
     compute_steps_s = iters / max(compute_s, 1e-12)
     end_to_end_steps_s = iters / max(end_to_end_s, 1e-12)
     result: dict[str, Any] = {
         "batch_size": batch_size,
+        "optimizer_step": optimizer_step,
+        "image_size": image_size,
         "warmup": warmup,
         "iters": iters,
         "compute_steps_per_sec": compute_steps_s,
@@ -131,7 +140,8 @@ def main(argv: list[str] | None = None) -> None:
             "attn": args.attn,
             **measure_batch(config, batch_size=batch_size, device=device,
                             dtype=torch.bfloat16 if use_bf16 else torch.float32,
-                            warmup=args.warmup, iters=args.iters, compile=args.compile),
+                            warmup=args.warmup, iters=args.iters, compile=args.compile,
+                            optimizer_step=args.optimizer_step, image_size=args.image_size),
         }
         print(json.dumps(result, sort_keys=True) if args.json else result)
 

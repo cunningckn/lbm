@@ -1,17 +1,29 @@
 # Validation and reproducible entry points
 
 The September 2026 cleanup was tested on js_dev_2 (A800 80 GB GPUs) in
-isolated checkouts. Dataset files and the user's checkout were preserved.
+isolated checkouts. Existing source datasets and uncommitted checkout edits
+were preserved.
 
-Final runtime regression on the PR #24 code passed **463 tests, zero skips**
+The earlier runtime regression on the PR #24 code passed **463 tests, zero skips**
 with GPUs, pretrained assets and real datasets enabled. The new hosted CPU
 job in PR #25 passed **432 tests**, with **17 explicit resource-dependent
 skips and 14 integration cases deselected**. CPU CI does not replace the
 server run. CLI help smoke checks passed for scan, mmap, norm, FK,
 inspection, training and the training-throughput benchmark.
 
+Latest follow-up: bounded exact normalization, frozen vision caches, compact
+prefix conditioning and compact image transfer are implemented. The current
+two-GPU suite passed 493 tests with zero skips, including the follow-up
+mixed-checkpoint inference fix. CPU regression with available pretrained
+assets passed 468 with 11 resource skips and 14 integration deselections.
+See the new reports for long training and actual closed-loop task results.
+
 | Work | Evidence |
 | --- | --- |
+| Bounded exact normalization memory | [normalization](bounded-norm/README.md) |
+| Frozen vision feature preparation | [feature cache](feature-cache/README.md) |
+| Long held-out training and LIBERO closed loop | [quality validation](remaining/README.md) |
+| Comparable real-data throughput tuning | [real throughput](real-throughput/README.md) |
 | GPU + pretrained + real-data initial baseline | [initial validation](2026-09-13/README.md) |
 | Single/dual GPU throughput and multi-source loader tuning | [scaling and mixture](scaling-mixture/README.md) |
 | Bounded mmap packing, corruption and interruption recovery | [cache integrity](cache-integrity/README.md) |
@@ -81,12 +93,13 @@ OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 LBM_REAL_DATA=1 \
 Increase batch size sequentially on an idle GPU; an OOM is a capacity limit,
 not a successful measurement. The benchmark separates reused synthetic
 batches from newly generated inputs and records whether optimizer updates
-are included. Future precomputed vision-feature support should have an
-explicit batch contract and separate benchmark label; it is not currently
-implemented or included in the throughput claims.
+are included. Frozen vision-feature caches now have an explicit batch contract
+and a separate real-data benchmark label; they are not included in the older
+synthetic numbers above.
 
 Hosted CPU CI checks regressions without private datasets, CUDA or downloaded
-weights. Server integration is additional coverage. The 200+5-step real run
-checks numerical stability and restore, not task convergence, held-out
-accuracy or multi-day training stability. Closed-loop evaluation still
-requires a trained checkpoint and a chosen LIBERO/RMBench task protocol.
+weights. Server integration is additional coverage. The follow-up completed
+5,000+10 real mixed-data updates with episode-disjoint validation and a
+separate LIBERO task's trained-policy closed-loop evaluation (8/10 successes).
+These bounded experiments do not establish full-suite accuracy, convergence
+or multi-day training stability.

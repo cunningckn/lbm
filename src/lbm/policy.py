@@ -21,6 +21,7 @@ from lbm.dataloader.custom.datasets import CUSTOM_SPECS
 from lbm.dataloader.paths import resolve_dataset
 from lbm.models.clip import CLIPTextEmbedder
 from lbm.models.dit import DiTPolicy, load_pretrained
+from lbm.temporal import n_steps
 from lbm.utils.preprocess import (
     load_norm_stats,
     norm_stats_filename,
@@ -69,6 +70,10 @@ def _identity_stats(dim: int) -> dict[str, np.ndarray]:
     z = np.zeros(dim, dtype=np.float32)
     o = np.ones(dim, dtype=np.float32)
     return {"mean": z, "std": o, "min": z, "max": o, "count": 0}
+
+
+def _stats_dimension(stats):
+    return int(np.asarray(stats['q01'] if 'q01' in stats else stats['mean']).size)
 
 
 def _fit_vector(x: np.ndarray, dim: int) -> np.ndarray:
@@ -134,6 +139,12 @@ class LBMPolicy:
         self.dtype = dtype
         self.norm_stats = norm_stats
         self.action_space = ()
+        self.camera_keys = tuple(config.camera_keys)
+        self.state_dim = _stats_dimension(norm_stats['state'])
+        self.action_dim = _stats_dimension(norm_stats['actions'])
+        self.output_steps = config.chunk_length
+        if self.state_dim > config.state_dim or self.action_dim > config.action_dim:
+            raise ValueError('source normalization dimensions exceed checkpoint dimensions')
         self.diffusion_steps = int(diffusion_steps)
         self.embodiment_id = int(embodiment_id)
         self._clip: CLIPTextEmbedder | None = None
@@ -169,9 +180,13 @@ class LBMPolicy:
             config, saved_steps = DiTConfig(), FlowConfig().num_diffusion_steps
         if not robot_type:
             raise ValueError("from_checkpoint requires robot_type")
+        # A saved config describes trained parameter shapes, including mixture padding.
+        if not cfg_file.is_file():
+            config = apply_spec(config, robot_type)
+        if not set(CUSTOM_SPECS[robot_type].camera_keys) <= set(config.camera_keys):
+            raise ValueError('source cameras are not present in checkpoint camera slots')
         saved_freq = float(config.action_freq)
         saved_length = float(config.action_length)
-        config = apply_spec(config, robot_type)
         lang = getattr(config, "language_encoder", "none") or "none"
         if lang != "none":
             raise ValueError(
@@ -192,19 +207,20 @@ class LBMPolicy:
             explicit=Path(norm_stats_path) if norm_stats_path else None,
             ckpt=ckpt_path,
             robot_type=robot_type,
-            action_freq=saved_freq,
+            action_freq=min(saved_freq, spec.fps),
             action_length=saved_length,
             slices=resolve_action_space(spec, "delta"),
         )
         space = ()
+        raw = {}
         if stats_path is not None:
             raw = json.loads(Path(stats_path).read_text(encoding="utf-8"))
             stats = load_norm_stats(stats_path)
             space = action_space_from_payload(raw)
         else:
             stats = {
-                "state": _identity_stats(config.state_dim),
-                "actions": _identity_stats(config.action_dim),
+                "state": _identity_stats(spec.state_dim),
+                "actions": _identity_stats(spec.action_dim),
             }
         if not space:
             space = tuple(spec.action_space)
@@ -227,6 +243,9 @@ class LBMPolicy:
             dtype=dtype,
         )
         policy.action_space = space
+        policy.camera_keys = tuple(spec.camera_keys)
+        source_freq = float(raw.get('action_freq', min(config.action_freq, spec.fps)))
+        policy.output_steps = min(config.chunk_length, n_steps(config.action_length, source_freq))
         return policy
 
     def reset(self) -> None:
@@ -236,10 +255,10 @@ class LBMPolicy:
     def metadata(self) -> dict[str, Any]:
         cfg = self.model_config
         return {
-            "camera_keys": list(cfg.camera_keys),
-            "state_dim": int(cfg.state_dim),
-            "action_dim": int(cfg.action_dim),
-            "chunk_length": int(cfg.chunk_length),
+            "camera_keys": list(self.camera_keys),
+            "state_dim": int(self.state_dim),
+            "action_dim": int(self.action_dim),
+            "chunk_length": int(self.output_steps),
             "history_size": int(cfg.history_size),
             "diffusion_steps": int(self.diffusion_steps),
             "embodiment_id": int(self.embodiment_id),
@@ -263,7 +282,7 @@ class LBMPolicy:
     def _images(self, images: dict[str, np.ndarray]) -> dict[str, torch.Tensor]:
         out: dict[str, torch.Tensor] = {}
         hist = max(1, self.model_config.history_size)
-        for cam in self.model_config.camera_keys:
+        for cam in self.camera_keys:
             if cam not in images:
                 raise KeyError(f"missing camera {cam!r}; got {tuple(images)}")
             self._history[cam].append(np.asarray(images[cam]))
@@ -273,30 +292,35 @@ class LBMPolicy:
             frames = frames[-hist:]
             stacked = torch.stack([self._prep_frame(f).squeeze(0) for f in frames], dim=0)
             out[cam] = stacked[-1].unsqueeze(0) if hist == 1 else stacked.unsqueeze(0)
-        return out
+        template = next(iter(out.values()))
+        return {cam: out[cam] if cam in out else torch.zeros_like(template)
+                for cam in self.model_config.camera_keys}
 
     def normalized_action_prefix(self, action_prefix: np.ndarray, prefix_length: int) -> np.ndarray:
         chunk = int(self.model_config.chunk_length)
-        dim = int(self.model_config.action_dim)
-        out = np.zeros((chunk, dim), dtype=np.float32)
+        dim = int(self.action_dim)
+        out = np.zeros((chunk, self.model_config.action_dim), dtype=np.float32)
         prefix = np.asarray(action_prefix, dtype=np.float32)
         if prefix.ndim == 1:
             prefix = prefix[None]
         n = min(int(prefix_length), chunk, prefix.shape[0])
+        if n <= 0:
+            return out
         fitted = np.stack([_fit_vector(row, dim) for row in prefix[:n]], axis=0)
         ref = getattr(self, "_last_raw_state", None)
         if ref is not None and self.action_space:
             fitted = apply_action_space(fitted, ref, self.action_space)
-        out[:n] = normalize(fitted, self.norm_stats["actions"], self.action_space)
+        out[:n, :dim] = normalize(fitted, self.norm_stats["actions"], self.action_space)
         return out
 
     @torch.no_grad()
     def infer(self, obs: dict[str, Any]) -> np.ndarray:
         if obs.get("reset"):
             self.reset()
-        raw_state = _fit_vector(obs["state"], self.model_config.state_dim)
+        raw_state = _fit_vector(obs["state"], self.state_dim)
         self._last_raw_state = raw_state
         state = normalize(raw_state, self.norm_stats["state"], self.action_space, field="state")
+        state = _fit_vector(state, self.model_config.state_dim)
         prompt = str(obs.get("prompt") or "")
         batch = {
             "state": torch.from_numpy(state).unsqueeze(0).to(device=self.device, dtype=self.dtype),
@@ -304,9 +328,13 @@ class LBMPolicy:
             "task_vec_clip": self._task_vec(prompt),
             "embodiment_id": torch.tensor([self.embodiment_id], device=self.device, dtype=torch.long),
         }
+        batch['camera_mask'] = torch.tensor(
+            [[cam in self.camera_keys for cam in self.model_config.camera_keys]],
+            device=self.device, dtype=torch.bool,
+        )
         self.task_vec = batch["task_vec_clip"]
         actions = self.model.sample_actions(batch, num_steps=self.diffusion_steps)
-        chunk = actions[0].float().cpu().numpy()
+        chunk = actions[0, :self.output_steps, :self.action_dim].float().cpu().numpy()
         chunk = unnormalize(chunk, self.norm_stats["actions"], self.action_space).astype(np.float32)
         if self.action_space:
             chunk = invert_action_space(chunk, raw_state, self.action_space)

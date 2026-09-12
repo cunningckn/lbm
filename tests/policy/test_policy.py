@@ -81,3 +81,62 @@ def test_obs_payload_roundtrip():
     np.testing.assert_array_equal(restored["images"]["image"], obs["images"]["image"])
     assert restored["prompt"] == "pick up the cup"
     assert restored["reset"] is True
+
+
+def test_mixed_checkpoint_keeps_model_io_and_adapts_source(tmp_path, monkeypatch):
+    import torch
+    from tests.helpers import tiny_dit_config
+
+    from lbm.action_space import resolve_action_space
+    from lbm.models.dit import DiTPolicy
+    from lbm.policy import LBMPolicy
+    from lbm.utils.preprocess import norm_stats_filename
+
+    cfg = tiny_dit_config(camera_keys=('image', 'wrist_image', 'extra'),
+                          state_dim=12, action_dim=10, action_length=2., action_freq=30.)
+    trained = DiTPolicy(cfg)
+    torch.save({'model': trained.state_dict()}, tmp_path/'model.pt')
+    (tmp_path/'train_config.json').write_text(json.dumps(dict(model=asdict(cfg), flow={'num_diffusion_steps': 2})))
+    stats = {key: dict(mean=[2.]*dim, std=[1.]*dim) for key, dim in [('state', 8), ('actions', 7)]}
+    dump = tmp_path/'source'
+    dump.mkdir()
+    norm_name = norm_stats_filename(10., 2., slices=resolve_action_space(CUSTOM_SPECS['libero'], 'delta'))
+    (dump/norm_name).write_text(json.dumps(dict(norm_stats=stats, action_freq=10.)))
+    monkeypatch.setattr('lbm.policy.resolve_dataset', lambda *a, **kw: dump)
+    policy = LBMPolicy.from_checkpoint(tmp_path/'model.pt', robot_type='libero', device='cpu')
+    assert policy.model_config == cfg
+    torch.testing.assert_close(policy.model.x_embedder.weight, trained.x_embedder.weight)
+    assert policy.metadata()['state_dim'] == 8
+    assert policy.metadata()['action_dim'] == 7
+    assert policy.metadata()['chunk_length'] == 20
+    assert policy.metadata()['camera_keys'] == ['image', 'wrist_image']
+    monkeypatch.setattr(policy, '_task_vec', lambda prompt: torch.zeros(1, cfg.task_embed_dim))
+    def sample(batch, **kwargs):
+        assert batch['state'].shape == (1, 12)
+        assert torch.count_nonzero(batch['state'][:, 8:]) == 0
+        assert batch['camera_mask'].tolist() == [[True, True, False]]
+        assert torch.count_nonzero(batch['images']['extra']) == 0
+        return torch.zeros(1, 60, 10)
+    monkeypatch.setattr(policy.model, 'sample_actions', sample)
+    obs = dict(state=np.ones(8)*3, images={cam: np.zeros((16,16,3), dtype=np.uint8)
+                                        for cam in ('image', 'wrist_image')}, reset=True)
+    actions = policy.infer(obs)
+    assert actions.shape == (20, 7) and np.isfinite(actions).all()
+    prefix = policy.normalized_action_prefix(actions[:2], 2)
+    assert prefix.shape == (60, 10)
+    assert not prefix[:, 7:].any()
+    assert not policy.normalized_action_prefix(np.empty((0, 7)), 0).any()
+    with pytest.raises(KeyError, match='wrist_image'):
+        policy.infer(dict(obs, images={'image': obs['images']['image']}))
+
+
+def test_policy_supports_quantile_only_source_stats():
+    import torch
+    from tests.helpers import tiny_dit_config
+
+    from lbm.policy import LBMPolicy
+
+    cfg = tiny_dit_config(state_dim=12, action_dim=10)
+    stats = {key: dict(q01=np.zeros(dim), q99=np.ones(dim)) for key, dim in [('state', 8), ('actions', 7)]}
+    policy = LBMPolicy(None, config=cfg, device=torch.device('cpu'), norm_stats=stats)
+    assert (policy.state_dim, policy.action_dim) == (8, 7)

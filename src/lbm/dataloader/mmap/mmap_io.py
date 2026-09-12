@@ -179,34 +179,29 @@ def _arrow_is_image_type(typ) -> bool:
     return False
 
 
-def _mmap_parquet_columns(path: Path) -> list[str] | None:
-    """Numeric / vector columns only. None = schema unavailable, read everything."""
-    try:
-        import pyarrow.parquet as pq
+def _mmap_parquet_columns(path: Path) -> list[str]:
+    """Exclude image payloads; schema failures must not trigger a full read."""
+    import pyarrow.parquet as pq
 
-        schema = pq.ParquetFile(path).schema_arrow
-    except Exception:
-        return None
-    keep = [field.name for field in schema if not _arrow_is_image_type(field.type)]
-    return keep or None
+    with pq.ParquetFile(path) as parquet:
+        schema = parquet.schema_arrow
+    return [field.name for field in schema if not _arrow_is_image_type(field.type)]
 
 
 def _read_parquet_for_mmap(path: Path, *, episode_index: int | None = None) -> pd.DataFrame:
+    import pyarrow.parquet as pq
+
     columns = _mmap_parquet_columns(path)
     if episode_index is None:
         return pd.read_parquet(path, columns=columns)
-    try:
-        import pyarrow.parquet as pq
-
-        table = pq.read_table(
-            path,
-            columns=columns,
-            filters=[("episode_index", "=", int(episode_index))],
-        )
-        frame = table.to_pandas()
-    except Exception:
-        frame = pd.read_parquet(path, columns=columns)
-        frame = frame[frame["episode_index"] == int(episode_index)]
+    # A failed filtered read must propagate: reading an entire shared file can
+    # exhaust memory and hide corrupt data or an incompatible schema.
+    table = pq.read_table(
+        path,
+        columns=columns,
+        filters=[("episode_index", "=", int(episode_index))],
+    )
+    frame = table.to_pandas()
     if frame.empty:
         raise FileNotFoundError(f"episode {episode_index} not found in {path}")
     return frame.reset_index(drop=True)

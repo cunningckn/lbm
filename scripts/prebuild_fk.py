@@ -24,23 +24,10 @@ if str(ROOT / "src") not in sys.path:
     sys.path.insert(0, str(ROOT / "src"))
 
 from lbm.config import TrainConfig
+from lbm.dataloader.custom.datasets import dataset_names, dataset_spec
+from lbm.dataloader.custom.fk_cache import needs_joint_fk
 from lbm.dataloader.mixture import load_selected_dumps
 from lbm.train_cli import add_dump_list_arguments, apply_dump_list_args, dumps_from_args
-
-DATASETS = (
-    "abc",
-    "agibot",
-    "das_gripper",
-    "droid",
-    "egoverse",
-    "galaxea",
-    "hifi_umi",
-    "hy_lance",
-    "kai0",
-    "libero",
-    "rmbench",
-    "robotwin",
-)
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -64,7 +51,8 @@ def main(argv: list[str] | None = None) -> None:
     cfg.data.use_mmap = True
     cfg.data.use_mmap_frames = False
     cfg.data.mmap_prebuild = False
-    mix = load_selected_dumps(cfg, dumps_from_args(args, default=DATASETS), mode="train")
+    defaults = tuple(name for name in dataset_names() if needs_joint_fk(dataset_spec(name)))
+    mix = load_selected_dumps(cfg, dumps_from_args(args, default=defaults), mode="train")
     n_inner = len(mix.datasets)
     workers = cfg.data.mmap_prebuild_workers
     print(f"prebuild fk: {n_inner} dump(s), workers={workers or 'auto'} force={bool(args.force)}")

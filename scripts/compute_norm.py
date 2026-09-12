@@ -7,7 +7,7 @@ Training loads the file that matches that dump's freq / length / mode.
 LeRobot dumps read proprio from parquet mmap (same as training). Pass ``--mmap``
 to also prebuild JPEG frame caches in the same run.
 
-Edit ``DATASETS`` below (or pass ``--dataset kai0,libero``). Missing folders are skipped.
+All registered datasets are selected by default (or pass ``--dataset kai0,libero``). Missing folders are skipped.
 
     uv run python scripts/compute_norm.py
     uv run python scripts/compute_norm.py --dataset kai0
@@ -32,21 +32,6 @@ from lbm.config import TrainConfig, add_temporal_arguments, apply_temporal_args
 from lbm.dataloader.mixture import load_selected_dumps
 from lbm.train_cli import add_dump_list_arguments, apply_dump_list_args, dumps_from_args
 from lbm.utils.preprocess import compute_norm_stats, dump_norm_stats_path, save_norm_stats
-
-DATASETS = (
-    "abc",
-    "agibot",
-    "das_gripper",
-    "droid",
-    "egoverse",
-    "galaxea",
-    "hifi_umi",
-    "hy_lance",
-    "kai0",
-    "libero",
-    "rmbench",
-    "robotwin",
-)
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -107,7 +92,7 @@ def main(argv: list[str] | None = None) -> None:
         cfg.data.override_action_freq = True
     cfg.data.use_mmap = True
     cfg.data.use_mmap_frames = True
-    mix = load_selected_dumps(cfg, dumps_from_args(args, default=DATASETS), mode="train")
+    mix = load_selected_dumps(cfg, dumps_from_args(args), mode="train")
     if args.mmap:
         n_inner = len(mix.datasets)
         print(f"prebuild mmap: {n_inner} dump(s), workers={cfg.data.mmap_prebuild_workers or 'auto'}")

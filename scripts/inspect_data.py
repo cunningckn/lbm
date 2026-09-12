@@ -4,7 +4,7 @@
 Vision → PNG + MP4, state/action → plots, language → txt. Then keeps
 iterating (no train) so IO can be timed.
 
-Edit ``DATASETS`` below (or pass ``--dataset rmbench``). Missing folders are skipped.
+All registered datasets are selected by default (or pass ``--dataset rmbench``). Missing folders are skipped.
 
     uv run python scripts/inspect_data.py
     uv run python scripts/inspect_data.py --dataset rmbench
@@ -35,21 +35,6 @@ from lbm.dataloader.pad import collate_fn, dataloader_worker_init_fn
 from lbm.train_cli import add_dump_list_arguments, apply_dump_list_args, dumps_from_args
 from lbm.utils.batch_dump import describe_loader_batch, save_loader_batch, video_fps_from_config
 from lbm.utils.progress import track
-
-DATASETS = (
-    "abc",
-    "agibot",
-    "das_gripper",
-    "droid",
-    "egoverse",
-    "galaxea",
-    "hifi_umi",
-    "hy_lance",
-    "kai0",
-    "libero",
-    "rmbench",
-    "robotwin",
-)
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -110,7 +95,7 @@ def _make_loader(dataset, cfg: TrainConfig, *, shuffle: bool) -> DataLoader:
 def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
     cfg = _build_config(args)
-    dataset = load_selected_dumps(cfg, dumps_from_args(args, default=DATASETS), mode="train")
+    dataset = load_selected_dumps(cfg, dumps_from_args(args), mode="train")
     n_inner = len(getattr(dataset, "datasets", [dataset]))
     print(
         f"dataset samples={len(dataset)} dumps={n_inner} "

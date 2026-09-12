@@ -53,7 +53,7 @@ def default_checkpoints_dir() -> Path:
 class OptimConfig:
     """AdamW with a linear-warmup-then-constant LR schedule."""
 
-    learning_rate: float = 1e-4
+    learning_rate: float = TRAIN_DEFAULTS.learning_rate
     lr_warmup_steps: int = 1000
     weight_decay: float = 0.01
     adam_beta1: float = 0.9
@@ -201,10 +201,11 @@ def validate_model_config(model: DiTConfig) -> list[str]:
         errors.append("language_encoder must be 'none', 'clip', or 't5'")
     if model.language_max_length <= 0:
         errors.append("language_max_length must be positive")
-    if model.t5_d_model % model.t5_num_heads:
+    if model.t5_num_heads <= 0 or model.t5_d_model <= 0 or model.t5_d_model % model.t5_num_heads:
         errors.append("t5_d_model must be divisible by t5_num_heads")
     if (
-        model.hidden_size % model.num_heads
+        min(model.num_heads, model.vit_num_heads, model.vision_pool_num_heads) <= 0
+        or model.hidden_size % model.num_heads
         or model.vit_embed_dim % model.vit_num_heads
         or model.vit_embed_dim % model.vision_pool_num_heads
         or model.hidden_size % 2

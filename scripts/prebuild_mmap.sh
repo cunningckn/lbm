@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Prebuild parquet trajectory mmap + JPEG frame mmap caches.
-# Edit DATASETS below (or DATASET=kai0,libero).
+# Defaults to all registered datasets (or DATASET=kai0,libero).
 #
 #   ./scripts/prebuild_mmap.sh
 #   DATASET=libero ./scripts/prebuild_mmap.sh
@@ -11,22 +11,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export PYTHONPATH="${ROOT}/src${PYTHONPATH:+:${PYTHONPATH}}"
 cd "${ROOT}"
 
-DATASETS=(
-  abc
-  agibot
-  das_gripper
-  droid
-  egoverse
-  galaxea
-  hifi_umi
-  hy_lance
-  kai0
-  libero
-  rmbench
-  robotwin
-)
-
-DATASET="${DATASET:-$(IFS=,; echo "${DATASETS[*]}")}"
+DATASET="${DATASET:-}"
 DATA_ROOT="${DATA_ROOT:-}"
 WORKERS="${WORKERS:-0}"
 

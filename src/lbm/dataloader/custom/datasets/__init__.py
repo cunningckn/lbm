@@ -7,7 +7,26 @@ import pkgutil
 from pathlib import Path
 from types import ModuleType
 
-from .mixes import NAMED_MIXES
+from ..spec import CustomSpec
+from .mixes import named_mixes
+
+
+def _register_module(out: dict[str, ModuleType], mod: ModuleType) -> None:
+    """Fail early on incomplete adapters or ambiguous dataset identities."""
+    name = getattr(mod, "NAME", None)
+    spec = getattr(mod, "SPEC", None)
+    if name is None and spec is None:
+        return  # Helper modules are not adapters.
+    if not isinstance(name, str) or not name or name.strip() != name:
+        raise ValueError(f"{mod.__name__}: NAME must be a non-empty, trimmed string")
+    if not isinstance(spec, CustomSpec) or spec.name != name:
+        raise ValueError(f"{mod.__name__}: SPEC must be a CustomSpec with name={name!r}")
+    for operation in ("scan", "read_vectors", "read_frames"):
+        if not callable(getattr(mod, operation, None)):
+            raise ValueError(f"{mod.__name__}: missing callable {operation}")
+    if name in out:
+        raise ValueError(f"duplicate dataset {name!r}: {out[name].__name__} and {mod.__name__}")
+    out[name] = mod
 
 
 def _load_modules() -> dict[str, ModuleType]:
@@ -17,14 +36,13 @@ def _load_modules() -> dict[str, ModuleType]:
         if info.name.startswith("_") or info.name == "mixes":
             continue
         mod = importlib.import_module(f"{__package__}.{info.name}")
-        name = getattr(mod, "NAME", None)
-        if name and hasattr(mod, "SPEC"):
-            out[str(name)] = mod
+        _register_module(out, mod)
     return out
 
 
 MODULES = _load_modules()
 CUSTOM_SPECS = {name: mod.SPEC for name, mod in MODULES.items()}
+NAMED_MIXES = named_mixes(tuple(sorted(MODULES)))
 CUSTOM_MIXTURES: dict[str, list[tuple[str, float, str]]] = {name: [(name, 1.0, name)] for name in CUSTOM_SPECS}
 CUSTOM_MIXTURES.update({name: list(rows) for name, rows in NAMED_MIXES.items()})
 

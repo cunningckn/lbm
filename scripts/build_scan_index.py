@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build ``{dump}/.cache/episodes`` for every on-disk dump (or a named subset).
 
-Edit ``DATASETS`` below (or pass ``--dataset kai0,libero``). Spec is the catalog name.
+All registered datasets are selected by default (or pass ``--dataset kai0,libero``). Spec is the catalog name.
 
     uv run python scripts/build_scan_index.py
     uv run python scripts/build_scan_index.py --rescan
@@ -30,21 +30,6 @@ from lbm.dataloader.paths import datasets_root
 from lbm.train_cli import add_dump_list_arguments, dumps_from_args
 from lbm.utils.progress import track
 
-DATASETS = (
-    "abc",
-    "agibot",
-    "das_gripper",
-    "droid",
-    "egoverse",
-    "galaxea",
-    "hifi_umi",
-    "hy_lance",
-    "kai0",
-    "libero",
-    "rmbench",
-    "robotwin",
-)
-
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Build .cache/episodes for each dump under datasets/")
@@ -56,7 +41,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
     base = Path(args.data_root).expanduser().resolve() if args.data_root else datasets_root()
-    names = dumps_from_args(args, default=DATASETS)
+    names = dumps_from_args(args)
     print(f"build scan index: root={base} dumps={len(names)} rescan={bool(args.rescan)}", flush=True)
 
     found = on_disk_dumps(names, base=base)

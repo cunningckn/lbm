@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Read dumps through the training DataLoader, loop, dump the first batch.
-# Edit DATASETS below (or DATASET=kai0,libero).
+# Defaults to all registered datasets (or DATASET=kai0,libero).
 #
 #   ./scripts/inspect_data.sh
 #   DATASET=rmbench ./scripts/inspect_data.sh
@@ -13,22 +13,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export PYTHONPATH="${ROOT}/src${PYTHONPATH:+:${PYTHONPATH}}"
 cd "${ROOT}"
 
-DATASETS=(
-  abc
-  agibot
-  das_gripper
-  droid
-  egoverse
-  galaxea
-  hifi_umi
-  hy_lance
-  kai0
-  libero
-  rmbench
-  robotwin
-)
-
-DATASET="${DATASET:-$(IFS=,; echo "${DATASETS[*]}")}"
+DATASET="${DATASET:-}"
 DATA_ROOT="${DATA_ROOT:-}"
 OUTPUT_DIR="${OUTPUT_DIR:-${ROOT}/outputs/inspect_data}"
 NUM_WORKERS="${NUM_WORKERS:-4}"

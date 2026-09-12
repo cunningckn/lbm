@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Precompute joint→EEF proprio into {dump}/.cache/fk.
-# Edit DATASETS below (or DATASET=kai0,agibot). Dumps without an FK chain are skipped.
+# Defaults to registered datasets with joint FK (or DATASET=kai0,agibot). Dumps without an FK chain are skipped.
 #
 #   ./scripts/prebuild_fk.sh
 #   DATASET=kai0 ./scripts/prebuild_fk.sh
@@ -12,22 +12,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export PYTHONPATH="${ROOT}/src${PYTHONPATH:+:${PYTHONPATH}}"
 cd "${ROOT}"
 
-DATASETS=(
-  abc
-  agibot
-  # das_gripper
-  droid
-  # egoverse
-  galaxea
-  # hifi_umi
-  # hy_lance
-  kai0
-  # libero
-  rmbench
-  robotwin
-)
-
-DATASET="${DATASET:-$(IFS=,; echo "${DATASETS[*]}")}"
+DATASET="${DATASET:-}"
 DATA_ROOT="${DATA_ROOT:-}"
 WORKERS="${WORKERS:-0}"
 FORCE="${FORCE:-0}"

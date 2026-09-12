@@ -18,6 +18,8 @@ mixed-checkpoint inference fix. CPU regression with available pretrained
 assets passed 468 with 11 resource skips and 14 integration deselections.
 See the new reports for long training and actual closed-loop task results.
 
+Latest follow-up: [validation, recovery and feature-shard audit](audit/README.md).
+
 | Work | Evidence |
 | --- | --- |
 | Bounded exact normalization memory | [normalization](bounded-norm/README.md) |

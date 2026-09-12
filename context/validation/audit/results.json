@@ -1,0 +1,59 @@
+{
+  "regression": {
+    "full_gpu_real_pretrained_passed": 507,
+    "full_skipped": 0,
+    "additional_cache_split_passed": 20,
+    "new_sigkill_case_passed": true
+  },
+  "single_gpu": {
+    "gpu": "A800 80GB",
+    "batch": 128,
+    "workers": 2,
+    "samples_per_second": 123.40688663440079,
+    "measured_updates": 60,
+    "seconds": 62.23315577802714,
+    "peak_allocated_mib": 75317.82080078125
+  },
+  "real_training": {
+    "train_samples": 8734,
+    "heldout_samples": 3095,
+    "updates": 510,
+    "batch": 64,
+    "workers": 2,
+    "train_seconds": 408.32902596198255,
+    "resume_ten_updates_seconds": 46.49562157300534,
+    "heldout_error_step_500": {
+      "kai0": 0.164353,
+      "agibot": 0.208351,
+      "aggregate": 0.1912
+    },
+    "allocated_mib_after_warmup": [
+      44998.53759765625,
+      45005.41357421875
+    ]
+  },
+  "libero": {
+    "suite": "libero_spatial",
+    "task_id": 0,
+    "policy_seed": 2026,
+    "simulator_seed": 17,
+    "initial_state_indices": [
+      10,
+      39
+    ],
+    "trials": 30,
+    "successes": 23,
+    "failures_at_step_limit": 7,
+    "max_steps": 220,
+    "replan_steps": 5,
+    "diffusion_steps": 10
+  },
+  "out_of_ram_io": {
+    "status": "unverified_after_server_connection_loss",
+    "physical_copies": 16,
+    "shards_copied": 288
+  },
+  "full_size_real_fsdp_followup": {
+    "status": "not_started_ssh_connection_timeout"
+  }
+}

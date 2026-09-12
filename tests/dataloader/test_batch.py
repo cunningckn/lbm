@@ -1,3 +1,4 @@
+import pytest
 import torch
 
 from lbm.batch import _as_str, _current_vector, _normalize_images, policy_batch_from_loader
@@ -115,3 +116,20 @@ def test_shorter_model_horizon_is_not_silently_truncated():
     with pytest.raises(ValueError, match="action_steps"):
         policy_batch_from_loader(raw, camera_keys=("cam",), device=torch.device("cpu"),
                                  dtype=torch.float32, action_steps=2)
+
+
+@pytest.mark.gpu
+@pytest.mark.parametrize('history', [1, 3])
+def test_cuda_image_normalization_matches_cpu(history):
+    if not torch.cuda.is_available():
+        pytest.skip('requires CUDA')
+    raw = dict(image=torch.randint(0, 256, (2, 2, history, 16, 16, 3), dtype=torch.uint8).pin_memory(),
+               action=torch.zeros(2, 4, 3), state=torch.zeros(2, 3), lang=['task', 'task'])
+    class Embedder:
+        def encode(self, texts):
+            return torch.zeros(len(texts), 8)
+    kwargs = dict(camera_keys=('one', 'two'), dtype=torch.bfloat16, train=False, embedder=Embedder())
+    cpu = policy_batch_from_loader(raw, device=torch.device('cpu'), **kwargs)
+    cuda = policy_batch_from_loader(raw, device=torch.device('cuda'), **kwargs)
+    for key in cpu['images']:
+        torch.testing.assert_close(cuda['images'][key].cpu(), cpu['images'][key], rtol=0, atol=0)

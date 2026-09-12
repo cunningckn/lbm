@@ -66,18 +66,42 @@ def prepare_validation(train, validation, config):
     return train, validation
 
 
+def balanced_indices(source, take):
+    offsets = getattr(source, '_episode_offsets', None)
+    if offsets is None and (getattr(source, 'records', None) or getattr(source, 'episodes', None)):
+        offsets = source._offsets
+    if offsets is None:
+        return np.linspace(0, len(source) - 1, take, dtype=np.int64).tolist()
+    starts = np.concatenate(([0], offsets[:-1]))
+    lengths = np.asarray(offsets) - starts
+    active = np.flatnonzero(lengths > 0)
+    if len(active) > take:
+        active = active[np.linspace(0, len(active) - 1, take, dtype=int)]
+    counts = np.zeros(len(lengths), dtype=np.int64)
+    left = take
+    while left:
+        for episode in active:
+            if counts[episode] < lengths[episode]:
+                counts[episode] += 1
+                left -= 1
+                if not left:
+                    break
+    return [int(starts[e] + i) for e in active
+            for i in np.linspace(0, lengths[e] - 1, counts[e], dtype=np.int64)]
+
+
 def validation_loaders(dataset, config, collate_fn, *, rank=0, world=1):
     """Balance sources, spread samples across episodes, pad ranks without counting duplicates."""
     if not dataset or config.val_batches == 0:
         return {}
-    sources = getattr(dataset, 'datasets', [dataset])
+    sources = getattr(dataset, 'datasets', None) or [dataset]
     budget = config.val_batches * config.batch_size * world
     if budget < len(sources):
         raise ValueError('validation budget must cover every source; increase val_batches')
     loaders = {}
     for i, source in enumerate(sources):
         take = min(len(source), budget // len(sources) + (i < budget % len(sources)))
-        selected = np.linspace(0, len(source) - 1, take, dtype=np.int64).tolist()
+        selected = balanced_indices(source, take)
         local = selected[rank::world]
         valid = len(local)
         # FSDP needs equal forward counts on all ranks, including a small tail.

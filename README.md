@@ -369,3 +369,18 @@ DDP/FSDP save complete checkpoint directories, including optimizer, scheduler,
 per-rank RNG and cursor. Resume with `--resume <output>/<step>` and the same world
 size, sharding configuration and data. A directory without `complete.json` is
 incomplete and cannot be resumed. Keep input files and normalization unchanged.
+
+### Resumable feature preparation
+
+`prebuild_features.py` now writes checksummed shards (default 1,024 rows). An
+interrupted build keeps `<output>.building`; rerunning the same command verifies
+completed shards and starts extraction at the next row. Change shard size with
+`--feature-shard-rows`. A changed source/configuration is rejected on recovery.
+Use a new output path when intentionally rebuilding different data.
+
+Prepare matching caches with `--val-fraction 0.1 --feature-split train` and
+`--val-fraction 0.1 --feature-split val`, using separate output directories and
+otherwise identical settings. Both use training-only normalization and record
+source/episode identities, allowing overlap checks and per-source validation.
+Legacy caches remain readable but lack episode provenance and content checksums
+unless their manifests contain them; rebuild these for the stronger guarantees.

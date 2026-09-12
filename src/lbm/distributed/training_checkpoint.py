@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import json
+import os
+import uuid
 from pathlib import Path
 
 import torch
@@ -27,18 +29,24 @@ def _rank_zero(operation):
 def save_training_checkpoint(path, model, optimizer, scheduler, *, step, epoch, batch_in_epoch,
                              epoch_rng, signature):
     path = Path(path)
-    temporary = path.with_name(path.name + '.incomplete')
     rank = dist.get_rank()
+    suffix = [uuid.uuid4().hex if rank == 0 else None]
+    dist.broadcast_object_list(suffix)
+    temporary = path.with_name(path.name + '.incomplete-' + suffix[0])
     _rank_zero(lambda: temporary.mkdir(parents=True, exist_ok=False))
     state = {'model': model.state_dict(),
              'optimizer': optimizer.state_dict() if signature['fsdp'] else get_optimizer_state_dict(model, optimizer)}
     dcp.save(state, checkpoint_id=str(temporary / 'shards'))
-    torch.save(dict(step=step, epoch=epoch, batch_in_epoch=batch_in_epoch, epoch_rng=epoch_rng,
-                    rng_state=capture_rng_state(), scheduler=scheduler.state_dict(), signature=signature),
-               temporary / f'rank-{rank}.pt')
+    with (temporary / f'rank-{rank}.pt').open('wb') as handle:
+        torch.save(dict(step=step, epoch=epoch, batch_in_epoch=batch_in_epoch, epoch_rng=epoch_rng,
+                        rng_state=capture_rng_state(), scheduler=scheduler.state_dict(), signature=signature), handle)
+        handle.flush()
+        os.fsync(handle.fileno())
     dist.barrier()
     def publish():
-        (temporary / 'complete.json').write_text(json.dumps({'version': 1, 'world': dist.get_world_size()}))
+        from lbm.feature_shards import atomic_json
+
+        atomic_json(temporary / 'complete.json', {'version': 1, 'world': dist.get_world_size()})
         temporary.rename(path)
     _rank_zero(publish)
 

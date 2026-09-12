@@ -65,3 +65,16 @@ def test_episode_holdout_recomputes_train_only_stats():
     assert 'stale' not in tr.norm_stats
     assert va.norm_stats is tr.norm_stats
     assert tr._locate(len(tr) - 1) == (2, 11)
+
+
+def test_validation_covers_short_episodes_between_long_ones():
+    import numpy as np
+
+    from lbm.training_split import balanced_indices
+
+    source = Samples('A', 10003)
+    source._episode_offsets = np.array([1, 2, 10002, 10003])
+    assert balanced_indices(source, 4) == [0, 1, 2, 10002]
+    indices = balanced_indices(source, 20)
+    assert len(indices) == len(set(indices)) == 20
+    assert {0, 1, 10002} <= set(indices)

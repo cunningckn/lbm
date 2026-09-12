@@ -182,14 +182,21 @@ def collate_fn(batch: list[dict] | dict) -> dict:
     return pad_loader_batch(batch)
 
 
-def _iter_mmap_stores(dataset: Any):
+def _iter_mmap_stores(dataset: Any, seen=None):
+    seen = set() if seen is None else seen
+    if id(dataset) in seen:
+        return
+    seen.add(id(dataset))
     stores = getattr(dataset, "_mmap_stores", None)
     if isinstance(stores, dict):
         yield from stores.values()
     elif stores:
         yield from stores
+    wrapped = getattr(dataset, 'dataset', None)
+    if wrapped is not None:
+        yield from _iter_mmap_stores(wrapped, seen)
     for sub in getattr(dataset, "datasets", []) or []:
-        yield from _iter_mmap_stores(sub)
+        yield from _iter_mmap_stores(sub, seen)
 
 
 def dataloader_worker_init_fn(_worker_id: int) -> None:

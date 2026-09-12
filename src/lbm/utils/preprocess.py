@@ -10,6 +10,7 @@ import torch
 import torch.nn.functional as F
 
 from lbm.action_space import actions_in_train_space, column_scale_mask, uses_rel
+from lbm.utils.quantiles import DiskQuantiles
 
 IMAGENET_MEAN = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)
 IMAGENET_STD = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
@@ -112,45 +113,54 @@ def _jsonable(value):
 
 
 class _Moments:
-    def __init__(self) -> None:
+    def __init__(self, *, scratch_dir=None, block_rows=65536) -> None:
+        self.quantiles = DiskQuantiles(directory=scratch_dir, block_rows=block_rows)
         self.count = 0
         self.sum = None
         self.sumsq = None
         self.min = None
         self.max = None
-        self._chunks: list[np.ndarray] = []
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.quantiles.close()
 
     def update(self, arr) -> None:
-        x = np.asarray(arr, dtype=np.float64)
+        x = np.asarray(arr)
         if x.size == 0:
             return
         if x.ndim == 1:
             x = x[None]
         x = x.reshape(-1, x.shape[-1])
         dim = int(x.shape[-1])
-        if not np.isfinite(x).all():
-            raise ValueError("normalization data must be finite")
         if self.sum is not None and dim != len(self.sum):
             raise ValueError("normalization dimension changed between batches")
+        # Validate before updating counts; all temporary arrays stay block-sized.
+        for start in range(0, len(x), self.quantiles.block_rows):
+            if not np.isfinite(x[start:start + self.quantiles.block_rows]).all():
+                raise ValueError("normalization data must be finite")
         if self.sum is None:
             self.sum = np.zeros(dim, dtype=np.float64)
             self.sumsq = np.zeros(dim, dtype=np.float64)
             self.min = np.full(dim, np.inf)
             self.max = np.full(dim, -np.inf)
-        self.count += int(x.shape[0])
-        self.sum += x.sum(axis=0)
-        self.sumsq += np.square(x).sum(axis=0)
-        self.min = np.minimum(self.min, x.min(axis=0))
-        self.max = np.maximum(self.max, x.max(axis=0))
-        self._chunks.append(x.astype(np.float32, copy=False))
+        for start in range(0, len(x), self.quantiles.block_rows):
+            block = np.asarray(x[start:start + self.quantiles.block_rows], dtype=np.float64)
+            self.quantiles.append(block)
+            self.count += len(block)
+            self.sum += block.sum(axis=0)
+            self.sumsq += np.square(block).sum(axis=0)
+            self.min = np.minimum(self.min, block.min(axis=0))
+            self.max = np.maximum(self.max, block.max(axis=0))
 
     def as_dict(self) -> dict:
         if self.sum is None or self.count <= 0:
             raise ValueError("no state/action frames")
         mean = self.sum / self.count
         var = np.maximum(self.sumsq / self.count - np.square(mean), 0.0)
-        stacked = np.concatenate(self._chunks, axis=0)
-        q01, q99 = np.quantile(stacked, [0.01, 0.99], axis=0)
+        q01, q99 = self.quantiles.quantiles([0.01, 0.99])
         return {
             "mean": mean.astype(np.float32),
             "std": np.sqrt(var).astype(np.float32),
@@ -163,7 +173,7 @@ class _Moments:
         }
 
 
-def compute_norm_stats(dataset, *, progress: bool | None = None, leave: bool = True) -> dict:
+def compute_norm_stats(dataset, *, progress: bool | None = None, leave: bool = True, scratch_dir=None) -> dict:
     """Mean/std, min/max, and q01/q99 over training-space state/action rows.
 
     ``rel`` slides every window (same gather as ``__getitem__``). ``abs`` / ``delta``
@@ -173,53 +183,52 @@ def compute_norm_stats(dataset, *, progress: bool | None = None, leave: bool = T
     from lbm.dataloader.custom.fk_cache import require_fk_cache
 
     require_fk_cache(dataset)
-    state_m = _Moments()
-    action_m = _Moments()
-    n_episodes = len(dataset.episodes) if dataset.episodes else len(dataset.records)
-    spec = dataset.spec
-    root = dataset.root
-    dump = Path(root).name if root is not None else spec.name
-    indices = range(n_episodes)
-    if progress is not False:
-        from lbm.utils.progress import track
+    with _Moments(scratch_dir=scratch_dir) as state_m, _Moments(scratch_dir=scratch_dir) as action_m:
+        n_episodes = len(dataset.episodes) if dataset.episodes else len(dataset.records)
+        spec = dataset.spec
+        root = dataset.root
+        dump = Path(root).name if root is not None else spec.name
+        indices = range(n_episodes)
+        if progress is not False:
+            from lbm.utils.progress import track
 
-        indices = track(indices, desc=f"norm {dump}", total=n_episodes, unit="ep", leave=leave)
-    slide = uses_rel(getattr(dataset, "_space", ()))
-    for epi_i in indices:
-        state, action, slices = dataset._policy_vectors(epi_i)
-        n = int(action.shape[0])
-        if n == 0:
-            continue
-        if slide:
-            deltas = dataset.action_deltas
-            for t in range(n):
-                chunk = dataset._gather_vector(action, t, deltas, n)
-                st = state[min(t, n - 1)]
-                chunk = actions_in_train_space(chunk, st, slices)
-                action_m.update(chunk)
-                state_m.update(st)
-        else:
-            packed = actions_in_train_space(action, state[0], slices)
-            state_m.update(state)
-            action_m.update(packed)
-    payload = {
-        "norm_stats": {
-            "state": state_m.as_dict(),
-            "actions": action_m.as_dict(),
-        },
-        "action_space": [sl.as_dict() for sl in getattr(dataset, "_space", ())],
-        "action_mode": dataset.action_mode,
-        "action_kind": getattr(dataset, "action_kind", None),
-        "action_format": getattr(dataset, "action_format", None),
-        "action_freq": float(dataset.action_freq),
-        "action_length": float(dataset.action_length),
-        "spec": spec.name,
-        "embodiment": spec.embodiment,
-        "n_episodes": int(n_episodes),
-    }
-    if root is not None:
-        payload["dataset_root"] = str(root)
-    return payload
+            indices = track(indices, desc=f"norm {dump}", total=n_episodes, unit="ep", leave=leave)
+        slide = uses_rel(getattr(dataset, "_space", ()))
+        for epi_i in indices:
+            state, action, slices = dataset._policy_vectors(epi_i)
+            n = int(action.shape[0])
+            if n == 0:
+                continue
+            if slide:
+                deltas = dataset.action_deltas
+                for t in range(n):
+                    chunk = dataset._gather_vector(action, t, deltas, n)
+                    st = state[min(t, n - 1)]
+                    chunk = actions_in_train_space(chunk, st, slices)
+                    action_m.update(chunk)
+                    state_m.update(st)
+            else:
+                packed = actions_in_train_space(action, state[0], slices)
+                state_m.update(state)
+                action_m.update(packed)
+        payload = {
+            "norm_stats": {
+                "state": state_m.as_dict(),
+                "actions": action_m.as_dict(),
+            },
+            "action_space": [sl.as_dict() for sl in getattr(dataset, "_space", ())],
+            "action_mode": dataset.action_mode,
+            "action_kind": getattr(dataset, "action_kind", None),
+            "action_format": getattr(dataset, "action_format", None),
+            "action_freq": float(dataset.action_freq),
+            "action_length": float(dataset.action_length),
+            "spec": spec.name,
+            "embodiment": spec.embodiment,
+            "n_episodes": int(n_episodes),
+        }
+        if root is not None:
+            payload["dataset_root"] = str(root)
+        return payload
 
 
 def _has_quantiles(stats) -> bool:

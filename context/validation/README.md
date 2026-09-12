@@ -51,10 +51,10 @@ uv run python scripts/train.py --data-mix kai0,agibot --action-mode delta \
 Use explicit action frequency/length/kind/format consistently across norm
 generation and training when overriding defaults. Production statistics
 should cover representative training data; the one-episode validation
-statistics are not production defaults. Exact quantiles still retain the
-state/action observations in memory: for extremely large datasets this
-separate statistics computation needs capacity planning. The bounded-memory
-mmap packing result does not imply bounded exact-quantile computation.
+statistics are not production defaults. Exact quantiles spool float32 observations to temporary disk and select ranks
+in fixed-size blocks. Use `compute_norm.py --stats-temp-dir /scratch` to choose
+a disk with enough space for the state/action rows. Dataset adapters still
+load episode vectors; the reducer no longer retains the whole corpus.
 
 For reproducible standard-checkpoint replay, start with zero workers and
 resume with the same model/data settings; `--resume` restores optimizer,

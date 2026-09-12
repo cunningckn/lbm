@@ -1,0 +1,19 @@
+........................................................................ [ 17%]
+........................................................................ [ 35%]
+........................................................................ [ 53%]
+........................................................................ [ 71%]
+........................................................................ [ 89%]
+..........................................                               [100%]
+=============================== warnings summary ===============================
+tests/dataloader/test_mmap.py::TestFrameMmap::test_decode_pool_works_after_fork
+tests/dataloader/test_mmap.py::TestFrameMmap::test_decode_pool_recreated_when_parent_had_threads
+  /mnt/kpfs/workspace/jinaoqun/Projects/lbm/.venv/lib/python3.12/site-packages/lance/__init__.py:359: UserWarning: lance is not fork-safe. If you are using multiprocessing, use spawn or forkserver instead.
+    warnings.warn(
+
+tests/dataloader/test_mmap.py::TestFrameMmap::test_decode_pool_works_after_fork
+tests/dataloader/test_mmap.py::TestFrameMmap::test_decode_pool_recreated_when_parent_had_threads
+  /root/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/multiprocessing/popen_fork.py:66: DeprecationWarning: This process (pid=1652105) is multi-threaded, use of fork() may lead to deadlocks in the child.
+    self.pid = os.fork()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+402 passed, 4 warnings in 116.33s (0:01:56)

@@ -1,0 +1,10 @@
+[scan] loaded 23963 episodes from /mnt/open_source_data/Kai0/.cache/episodes
+pretrained: dino=/tmp/lbm-gpu-validation/checkpoints/dinov3/dinov3_vitb16_pretrain_lvd1689m.pth
+device=cuda world=1 params=2015.9M trainable=1928.8M bf16=True fsdp=0 action=5s@30Hz→150 history=0s@10Hz→1 vision=dino language=none train_vision_encoder=0 train_language_encoder=0
+cameras=('top_head', 'hand_left', 'hand_right') state_dim=14 action_dim=14 train_len=1800 val_len=1800
+warning: no norm_stats for ['kai0']; state/action left raw
+step      5  loss 1.3672  lr 6.00e-07  gnorm 28.375  1.91 it/s
+step     10  loss 1.3594  lr 1.10e-06  gnorm 21.625  5.94 it/s
+step     15  loss 1.2812  lr 1.60e-06  gnorm 24.000  6.03 it/s
+step     20  loss 1.2891  lr 2.10e-06  gnorm 19.125  6.16 it/s
+{"peak_memory_mib": 18654.89501953125, "dataset": "kai0", "max_episodes": 1, "steps": 20, "batch_size": 4, "num_workers": 2, "mmap": false}

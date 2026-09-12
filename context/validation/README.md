@@ -3,6 +3,13 @@
 The September 2026 cleanup was tested on js_dev_2 (A800 80 GB GPUs) in
 isolated checkouts. Dataset files and the user's checkout were preserved.
 
+Final runtime regression on the PR #24 code passed **463 tests, zero skips**
+with GPUs, pretrained assets and real datasets enabled. The new hosted CPU
+job in PR #25 passed **432 tests**, with **17 explicit resource-dependent
+skips and 14 integration cases deselected**. CPU CI does not replace the
+server run. CLI help smoke checks passed for scan, mmap, norm, FK,
+inspection, training and the training-throughput benchmark.
+
 | Work | Evidence |
 | --- | --- |
 | GPU + pretrained + real-data initial baseline | [initial validation](2026-09-13/README.md) |
@@ -18,6 +25,14 @@ precomputed-image-feature path. Real Kai0+Agibot batches reached about
 70 samples/s with eight workers in the short loader trial. Image windows,
 action length, precision, update scope and data source must match when
 comparing throughput. See the reports for complete settings and limitations.
+
+After the exact-video-seek fix and training-loop refactor, the real mixture
+trial was repeated for 40 updates at batch 32, eight workers, no mmap and
+the same one-episode-per-source selection. Steps 20/30/40 logged
+2.20/2.21/2.18 updates/s (70.40/70.72/69.76 samples/s), with 33,249.52 MiB
+peak allocated memory. This matches the earlier throughput baseline while
+using correctly decoded target frames. Norm files were absent in this
+throughput-only trial; normalized stability is a separate experiment below.
 
 ## Prepare and train multiple datasets
 

@@ -33,3 +33,19 @@ def test_mixture_from_synthetic_trees(tmp_path):
     assert set(io["camera_keys"]) >= {"cam_high", "image"}
     assert embodiment_id_from_tag(rm.spec.embodiment) == 7
     assert embodiment_id_from_tag(lib.spec.embodiment) == 25
+
+
+def test_catalog_mixture_uses_explicit_data_root(tmp_path, monkeypatch):
+    from lbm.config import TrainConfig
+    from lbm.dataloader.mixture import load_dataset
+
+    write_lerobot_v2_tree(tmp_path, robot_type="libero", name="libero")
+    write_lerobot_v2_tree(tmp_path, robot_type="rmbench", name="rmbench")
+    monkeypatch.setenv("LBM_DATASETS", str(tmp_path / "wrong-root"))
+    cfg = TrainConfig()
+    cfg.data.data_root_dir = str(tmp_path)
+    cfg.data.data_mix = "libero,rmbench"
+    cfg.data.use_mmap = cfg.data.use_mmap_frames = False
+    mix = load_dataset(cfg)
+    assert len(mix.datasets) == 2
+    assert all(ds.root.is_relative_to(tmp_path) for ds in mix.datasets)

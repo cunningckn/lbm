@@ -25,9 +25,13 @@ def build_catalog_mixture(
 
     pairs: list[tuple[Any, float]] = []
     missing: list[str] = []
-    root = datasets_root()
+    root = Path(config.data.data_root_dir).expanduser() if config.data.data_root_dir else datasets_root()
     for entry in entries:
-        path = resolve_dataset(entry.name, required=False)
+        if config.data.data_root_dir:
+            candidate = root / entry.name
+            path = candidate.resolve() if candidate.is_dir() else None
+        else:
+            path = resolve_dataset(entry.name, required=False)
         if path is None:
             missing.append(entry.name)
             print(f"[mix] skip {entry.name}: not on disk (tried {root / entry.name})", flush=True)

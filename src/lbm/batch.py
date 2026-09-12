@@ -6,6 +6,7 @@ from typing import Any
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 
 from lbm.dataloader.pad import embodiment_id_from_tag
 from lbm.utils.preprocess import imagenet_normalize
@@ -145,6 +146,8 @@ def policy_batch_from_loader(
     train: bool = True,
     non_blocking: bool = True,
     state_dim: int = 0,
+    action_dim: int = 0,
+    action_steps: int = 0,
 ) -> dict[str, Any]:
     """Map a collated LeRobot batch onto ``DiTPolicy.forward`` / ``sample_actions``."""
     image = batch["image"]
@@ -176,6 +179,20 @@ def policy_batch_from_loader(
             actions.shape[0], int(state_dim), device=device, dtype=dtype
         )
 
+    if state_dim:
+        if state.shape[-1] > state_dim:
+            raise ValueError("batch state exceeds model state_dim")
+        state = F.pad(state, (0, state_dim - state.shape[-1]))
+    original_action_shape = actions.shape
+    if action_dim:
+        if actions.shape[-1] > action_dim:
+            raise ValueError("batch action exceeds model action_dim")
+        actions = F.pad(actions, (0, action_dim - actions.shape[-1]))
+    if action_steps:
+        if actions.shape[1] > action_steps:
+            raise ValueError("batch action exceeds model action_steps")
+        actions = F.pad(actions, (0, 0, 0, action_steps - actions.shape[1]))
+
     langs = [_as_str(t) for t in batch["lang"]]
     bsz = actions.shape[0]
     if "embodiment_id" in batch:
@@ -197,14 +214,27 @@ def policy_batch_from_loader(
         "embodiment_id": embodiment_id,
         "robot_tag": list(batch.get("robot_tag") or []),
     }
-    if "action_mask" in batch:
-        out["action_mask"] = torch.as_tensor(batch["action_mask"]).to(
-            device=device, non_blocking=non_blocking
+    if "action_mask" in batch or actions.shape != original_action_shape:
+        mask = torch.as_tensor(batch.get("action_mask", True), device=device, dtype=torch.bool)
+        mask = torch.broadcast_to(mask, original_action_shape)
+        out["action_mask"] = F.pad(
+            mask, (0, actions.shape[-1] - original_action_shape[-1],
+                   0, actions.shape[1] - original_action_shape[1]), value=False,
         )
-    if "camera_mask" in batch:
-        out["camera_mask"] = torch.as_tensor(batch["camera_mask"]).to(
-            device=device, non_blocking=non_blocking
-        )
+
+    unknown = set(images) - set(camera_keys)
+    if unknown:
+        raise ValueError(f"batch cameras not present in model: {sorted(unknown)}")
+    if "camera_mask" in batch or keys != camera_keys:
+        source_mask = torch.as_tensor(batch.get("camera_mask", True), device=device, dtype=torch.bool)
+        source_mask = torch.broadcast_to(source_mask, (bsz, len(keys)))
+        camera_mask = torch.zeros(bsz, len(camera_keys), device=device, dtype=torch.bool)
+        for i, key in enumerate(camera_keys):
+            if key in keys:
+                camera_mask[:, i] = source_mask[:, keys.index(key)]
+        out["camera_mask"] = camera_mask
+    template = next(iter(images.values()))
+    out["images"] = {key: images[key] if key in images else torch.zeros_like(template) for key in camera_keys}
 
     if train and mask_state_ratio > 0 and state.numel():
         masked = torch.rand(state.shape[0], device=device) < mask_state_ratio

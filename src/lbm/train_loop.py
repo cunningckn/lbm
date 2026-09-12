@@ -353,6 +353,8 @@ def main(config: TrainConfig) -> None:
             mask_state_ratio=config.flow.mask_state_ratio if train else 0.0,
             train=train,
             state_dim=config.model.state_dim,
+            action_dim=config.model.action_dim,
+            action_steps=config.model.chunk_length,
         )
 
     wandb = None

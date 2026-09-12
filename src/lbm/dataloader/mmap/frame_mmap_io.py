@@ -144,14 +144,53 @@ def _parse_image_size(value: object) -> int | None:
     return int(value)
 
 
+def _validated_jpeg_tables(cache_dir: Path, manifest: dict):
+    """Check indexes in bounded chunks before exposing any payload slices."""
+    n = int(manifest["num_frames"])
+    if manifest.get("layout") != LAYOUT_JPEG or n <= 0:
+        raise ValueError("invalid JPEG layout or frame count")
+    if min(int(manifest["height"]), int(manifest["width"])) <= 0:
+        raise ValueError("invalid JPEG dimensions")
+    offset = length = None
+    try:
+        offset = np.load(cache_dir / "offset.npy", mmap_mode="r", allow_pickle=False)
+        length = np.load(cache_dir / "length.npy", mmap_mode="r", allow_pickle=False)
+        if offset.shape != (n,) or length.shape != (n,):
+            raise ValueError("JPEG index length differs from manifest")
+        if offset.dtype != np.dtype("int64") or length.dtype != np.dtype("uint32"):
+            raise ValueError("invalid JPEG index dtype")
+        size = (cache_dir / "frames.bin").stat().st_size
+        end = 0
+        for lo in range(0, n, 65536):
+            hi = min(n, lo + 65536)
+            off, count = offset[lo:hi], length[lo:hi]
+            if (int(off[0]) != end or np.any(count == 0)
+                    or np.any(off < 0) or np.any(off > size)
+                    or np.any(off[1:] != off[:-1] + count[:-1])):
+                raise ValueError("invalid JPEG offsets or lengths")
+            end = int(off[-1]) + int(count[-1])
+        if end != size:
+            raise ValueError("JPEG payload size differs from index")
+        return offset, length
+    except BaseException:
+        for arr in (offset, length):
+            mapping = getattr(arr, "_mmap", None)
+            if mapping is not None:
+                mapping.close()
+        raise
+
+
 def _jpeg_manifest_ready(cache_dir: Path, source_tag: str) -> bool:
     manifest = read_source_manifest(cache_dir, source_tag)
-    return (
-        bool(manifest)
-        and manifest.get("layout") == LAYOUT_JPEG
-        and int(manifest.get("height") or 0) > 0
-        and int(manifest.get("width") or 0) > 0
-    )
+    if not manifest:
+        return False
+    try:
+        tables = _validated_jpeg_tables(cache_dir, manifest)
+    except (OSError, ValueError, KeyError, TypeError, OverflowError, EOFError):
+        return False
+    for arr in tables:
+        arr._mmap.close()
+    return True
 
 
 def _cache_is_ready(cache_dir: Path, source_tag: str) -> bool:
@@ -375,9 +414,13 @@ class MmapFrameEpisode:
         manifest = read_manifest(cache_dir / MANIFEST)
         if manifest is None:
             raise FileNotFoundError(f"invalid frame mmap manifest in {cache_dir}")
-        blob = np.memmap(cache_dir / "frames.bin", dtype=np.uint8, mode="r")
-        offset = np.load(cache_dir / "offset.npy", mmap_mode="r")
-        length = np.load(cache_dir / "length.npy", mmap_mode="r")
+        offset, length = _validated_jpeg_tables(cache_dir, manifest)
+        try:
+            blob = np.memmap(cache_dir / "frames.bin", dtype=np.uint8, mode="r")
+        except BaseException:
+            offset._mmap.close()
+            length._mmap.close()
+            raise
         return cls(
             cache_dir=cache_dir,
             num_frames=int(manifest["num_frames"]),
@@ -389,9 +432,10 @@ class MmapFrameEpisode:
         )
 
     def close(self) -> None:
-        mmap = getattr(self._blob, "_mmap", None)
-        if mmap is not None:
-            mmap.close()
+        for arr in (self._blob, self._offset, self._length):
+            mapping = getattr(arr, "_mmap", None)
+            if mapping is not None:
+                mapping.close()
 
     def _safe_indices(self, frame_indices: np.ndarray) -> np.ndarray:
         idx = np.asarray(frame_indices, dtype=np.int64).reshape(-1)

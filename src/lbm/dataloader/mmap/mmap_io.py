@@ -61,7 +61,7 @@ def read_manifest(path: Path) -> dict[str, Any] | None:
         if not text:
             return None
         payload = json.loads(text)
-    except (OSError, json.JSONDecodeError):
+    except (OSError, UnicodeError, json.JSONDecodeError):
         return None
     return payload if isinstance(payload, dict) else None
 

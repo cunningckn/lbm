@@ -156,6 +156,8 @@ def policy_batch_from_loader(
     keys = tuple(batch.get("camera_keys") or camera_keys)
     if len(keys) != image.shape[1]:
         keys = camera_keys
+    # Transfer compact uint8 frames before normalization; keep pinned DMA useful.
+    image = image.to(device=device, non_blocking=non_blocking)
     images = _normalize_images(image, keys)
     images = {
         cam: img.to(device=device, dtype=dtype, non_blocking=non_blocking)

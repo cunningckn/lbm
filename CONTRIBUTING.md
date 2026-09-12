@@ -18,8 +18,10 @@ python -m compileall -q src tests scripts examples benchmarks simulation
 Ruff rules live in `pyproject.toml`. Imports, whitespace, line length and
 undefined names are checked for repository Python code, including simulations.
 Use `ruff check --fix` for safe automatic fixes and review the resulting diff.
-CI runs lint and syntax checks on pull requests and pushes to `master`; these
-checks do not install PyTorch, download weights, or require a GPU.
+CI runs lint, syntax checks and CPU regression tests on pull requests and
+pushes to `master`. The CPU job installs the lockfile's PyTorch/torchvision
+versions using official CPU wheels and constrains the other runtime packages
+to `uv.lock`. It does not download pretrained weights or require a GPU.
 
 ## Runtime validation
 
@@ -30,8 +32,9 @@ uv run --locked --extra dev --extra data pytest -q tests/config
 uv run --locked --extra dev --extra data pytest -q tests/dataloader/test_mmap.py tests/dataloader/test_mmap_memory.py
 ```
 
-These runtime tests are not yet part of hosted CI. Tests involving CUDA, real
-datasets or pretrained weights require those resources to be available.
+Hosted CI excludes integration/GPU-marked cases. Missing pretrained assets
+cause explicit skips. Tests involving CUDA, real datasets or pretrained
+weights require a separate environment with those resources available.
 For training or performance changes, also record the model configuration,
 batch size, hardware, warmup, measurement duration, peak memory and throughput.
 Compare the same workload before and after the change.
@@ -62,6 +65,12 @@ in `src/lbm/train_loop.py` owns dataset creation, epoch advancement and resume
 replay. Keep loader construction changes in `make_loader()` and run
 `tests/config/test_training_loader.py`, `tests/config/test_train_loop.py` and
 `tests/config/test_checkpoint_resume.py` to check sampling and resume behavior.
+
+`training_validation.py` owns evaluation mode, inference-only sampling and
+distributed error/count aggregation. `training_metrics.py` owns metric math
+and console/experiment-log field names. Keep model architecture in `models`,
+batch alignment in `batch.py`, and shared CLI/default definitions in
+`config.py`/`train_cli.py` so a feature does not create another set of defaults.
 
 ## Pretrained assets in tests
 

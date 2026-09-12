@@ -56,7 +56,9 @@ def main(argv=None):
     norms = {ds.spec.name: _jsonable(ds.norm_stats) for ds in dataset.datasets}
     metadata = dict(model={key: getattr(cfg.model, key) for key in MODEL_FIELDS},
                     backbone_sha256=backbone_fingerprint(encoder.img_backbone),
-                    normalization=norms, source_config=asdict(cfg))
+                    normalization=norms,
+                    action_spaces={ds.spec.name: [sl.as_dict() for sl in ds._space] for ds in dataset.datasets},
+                    source_config=asdict(cfg))
 
     def batches():
         count = 0

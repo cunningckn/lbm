@@ -155,3 +155,17 @@ class FeatureDataset(Dataset):
     def check_backbone(self, model):
         if backbone_fingerprint(model.img_backbone) != self.metadata['backbone_sha256']:
             raise ValueError('feature cache was built with different encoder weights or precision')
+
+    def check_validation(self, other):
+        for key in ('model', 'normalization', 'action_spaces'):
+            if self.metadata.get(key) != other.metadata.get(key):
+                raise ValueError(f'training and validation feature cache {key} differ')
+
+    def inference_normalization(self):
+        norms = self.metadata.get('normalization', {})
+        if len(norms) != 1:
+            return None
+        name, stats = next(iter(norms.items()))
+        if stats is None:
+            return None
+        return dict(norm_stats=stats, action_space=self.metadata.get('action_spaces', {}).get(name, []))

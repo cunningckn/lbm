@@ -122,6 +122,8 @@ def parse_args(
 
     add_dataset_location_arguments(p, dataset_default=default_dataset)
     p.add_argument("--val-dataset", default="")
+    p.add_argument("--val-fraction", type=float, default=0.0,
+                   help="episode holdout fraction; recomputes training-only normalization")
     p.add_argument("--video-backend", default=TRAIN_DEFAULTS.video_backend)
     p.add_argument("--action-mode", default=TRAIN_DEFAULTS.action_mode, help="delta (default), rel, or abs")
     p.add_argument(
@@ -201,6 +203,7 @@ def build_train_config(args: argparse.Namespace) -> TrainConfig:
     cfg.optim.learning_rate = args.lr
     apply_dataset_location_args(cfg, args)
     cfg.data.val_dataset = args.val_dataset
+    cfg.data.val_fraction = args.val_fraction
     cfg.data.video_backend = args.video_backend
     cfg.data.action_mode = args.action_mode
     cfg.data.action_kind = getattr(args, "action_kind", None)

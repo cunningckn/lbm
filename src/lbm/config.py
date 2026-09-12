@@ -418,6 +418,7 @@ class DataConfig:
     data_mix: str = ""
     dataset: str = ""
     val_dataset: str = ""
+    val_fraction: float = 0.0
     robot_type: str = ""
     video_backend: str = TRAIN_DEFAULTS.video_backend
     lerobot_version: str = "v2.0"

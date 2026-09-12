@@ -104,6 +104,7 @@ def resolve_norm_stats_path(
     if explicit is not None:
         candidates.append(Path(explicit))
     ckpt_dir = ckpt if ckpt.is_dir() else ckpt.parent
+    candidates.append(ckpt_dir / "normalization" / f"{robot_type}.json")
     candidates.append(ckpt_dir / "norm_stats.json")
     if robot_type and action_freq is not None:
         dump = resolve_dataset(robot_type, required=False)

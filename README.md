@@ -341,3 +341,13 @@ uv run pytest tests/distributed/test_fsdp.py::test_fsdp_two_gpu_train_step
 DINO weights are **not** bundled. Follow the DINOv3 license, download `dinov3_vitb16_pretrain_lvd1689m.pth`, and put it in `checkpoints/dinov3/` (or set `LBM_DINO` / `lbm_DINO`). CLIP ViT-B/32 text weights download on first `CLIPTextEmbedder` / `--language-encoder clip` use into `checkpoints/clip/`.
 
 SigLIP-B (`google/siglip-base-patch16-224`) and t5-small download to `checkpoints/siglip` / `checkpoints/t5` on first `--vision-encoder siglip` / `--language-encoder t5` train run. Override with `LBM_SIGLIP` / `LBM_T5` (aliases `lbm_SIGLIP` / `lbm_T5`), or `HF_ENDPOINT` / `lbm_SIGLIP_URL` / `lbm_T5_URL`. The whole tree is `lbm/checkpoints` (`LBM_CHECKPOINTS` to relocate). Pass `--no-pretrained-encoders` to keep random init. Vision and language towers are frozen by default; pass `--train-vision-encoder` / `--train-language-encoder` to train them. Attention-pool and proj layers are always trained.
+
+### Held-out validation
+
+Training data is never reused implicitly for validation. Pass an episode-disjoint
+`--val-dataset`, or use `--val-fraction 0.1` to split each online source by episode
+with `--seed` and recompute normalization on training episodes only. Each source
+needs at least two episodes. Without either option, validation is disabled.
+`--val-batches 0` disables evaluation. Validation budgets are balanced across
+sources, include partial batches, and report both per-source and overall errors.
+For feature training, provide a separately prepared held-out cache.

@@ -66,3 +66,52 @@ def test_policy_batch_from_loader_shapes():
     assert batch["task_vec_clip"].shape == (2, cfg.task_embed_dim)
     assert batch["embodiment_id"].tolist() == [7, 25]
     assert batch["action_mask"].shape == batch["actions"].shape
+
+
+def test_single_source_batch_pads_to_mixed_model_and_masks_padding():
+    from tests.helpers import tiny_dit_config
+
+    from lbm.models.dit import DiTPolicy
+
+    cfg = tiny_dit_config(state_dim=20, action_dim=22, action_length=4,
+                          camera_keys=("other", "present"))
+    raw = {"image": torch.zeros(2, 1, 1, 32, 32, 3, dtype=torch.uint8),
+           "camera_keys": ("present",), "state": torch.ones(2, 14),
+           "action": torch.ones(2, 2, 14), "lang": ["test", "test"]}
+    batch = policy_batch_from_loader(raw, camera_keys=cfg.camera_keys,
+                                    device=torch.device("cpu"), dtype=torch.float32,
+                                    state_dim=20, action_dim=22, action_steps=4)
+    assert batch["state"].shape == (2, 20)
+    assert not batch["state"][:, 14:].any()
+    assert batch["actions"].shape == (2, 4, 22)
+    assert batch["action_mask"][:, :2, :14].all()
+    assert not batch["action_mask"][:, 2:].any()
+    assert not batch["action_mask"][..., 14:].any()
+    assert batch["camera_mask"].tolist() == [[False, True], [False, True]]
+    assert not batch["images"]["other"].any()
+    batch["task_vec_clip"] = torch.zeros(2, cfg.task_embed_dim)
+    model = DiTPolicy(cfg)
+    loss = model(batch)
+    assert torch.isfinite(loss)
+    loss.backward()
+
+
+def test_mixed_model_rejects_truncating_observed_dimensions():
+    import pytest
+    raw = {"image": torch.zeros(1, 1, 1, 32, 32, 3, dtype=torch.uint8),
+           "state": torch.ones(1, 20), "action": torch.ones(1, 2, 22), "lang": ["test"]}
+    with pytest.raises(ValueError, match="state_dim"):
+        policy_batch_from_loader(raw, camera_keys=("cam",), device=torch.device("cpu"),
+                                 dtype=torch.float32, state_dim=14)
+    with pytest.raises(ValueError, match="action_dim"):
+        policy_batch_from_loader(raw, camera_keys=("cam",), device=torch.device("cpu"),
+                                 dtype=torch.float32, action_dim=14)
+
+
+def test_shorter_model_horizon_is_not_silently_truncated():
+    import pytest
+    raw = {"image": torch.zeros(1, 1, 1, 32, 32, 3, dtype=torch.uint8),
+           "state": torch.ones(1, 14), "action": torch.ones(1, 4, 14), "lang": ["test"]}
+    with pytest.raises(ValueError, match="action_steps"):
+        policy_batch_from_loader(raw, camera_keys=("cam",), device=torch.device("cpu"),
+                                 dtype=torch.float32, action_steps=2)

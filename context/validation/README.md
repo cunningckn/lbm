@@ -11,12 +11,13 @@ skips and 14 integration cases deselected**. CPU CI does not replace the
 server run. CLI help smoke checks passed for scan, mmap, norm, FK,
 inspection, training and the training-throughput benchmark.
 
-Latest follow-up: bounded exact normalization, frozen vision caches, compact
-prefix conditioning and compact image transfer are implemented. The current
-two-GPU suite passed 493 tests with zero skips, including the follow-up
-mixed-checkpoint inference fix. CPU regression with available pretrained
-assets passed 468 with 11 resource skips and 14 integration deselections.
-See the new reports for long training and actual closed-loop task results.
+The earlier follow-up added bounded exact normalization, frozen vision caches,
+compact prefix conditioning and compact image transfer. That two-GPU suite
+passed 493 tests with zero skips, including mixed-checkpoint inference.
+Its CPU regression with pretrained assets passed 468 with 11 resource skips
+and 14 integration deselections. The subsequent audit passed 507 full-suite
+cases plus a newly added killed-writer recovery case; see the audit below
+for completed checks and the server-connectivity blocker.
 
 Latest follow-up: [validation, recovery and feature-shard audit](audit/README.md).
 

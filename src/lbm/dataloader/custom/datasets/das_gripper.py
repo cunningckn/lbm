@@ -103,10 +103,7 @@ def _record(h5: Path, n: int) -> EpisodeRecord | None:
 
 
 def _lang(parent: Path) -> str:
-    try:
-        return parent.parent.parent.name.replace("_", " ")
-    except Exception:
-        return ""
+    return parent.parent.parent.name.replace("_", " ")
 
 
 def read_vectors(

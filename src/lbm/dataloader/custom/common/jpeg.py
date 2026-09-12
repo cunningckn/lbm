@@ -52,6 +52,6 @@ def still_rgb(raw, hw: tuple[int, int]) -> np.ndarray:
             from PIL import Image
 
             return np.asarray(Image.open(BytesIO(blob)).convert("RGB"), dtype=np.uint8)
-        except Exception:
+        except (OSError, ValueError):
             return blank
     return cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)

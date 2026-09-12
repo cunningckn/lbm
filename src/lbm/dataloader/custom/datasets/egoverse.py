@@ -71,7 +71,7 @@ def _meta(path: Path) -> tuple[int, str]:
     if n <= 0:
         try:
             n = int(_array(path, "left.obs_ee_pose").shape[0])
-        except Exception:
+        except (KeyError, FileNotFoundError):
             n = 0
     return n, lang
 
@@ -114,7 +114,7 @@ def read_frames(record: EpisodeRecord, spec: CustomSpec, cam: str, indices: list
         return blank
     try:
         stream = _array(Path(record.path), "images.front_1")
-    except Exception:
+    except (KeyError, FileNotFoundError):
         return blank
     from lbm.dataloader.custom.video import contiguous_span
 
@@ -141,7 +141,7 @@ def mmap_source_jpegs(record: EpisodeRecord, spec: CustomSpec, cam: str):
         return None
     try:
         stream = _array(Path(record.path), "images.front_1")
-    except Exception:
+    except (KeyError, FileNotFoundError):
         return None
     n = int(record.n_frames) if record.n_frames else int(stream.shape[0])
     n = min(n, int(stream.shape[0]))

@@ -76,58 +76,17 @@ def _resize_thwc(frames: np.ndarray, height: int, width: int) -> np.ndarray:
 
 
 def _decode_av_all(path: Path, *, progress: bool = False) -> np.ndarray | None:
-    try:
-        import av
-    except ImportError:
-        return None
-    try:
-        av.logging.set_level(av.logging.ERROR)
-    except Exception:
-        pass
-    try:
-        container = av.open(str(path))
-        stream = container.streams.video[0]
-    except Exception:
-        return None
-    iterator = container.decode(stream)
-    n = int(stream.frames or 0) or None
-    if progress:
-        from lbm.utils.progress import track
+    from lbm.dataloader.custom.video import _iter_av_all
 
-        iterator = track(iterator, desc=f"decode {path.name}", total=n, unit="f", leave=False)
-    frames = [frame.to_ndarray(format="rgb24") for frame in iterator]
-    container.close()
+    frames = list(_iter_av_all(path, progress=progress))
     return np.stack(frames, axis=0) if frames else None
 
 
 def _decode_cv2_all(path: Path, *, progress: bool = False) -> np.ndarray | None:
-    try:
-        import cv2
-    except ImportError:
-        return None
-    cap = cv2.VideoCapture(str(path))
-    if not cap.isOpened():
-        return None
-    n = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0) or None
-    out: list[np.ndarray] = []
-    bar = None
-    if progress:
-        from lbm.utils.progress import progress_bar
+    from lbm.dataloader.custom.video import _iter_cv2_all
 
-        bar = progress_bar(total=n, desc=f"decode {path.name}", unit="f", leave=False)
-    try:
-        while True:
-            ok, frame = cap.read()
-            if not ok or frame is None:
-                break
-            out.append(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-            if bar is not None:
-                bar.update(1)
-    finally:
-        if bar is not None:
-            bar.close()
-        cap.release()
-    return np.stack(out, axis=0) if out else None
+    frames = list(_iter_cv2_all(path, progress=progress))
+    return np.stack(frames, axis=0) if frames else None
 
 
 def _decode_from_job(job: dict):

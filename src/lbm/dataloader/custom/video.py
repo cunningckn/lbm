@@ -98,26 +98,27 @@ def _read_cv2(path: Path, indices: list[int], hw: tuple[int, int]) -> np.ndarray
     except ImportError:
         return None
     cap = cv2.VideoCapture(str(path))
-    if not cap.isOpened():
-        return None
-    n = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
-    out: list[np.ndarray] = []
-    last = None
-    h, w = hw
-    for raw in indices:
-        idx = int(np.clip(raw, 0, max(n - 1, 0))) if n else 0
-        cap.set(cv2.CAP_PROP_POS_FRAMES, idx)
-        ok, frame = cap.read()
-        if not ok or frame is None:
-            if last is None:
-                last = np.zeros((h, w, 3), dtype=np.uint8)
+    try:
+        if not cap.isOpened():
+            return None
+        n = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
+        out: list[np.ndarray] = []
+        last = None
+        h, w = hw
+        for raw in indices:
+            idx = int(np.clip(raw, 0, max(n - 1, 0))) if n else int(max(raw, 0))
+            cap.set(cv2.CAP_PROP_POS_FRAMES, idx)
+            ok, frame = cap.read()
+            if not ok or frame is None:
+                if last is None:
+                    last = np.zeros((h, w, 3), dtype=np.uint8)
+                out.append(last)
+                continue
+            last = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             out.append(last)
-            continue
-        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        last = rgb
-        out.append(rgb)
-    cap.release()
-    return np.stack(out, axis=0) if out else None
+        return np.stack(out, axis=0) if out else None
+    finally:
+        cap.release()
 
 
 def _open_av(path: Path):
@@ -125,61 +126,51 @@ def _open_av(path: Path):
         import av
     except ImportError:
         return None
-    try:
-        av.logging.set_level(av.logging.ERROR)
-    except Exception:
-        pass
+    av.logging.set_level(av.logging.ERROR)
     try:
         container = av.open(str(path))
-        stream = container.streams.video[0]
-    except Exception:
+    except av.error.FFmpegError:
         return None
-    return container, stream
+    if not container.streams.video:
+        container.close()
+        return None
+    return container, container.streams.video[0]
 
 
 def _read_av(path: Path, indices: list[int], hw: tuple[int, int]) -> np.ndarray | None:
     opened = _open_av(path)
     if opened is None:
         return None
+    import av
+
     container, stream = opened
-    fps = float(stream.average_rate or 30.0)
-    tb = float(stream.time_base) if stream.time_base else (1.0 / max(fps, 1.0))
-    n = int(stream.frames or 0)
-    h, w = hw
-    unique: list[int] = []
-    seen: set[int] = set()
-    for raw in indices:
-        idx = int(np.clip(raw, 0, max(n - 1, 0))) if n else int(max(raw, 0))
-        if idx not in seen:
-            unique.append(idx)
-            seen.add(idx)
-    decoded: dict[int, np.ndarray] = {}
-    max_i = max(unique) if unique else 0
-    if max_i <= 8:
-        for i, frame in enumerate(container.decode(stream)):
-            if i in seen:
-                decoded[i] = frame.to_ndarray(format="rgb24")
-            if i >= max_i:
-                break
-    else:
-        for idx in unique:
+    try:
+        fps = float(stream.average_rate or 30.0)
+        tb = float(stream.time_base) if stream.time_base else (1.0 / max(fps, 1.0))
+        n = int(stream.frames or 0)
+        wanted = [int(np.clip(i, 0, n - 1)) if n else int(max(i, 0)) for i in indices]
+        if not wanted:
+            return None
+        decoded: dict[int, np.ndarray] = {}
+        # A seek returns a preceding keyframe, not necessarily the requested frame.
+        # Decode forward by presentation timestamp before accepting a frame.
+        for idx in sorted(set(wanted)):
             pts = int(idx / max(fps, 1e-6) / max(tb, 1e-12))
-            try:
-                container.seek(pts, stream=stream)
-            except Exception:
-                pass
+            container.seek(pts, stream=stream, backward=True, any_frame=False)
             for frame in container.decode(stream):
-                decoded[idx] = frame.to_ndarray(format="rgb24")
-                break
-    container.close()
-    last = np.zeros((h, w, 3), dtype=np.uint8)
-    out = []
-    for raw in indices:
-        idx = int(np.clip(raw, 0, max(n - 1, 0))) if n else int(max(raw, 0))
-        if idx in decoded:
-            last = decoded[idx]
-        out.append(last)
-    return np.stack(out, axis=0) if out else None
+                actual = _av_frame_index(frame, fps)
+                if actual is None or actual > idx:
+                    return None  # Let the frame-index backend handle ambiguous timestamps.
+                if actual == idx:
+                    decoded[idx] = frame.to_ndarray(format="rgb24")
+                    break
+            if idx not in decoded:
+                return None
+        return np.stack([decoded[idx] for idx in wanted], axis=0)
+    except av.error.FFmpegError:
+        return None
+    finally:
+        container.close()
 
 
 def _av_frame_index(frame, fps: float) -> int | None:
@@ -199,30 +190,34 @@ def _iter_av_span(path: Path, start: int, stop: int, *, progress: bool = False):
     opened = _open_av(path)
     if opened is None:
         return
-    container, stream = opened
-    fps = float(stream.average_rate or 30.0)
-    tb = float(stream.time_base) if stream.time_base else (1.0 / max(fps, 1.0))
-    if start > 0:
-        try:
-            pts = int(start / max(fps, 1e-6) / max(tb, 1e-12))
-            container.seek(pts, stream=stream, backward=True, any_frame=False)
-        except Exception:
-            pass
-    want = stop - start
-    iterator = container.decode(stream)
-    if progress:
-        from lbm.utils.progress import track
+    import av
 
-        iterator = track(iterator, desc=f"decode {path.name}", total=want, unit="f", leave=False)
-    n = 0
+    container, stream = opened
     try:
+        fps = float(stream.average_rate or 30.0)
+        tb = float(stream.time_base) if stream.time_base else (1.0 / max(fps, 1.0))
+        if start > 0:
+            pts = int(start / max(fps, 1e-6) / max(tb, 1e-12))
+            try:
+                container.seek(pts, stream=stream, backward=True, any_frame=False)
+            except av.error.FFmpegError:
+                return
+        want = stop - start
+        iterator = container.decode(stream)
+        if progress:
+            from lbm.utils.progress import track
+
+            iterator = track(iterator, desc=f"decode {path.name}", total=want, unit="f", leave=False)
+        n = 0
         for frame in iterator:
             idx = _av_frame_index(frame, fps)
             if idx is None:
-                if start > 0 and n == 0:
-                    continue
+                if start > 0:
+                    return
             elif idx < start:
                 continue
+            elif idx >= stop:
+                break
             yield frame.to_ndarray(format="rgb24")
             n += 1
             if n >= want:
@@ -242,17 +237,17 @@ def _iter_cv2_span(path: Path, start: int, stop: int, *, progress: bool = False)
     except ImportError:
         return
     cap = cv2.VideoCapture(str(path))
-    if not cap.isOpened():
-        return
-    if start > 0:
-        cap.set(cv2.CAP_PROP_POS_FRAMES, start)
-    want = stop - start
     bar = None
-    if progress:
-        from lbm.utils.progress import progress_bar
-
-        bar = progress_bar(total=want, desc=f"decode {path.name}", unit="f", leave=False)
     try:
+        if not cap.isOpened():
+            return
+        if start > 0:
+            cap.set(cv2.CAP_PROP_POS_FRAMES, start)
+        want = stop - start
+        if progress:
+            from lbm.utils.progress import progress_bar
+
+            bar = progress_bar(total=want, desc=f"decode {path.name}", unit="f", leave=False)
         for _ in range(want):
             ok, frame = cap.read()
             if not ok or frame is None:
@@ -271,13 +266,13 @@ def _iter_av_all(path: Path, *, progress: bool = False):
     if opened is None:
         return
     container, stream = opened
-    iterator = container.decode(stream)
-    n = int(stream.frames or 0) or None
-    if progress:
-        from lbm.utils.progress import track
-
-        iterator = track(iterator, desc=f"decode {path.name}", total=n, unit="f", leave=False)
     try:
+        iterator = container.decode(stream)
+        n = int(stream.frames or 0) or None
+        if progress:
+            from lbm.utils.progress import track
+
+            iterator = track(iterator, desc=f"decode {path.name}", total=n, unit="f", leave=False)
         for frame in iterator:
             yield frame.to_ndarray(format="rgb24")
     finally:
@@ -290,15 +285,15 @@ def _iter_cv2_all(path: Path, *, progress: bool = False):
     except ImportError:
         return
     cap = cv2.VideoCapture(str(path))
-    if not cap.isOpened():
-        return
-    n = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0) or None
     bar = None
-    if progress:
-        from lbm.utils.progress import progress_bar
-
-        bar = progress_bar(total=n, desc=f"decode {path.name}", unit="f", leave=False)
     try:
+        if not cap.isOpened():
+            return
+        n = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0) or None
+        if progress:
+            from lbm.utils.progress import progress_bar
+
+            bar = progress_bar(total=n, desc=f"decode {path.name}", unit="f", leave=False)
         while True:
             ok, frame = cap.read()
             if not ok or frame is None:

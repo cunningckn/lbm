@@ -29,7 +29,8 @@ from lbm.models.dit import DiTPolicy, load_pretrained
 from lbm.models.encoders import load_encoder_weights
 from lbm.optim import build_adamw, count_trainable
 from lbm.training_loader import make_loader
-from lbm.training_metrics import action_error_stats
+from lbm.training_metrics import log_train_metrics, log_validation_metrics
+from lbm.training_validation import evaluate_actions
 from lbm.utils.fake_data import FakeActionDataset, collate_samples, move_batch_to_device
 
 
@@ -452,44 +453,19 @@ def main(config: TrainConfig) -> None:
                     t_last = time.monotonic()
                     sps = config.log_every / dt
                     lr = scheduler.get_last_lr()[0]
-                    gnorm = float(grad_norm.detach()) if torch.is_tensor(grad_norm) else float(grad_norm)
-                    print(
-                        f"step {step:6d}  loss {loss_d.item():.4f}  "
-                        f"lr {lr:.2e}  gnorm {gnorm:.3f}  {sps:.2f} it/s"
+                    log_train_metrics(
+                        step=step, loss=loss_d.item(), lr=lr,
+                        grad_norm=grad_norm.detach() if torch.is_tensor(grad_norm) else grad_norm,
+                        steps_per_s=sps, logger=wandb,
                     )
-                    if wandb:
-                        wandb.log(
-                            {
-                                "loss": loss_d.item(),
-                                "lr": lr,
-                                "grad_norm": gnorm,
-                                "steps_per_s": sps,
-                            },
-                            step=step,
-                        )
 
             if step % config.val_every == 0:
-                model.eval()
-                stats = torch.zeros(2, device=device, dtype=torch.float64)
-                if val_loader is not None:
-                    for vb in val_loader:
-                        vb = to_policy(vb, train=False)
-                        with torch.no_grad():
-                            pred = module.sample_actions(
-                                vb, num_steps=config.flow.num_diffusion_steps
-                            )
-                            stats += action_error_stats(pred, vb["actions"], vb.get("action_mask"))
-                if distributed:
-                    dist.all_reduce(stats, op=dist.ReduceOp.SUM)
-                model.train()
+                stats = evaluate_actions(
+                    model, module, val_loader, to_policy, device=device,
+                    num_steps=config.flow.num_diffusion_steps, distributed=distributed,
+                )
                 if rank == 0:
-                    if stats[1].item() > 0:
-                        recon = (stats[0] / stats[1]).item()
-                        print(f"step {step:6d}  val_recon_error {recon:.4f}")
-                        if wandb:
-                            wandb.log({"val_recon_error": recon}, step=step)
-                    else:
-                        print(f"step {step:6d}  val skipped (no valid action elements in full validation batches)")
+                    log_validation_metrics(stats, step=step, logger=wandb)
                 t_last = time.monotonic()
 
             if step % config.ckpt_every == 0 and (rank == 0 or fsdp):

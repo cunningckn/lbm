@@ -62,6 +62,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=0,
         help="mmap prebuild process count (0 = min(32, CPU count))",
     )
+    p.add_argument("--stats-temp-dir", default=None, help="scratch disk for bounded-memory exact quantiles")
     p.add_argument("--max-episodes", type=int, default=None, help="optional cap per dump (debug)")
     return p.parse_args(argv)
 
@@ -107,7 +108,7 @@ def main(argv: list[str] | None = None) -> None:
 
         dumps = track(singles, desc="norm dumps", unit="dump")
     for dataset in dumps:
-        payload = compute_norm_stats(dataset, leave=not many)
+        payload = compute_norm_stats(dataset, leave=not many, scratch_dir=args.stats_temp_dir)
         path = _output_path(dataset, args.output)
         save_norm_stats(path, payload)
         n = payload["norm_stats"]["actions"]["count"]

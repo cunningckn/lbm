@@ -102,6 +102,8 @@ def parse_args(
     initialization = p.add_mutually_exclusive_group()
     initialization.add_argument("--ckpt", default="", help="optional pretrained policy checkpoint")
     initialization.add_argument("--resume", default="", help="resume a trusted replay checkpoint; use --num-workers 0")
+    p.add_argument("--max-episodes", type=int, default=None, help="optional episode cap per source for experiments")
+    p.add_argument("--feature-cache", default="", help="prebuilt frozen-vision policy inputs")
     p.add_argument("--compile", action="store_true")
     p.add_argument("--fsdp", action="store_true")
     p.add_argument("--bf16", default=True, action=argparse.BooleanOptionalAction)
@@ -170,7 +172,7 @@ def parse_args(
 
 
 def build_train_config(args: argparse.Namespace) -> TrainConfig:
-    real = bool(args.dataset or args.data_mix) and not args.fake_data
+    real = bool(args.dataset or args.data_mix or args.feature_cache) and not args.fake_data
     cfg = TrainConfig(
         seed=args.seed,
         batch_size=args.batch_size,
@@ -181,6 +183,7 @@ def build_train_config(args: argparse.Namespace) -> TrainConfig:
         ),
         output_dir=args.output_dir,
         fake_data=not real,
+        feature_cache=args.feature_cache,
         load_pretrained=args.ckpt,
         resume=args.resume,
         pretrained_encoders=bool(args.pretrained_encoders),

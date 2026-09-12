@@ -157,6 +157,7 @@ def _resume_signature(config, train_loader, device):
         "dataset_length": len(train_loader.dataset),
         "device_type": device.type,
         "distributed": _is_distributed(),
+        **({"feature_manifest": train_loader.dataset.fingerprint} if config.feature_cache else {}),
     }
 
 
@@ -210,7 +211,17 @@ def main(config: TrainConfig) -> None:
     collate_fn = collate_samples
     train_ds = val_ds = None
 
-    if config.fake_data:
+    feature_mode = bool(config.feature_cache)
+    if feature_mode:
+        from lbm.training_features import FeatureDataset
+
+        train_ds = FeatureDataset(config.feature_cache)
+        train_ds.apply_config(config)
+        val_ds = FeatureDataset(config.data.val_dataset) if config.data.val_dataset else train_ds
+        if val_ds.metadata['model'] != train_ds.metadata['model']:
+            raise ValueError("training and validation feature cache configurations differ")
+        collate_fn = torch.utils.data.default_collate
+    elif config.fake_data:
         n_train = max(config.batch_size * world * 8, 64)
         n_val = max(config.batch_size * world * config.val_batches, 8)
         train_ds = FakeActionDataset(config.model, length=n_train, seed=config.seed)
@@ -303,6 +314,11 @@ def main(config: TrainConfig) -> None:
         if rank == 0:
             print(f"resumed {config.resume} at step={step} epoch={epoch} batch={batch_cursor}")
 
+    if feature_mode:
+        train_ds.check_backbone(model)
+        if val_ds is not train_ds:
+            val_ds.check_backbone(model)
+
     if config.compile:
         model = torch.compile(model, fullgraph=True)
         if rank == 0:
@@ -323,7 +339,7 @@ def main(config: TrainConfig) -> None:
     module = _unwrap(model)
 
     lang = config.model.language_encoder
-    if not config.fake_data:
+    if not config.fake_data and not feature_mode:
         if distributed and rank != 0:
             dist.barrier()
         if lang == "t5":
@@ -334,7 +350,7 @@ def main(config: TrainConfig) -> None:
             dist.barrier()
 
     def to_policy(raw, *, train: bool):
-        if config.fake_data:
+        if config.fake_data or feature_mode:
             batch = move_batch_to_device(raw, device, non_blocking=True)
             if dtype != torch.float32:
                 for key, value in list(batch.items()):
@@ -342,6 +358,10 @@ def main(config: TrainConfig) -> None:
                         batch[key] = {cam: img.to(dtype=dtype) for cam, img in value.items()}
                     elif torch.is_tensor(value) and value.is_floating_point():
                         batch[key] = value.to(dtype=dtype)
+            if feature_mode and train and config.flow.mask_state_ratio > 0:
+                masked = torch.rand(len(batch['state']), device=device) < config.flow.mask_state_ratio
+                batch['state_is_masked'] = masked
+                batch['state'] = batch['state'].masked_fill(masked[:, None], 0)
             return batch
         return policy_batch_from_loader(
             raw,
@@ -389,7 +409,15 @@ def main(config: TrainConfig) -> None:
                 f"state_dim={config.model.state_dim} action_dim={config.model.action_dim} "
                 f"train_len={len(train_ds)} val_len={len(val_ds)}"
             )
-            _log_and_copy_norm_stats(train_ds, output_dir)
+            if feature_mode:
+                from lbm.utils.preprocess import save_norm_stats
+
+                norms = train_ds.metadata.get('normalization', {})
+                print(f"feature_cache={config.feature_cache} sources={len(norms)}")
+                if len(norms) == 1 and next(iter(norms.values())) is not None:
+                    save_norm_stats(output_dir / 'norm_stats.json', next(iter(norms.values())))
+            else:
+                _log_and_copy_norm_stats(train_ds, output_dir)
 
     model.train()
     t_last = time.monotonic()

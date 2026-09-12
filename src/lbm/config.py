@@ -464,6 +464,7 @@ class TrainConfig:
     num_workers: int = TRAIN_DEFAULTS.num_workers
     train_steps: int = TRAIN_DEFAULTS.train_steps_real
     output_dir: str = field(default_factory=lambda: str(default_checkpoints_dir()))
+    feature_cache: str = ""
     fake_data: bool = False
 
     load_pretrained: str = ""

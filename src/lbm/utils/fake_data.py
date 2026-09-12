@@ -111,7 +111,7 @@ def move_batch_to_device(
 ) -> dict[str, Any]:
     out: dict[str, Any] = {}
     for key, value in batch.items():
-        if key == "images":
+        if key in {"images", "vision_features"}:
             out[key] = {cam: img.to(device, non_blocking=non_blocking) for cam, img in value.items()}
         elif torch.is_tensor(value):
             out[key] = value.to(device, non_blocking=non_blocking)
@@ -124,7 +124,7 @@ def describe_batch(batch: dict[str, Any]) -> str:
     """Human-readable tensor spec for fake / real batches."""
     lines = []
     for key, value in batch.items():
-        if key == "images":
+        if key in {"images", "vision_features"}:
             for cam, img in value.items():
                 lines.append(f"images[{cam!r}]: {tuple(img.shape)} {img.dtype}")
         elif torch.is_tensor(value):

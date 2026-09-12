@@ -22,10 +22,10 @@ from lbm.train_loop import main as train_main
 
 def main() -> None:
     args = parse_args()
-    if not args.fake_data and not args.dataset and not args.data_mix:
+    if not args.fake_data and not args.dataset and not args.data_mix and not args.feature_cache:
         raise SystemExit(
             "pass --dataset NAME (under datasets/) or a filesystem path, "
-            "or --data-mix NAME, or --fake-data"
+            "or --data-mix NAME, --feature-cache PATH, or --fake-data"
         )
     train_main(build_train_config(args))
 

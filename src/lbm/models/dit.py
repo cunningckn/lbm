@@ -363,29 +363,44 @@ class DiTPolicy(nn.Module):
             )
         return self.language_pool_proj(x, attention_mask=mask)
 
-    def build_vision_tokens(self, images, camera_mask=None):
-        """images: dict cam -> (B, 3, 224, 224) or (B, T, 3, 224, 224).
-
-        Already ImageNet-normalized. History frames (T>1) are encoded independently
-        and concatenated along the token axis. Returns (B, T * n_cam * queries, H).
-        Missing cameras (``camera_mask`` False) have their tokens zeroed.
-        """
+    def encode_vision_features(self, images):
+        """Raw backbone tokens (B, history, patches, width), before trainable pooling."""
         first = images[self.camera_keys[0]]
-        time_expand = first.ndim == 5
-        if time_expand:
-            bsz, t_hist = first.shape[:2]
-            flat = {
-                cam: img.reshape(bsz * t_hist, *img.shape[2:]) for cam, img in images.items()
-            }
+        bsz = first.shape[0]
+        history = first.shape[1] if first.ndim == 5 else 1
+        features = {}
+        for cam in self.camera_keys:
+            image = images[cam]
+            flat = image.reshape(bsz * history, *image.shape[-3:])
+            tokens = run_maybe_frozen(
+                self.config.train_vision_encoder,
+                lambda flat=flat: self.img_backbone.encode_image_tokens(flat),
+            )
+            features[cam] = tokens.reshape(bsz, history, *tokens.shape[1:])
+        return features
+
+    def build_vision_tokens(self, images=None, camera_mask=None, *, features=None):
+        """Pool live images or frozen-backbone cache tokens, then apply camera masks."""
+        if features is not None:
+            if self.config.train_vision_encoder:
+                raise ValueError("cached vision features require a frozen vision encoder")
+            if images is not None:
+                raise ValueError("provide images or vision_features, not both")
         else:
-            bsz = t_hist = None
-            flat = images
+            features = self.encode_vision_features(images)
+        if set(features) != set(self.camera_keys):
+            raise ValueError("vision feature cameras must match the model")
+        first = features[self.camera_keys[0]]
+        if first.ndim != 4 or first.shape[-1] != self.config.vit_embed_dim:
+            raise ValueError("vision features must have shape (B, history, patches, vit_embed_dim)")
+        bsz, t_hist = first.shape[:2]
+        time_expand = t_hist > 1
         tokens_by_cam = {}
         for cam in self.camera_keys:
-            tokens_by_cam[cam] = run_maybe_frozen(
-                self.config.train_vision_encoder,
-                lambda cam=cam: self.img_backbone.encode_image_tokens(flat[cam]),
-            )
+            feature = features[cam]
+            if feature.shape != first.shape:
+                raise ValueError("vision feature shapes must agree across cameras")
+            tokens_by_cam[cam] = feature.reshape(bsz * t_hist, *feature.shape[2:])
         tokens = self.vision_pool(tokens_by_cam)
         nq = self.config.vision_pool_num_queries
         nc = len(self.camera_keys)
@@ -473,7 +488,9 @@ class DiTPolicy(nn.Module):
         if prefix_noise_scale > 0.0 and prefix_mask_expanded is not None:
             x_t = x_t + prefix_mask_expanded.to(x_t.dtype) * torch.randn_like(x_t) * prefix_noise_scale
 
-        vision_tokens = self.build_vision_tokens(batch["images"], batch.get("camera_mask"))
+        vision_tokens = self.build_vision_tokens(
+            batch.get("images"), batch.get("camera_mask"), features=batch.get("vision_features")
+        )
         t_cond = t_per_pos.squeeze(-1) if prefix_mask_expanded is not None else t[:, 0, 0]
         c = self.compute_cond(state, self.encode_task(batch), t_cond, batch.get("embodiment_id"))
         v_t = self.predict_velocity(x_t, c, vision_tokens)
@@ -502,7 +519,9 @@ class DiTPolicy(nn.Module):
                 dtype=dtype,
             )
         x_t = noise.to(device=state.device, dtype=dtype)
-        vision = self.build_vision_tokens(batch["images"], batch.get("camera_mask"))
+        vision = self.build_vision_tokens(
+            batch.get("images"), batch.get("camera_mask"), features=batch.get("vision_features")
+        )
         return state, dtype, x_t, vision, self.encode_task(batch), batch.get("embodiment_id")
 
     @torch.no_grad()

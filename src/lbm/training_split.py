@@ -90,3 +90,19 @@ def validation_loaders(dataset, config, collate_fn, *, rank=0, world=1):
             drop_last=False, num_workers=min(2, config.num_workers),
         )
     return loaders
+
+
+def dataset_fingerprint(dataset):
+    """Detect reordered/replaced records and changed normalization even at equal length."""
+    from lbm.utils.preprocess import _jsonable
+
+    sources = []
+    for source in dataset.datasets:
+        files = []
+        for record in source.records:
+            path = Path(record.path)
+            stat = path.stat()
+            files.append((stat.st_size, stat.st_mtime_ns))
+        sources.append(dict(episodes=episode_ids(source), files=files,
+                            normalization=_jsonable(source.norm_stats)))
+    return hashlib.sha256(json.dumps(sources, sort_keys=True).encode()).hexdigest()

@@ -62,4 +62,15 @@ def make_loader(
             from lbm.dataloader.pad import dataloader_worker_init_fn
 
             kwargs["worker_init_fn"] = dataloader_worker_init_fn
+    if train:
+        from lbm.training_sampler import CursorBatchSampler, SeededDataset
+
+        rank = sampler.rank if sampler else 0
+        world = sampler.num_replicas if sampler else 1
+        sampler = CursorBatchSampler(dataset, config.batch_size, seed=config.seed,
+                                     rank=rank, world=world, drop_last=drop_last)
+        for key in ('batch_size', 'sampler', 'shuffle', 'drop_last'):
+            kwargs.pop(key)
+        kwargs['batch_sampler'] = sampler
+        dataset = SeededDataset(dataset, config.seed)
     return DataLoader(dataset, **kwargs), sampler

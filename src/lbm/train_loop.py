@@ -136,12 +136,22 @@ def _resume_signature(config, train_loader, device):
         "bf16", "compile", "val_every", "val_batches", "dump_batch",
     )
     values = asdict(config)
+    identity = {}
+    if not config.fake_data and not config.feature_cache:
+        from lbm.training_split import dataset_fingerprint
+
+        identity['source_fingerprint'] = dataset_fingerprint(train_loader.dataset)
     return {
+        **identity,
         **{key: values[key] for key in fields},
         "batches_per_epoch": len(train_loader),
         "dataset_length": len(train_loader.dataset),
         "device_type": device.type,
         "distributed": _is_distributed(),
+        "sampling_version": 1,
+        "world_size": dist.get_world_size() if _is_distributed() else 1,
+        "fsdp": config.fsdp,
+        "parallel": values["parallel"],
         **({"feature_manifest": train_loader.dataset.fingerprint} if config.feature_cache else {}),
     }
 
@@ -164,11 +174,11 @@ def main(config: TrainConfig) -> None:
     if config.resume:
         if config.load_pretrained:
             errors.append("--resume and --ckpt are mutually exclusive")
-        if config.fsdp or _is_distributed():
-            errors.append("--resume currently requires single-process training (no DDP/FSDP)")
-        if config.num_workers != 0:
-            errors.append("--resume requires --num-workers 0; worker RNG/prefetch state is not checkpointed")
-        if not Path(config.resume).is_file():
+        expected = Path(config.resume)
+        if _is_distributed():
+            if not (expected / 'complete.json').is_file():
+                errors.append("resume requires a complete distributed checkpoint directory")
+        elif not expected.is_file():
             errors.append(f"resume checkpoint is not a file: {config.resume}")
     if errors:
         raise ValueError("Invalid training config:\n  - " + "\n  - ".join(errors))
@@ -284,18 +294,13 @@ def main(config: TrainConfig) -> None:
     step, epoch, batch_cursor = 0, 0, 0
     signature = _resume_signature(config, train_loader, device)
     resume_payload = None
-    if config.resume:
+    if config.resume and not distributed:
         resume_payload = load_checkpoint(config.resume, model, optimizer, scheduler, signature=signature)
         step, epoch, batch_cursor = (resume_payload[key] for key in ("step", "epoch", "batch_in_epoch"))
         if config.train_steps < step:
             raise ValueError("--steps is the total target and cannot be less than the saved step")
         if rank == 0:
             print(f"resumed {config.resume} at step={step} epoch={epoch} batch={batch_cursor}")
-
-    if feature_mode:
-        train_ds.check_backbone(model)
-        if val_ds:
-            val_ds.check_backbone(model)
 
     if config.compile:
         model = torch.compile(model, fullgraph=True)
@@ -314,6 +319,19 @@ def main(config: TrainConfig) -> None:
             find_unused_parameters=False,
             gradient_as_bucket_view=True,
         )
+    if config.resume and distributed:
+        from lbm.distributed.training_checkpoint import load_training_checkpoint
+
+        resume_payload = load_training_checkpoint(config.resume, _unwrap(model), optimizer,
+                                                   scheduler, signature=signature)
+        step, epoch, batch_cursor = (resume_payload[key] for key in ("step", "epoch", "batch_in_epoch"))
+        if config.train_steps < step:
+            raise ValueError("--steps cannot be less than the saved step")
+    if feature_mode:
+        train_ds.check_backbone(model.module if fsdp else _unwrap(model))
+        if val_ds:
+            val_ds.check_backbone(model.module if fsdp else _unwrap(model))
+
     module = _unwrap(model)
 
     lang = config.model.language_encoder
@@ -410,11 +428,8 @@ def main(config: TrainConfig) -> None:
         epoch_rng = resume_payload["epoch_rng"] if resume_payload else capture_rng_state()
         if resume_payload:
             restore_rng_state(epoch_rng)
+        train_sampler.start_batch = batch_cursor
         iterator = iter(train_loader)
-        # Replay data reads up to the saved cursor, then restore training RNG
-        # after all setup and skipped reads, before obtaining the next batch.
-        for _ in range(batch_cursor):
-            next(iterator)
         if resume_payload:
             restore_rng_state(resume_payload["rng_state"])
             resume_payload = None
@@ -475,12 +490,14 @@ def main(config: TrainConfig) -> None:
                     log_validation_metrics(stats, step=step, logger=wandb)
                 t_last = time.monotonic()
 
-            if step % config.ckpt_every == 0 and (rank == 0 or fsdp):
+            if step % config.ckpt_every == 0:
                 ckpt_dir = output_dir / f"{step}"
-                if fsdp:
-                    from lbm.distributed import save_fsdp_checkpoint
+                if distributed:
+                    from lbm.distributed.training_checkpoint import save_training_checkpoint
 
-                    save_fsdp_checkpoint(ckpt_dir, model, optimizer)
+                    save_training_checkpoint(ckpt_dir, _unwrap(model), optimizer, scheduler,
+                                             step=step, epoch=epoch, batch_in_epoch=batch_index + 1,
+                                             epoch_rng=epoch_rng, signature=signature)
                     if rank == 0:
                         print(f"saved {ckpt_dir}")
                 elif rank == 0:

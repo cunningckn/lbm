@@ -101,7 +101,7 @@ def parse_args(
     p.add_argument("--output-dir", default=str(default_checkpoints_dir()))
     initialization = p.add_mutually_exclusive_group()
     initialization.add_argument("--ckpt", default="", help="optional pretrained policy checkpoint")
-    initialization.add_argument("--resume", default="", help="resume a trusted replay checkpoint; use --num-workers 0")
+    initialization.add_argument("--resume", default="", help="resume a trusted training checkpoint")
     p.add_argument("--max-episodes", type=int, default=None, help="optional episode cap per source for experiments")
     p.add_argument("--feature-cache", default="", help="prebuilt frozen-vision policy inputs")
     p.add_argument("--compile", action="store_true")

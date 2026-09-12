@@ -28,7 +28,8 @@ def evaluate_actions(model, module, loader, to_policy, *, device, num_steps: int
             seen = 0
             for raw in loader:
                 batch = to_policy(raw, train=False)
-                pred = module.sample_actions(batch, num_steps=num_steps)
+                pred = (module.sample_actions(batch, num_steps=num_steps)
+                        if hasattr(module, "sample_actions") else model(batch, sample_steps=num_steps))
                 mask = batch.get("action_mask")
                 valid_count = getattr(getattr(loader, 'dataset', None), 'valid_count', None)
                 if valid_count is not None:

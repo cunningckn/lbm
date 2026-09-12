@@ -181,11 +181,7 @@ class CustomSingleDataset(Dataset):
         self._offsets: np.ndarray | None = None
         self._vec_cache: dict[int, tuple[np.ndarray, np.ndarray]] = {}
         if self.episodes:
-            self._index = []
-            for epi_i, episode in enumerate(self.episodes):
-                n = int(episode.action.shape[0])
-                for t in range(n):
-                    self._index.append((epi_i, t))
+            self._offsets = np.cumsum([len(e.action) for e in self.episodes], dtype=np.int64)
         else:
             lengths = np.array([max(int(r.n_frames), 0) for r in self.records], dtype=np.int64)
             if not len(lengths) or int(lengths.sum()) <= 0:
@@ -495,15 +491,14 @@ class CustomMixtureDataset(Dataset):
         self.weights = [float(w) for _, w in pairs]
         self.mode = mode
         self.seed = int(seed)
-        self._map: list[tuple[int, int]] = []
-        for ds_i, dataset in enumerate(self.datasets):
-            for local in range(len(dataset)):
-                self._map.append((ds_i, local))
-        if not self._map:
-            raise ValueError("mixture has no samples")
+        if any(not np.isfinite(w) or w <= 0 for w in self.weights):
+            raise ValueError("mixture weights must be positive and finite")
+        self._offsets = np.cumsum([len(ds) for ds in self.datasets], dtype=np.int64)
+        if not self._offsets[-1] or any(len(ds) == 0 for ds in self.datasets):
+            raise ValueError("mixture has no samples or contains an empty source")
 
     def __len__(self) -> int:
-        return len(self._map)
+        return int(self._offsets[-1])
 
     @property
     def spec(self) -> CustomSpec:
@@ -520,7 +515,9 @@ class CustomMixtureDataset(Dataset):
         return merge_policy_io([ds.policy_io for ds in self.datasets])
 
     def __getitem__(self, index: int) -> dict[str, Any]:
-        ds_i, local = self._map[int(index) % len(self._map)]
+        index = int(index) % len(self)
+        ds_i = int(np.searchsorted(self._offsets, index, side="right"))
+        local = index - (int(self._offsets[ds_i - 1]) if ds_i else 0)
         return self.datasets[ds_i][local]
 
     def prebuild_mmap_caches(self, workers: int = 0) -> None:

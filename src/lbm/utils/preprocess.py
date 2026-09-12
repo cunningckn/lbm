@@ -1,6 +1,8 @@
 """Shared state/action normalization and image preprocessing."""
 
 import json
+import os
+import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -83,7 +85,18 @@ def load_dump_norm_stats(root, action_freq: float, action_length: float, slices:
 def save_norm_stats(path, stats: dict) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(_jsonable(stats), indent=2) + "\n", encoding="utf-8")
+    tmp = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=path.parent,
+                                         prefix=f".{path.name}.", suffix=".tmp", delete=False) as out:
+            tmp = Path(out.name)
+            out.write(json.dumps(_jsonable(stats), indent=2, allow_nan=False) + "\n")
+            out.flush()
+            os.fsync(out.fileno())
+        tmp.replace(path)
+    finally:
+        if tmp is not None:
+            tmp.unlink(missing_ok=True)
 
 
 def _jsonable(value):
@@ -115,6 +128,10 @@ class _Moments:
             x = x[None]
         x = x.reshape(-1, x.shape[-1])
         dim = int(x.shape[-1])
+        if not np.isfinite(x).all():
+            raise ValueError("normalization data must be finite")
+        if self.sum is not None and dim != len(self.sum):
+            raise ValueError("normalization dimension changed between batches")
         if self.sum is None:
             self.sum = np.zeros(dim, dtype=np.float64)
             self.sumsq = np.zeros(dim, dtype=np.float64)
@@ -142,6 +159,7 @@ class _Moments:
             "q01": q01.astype(np.float32),
             "q99": q99.astype(np.float32),
             "count": int(self.count),
+            "quantile_fallback": 1,
         }
 
 
@@ -217,14 +235,30 @@ def _broadcast_stat(x, value):
     return np.asarray(value, dtype=np.float32)
 
 
+def _quantile_bounds(x, stats):
+    low = _broadcast_stat(x, stats["q01"])
+    high = _broadcast_stat(x, stats["q99"])
+    # Opt-in metadata preserves the interpretation of existing checkpoint stats.
+    if stats.get("quantile_fallback", 0) == 1:
+        minimum = _broadcast_stat(x, stats["min"])
+        maximum = _broadcast_stat(x, stats["max"])
+        where = torch.where if torch.is_tensor(x) else np.where
+        constant = maximum - minimum <= 1e-6
+        fallback_low = where(constant, minimum - 0.5, minimum)
+        fallback_high = where(constant, maximum + 0.5, maximum)
+        degenerate = high - low <= 1e-6
+        low = where(degenerate, fallback_low, low)
+        high = where(degenerate, fallback_high, high)
+    return low, high
+
+
 def normalize(x, stats, slices=None, *, field: str = "action"):
     """Map ``x`` into model space. Prefers ``[q01, q99] → [-1, 1]``.
 
     ``slices`` skip EEF rot6d/quat rotation columns (already in ``[-1, 1]``).
     """
     if _has_quantiles(stats):
-        q01 = _broadcast_stat(x, stats["q01"])
-        q99 = _broadcast_stat(x, stats["q99"])
+        q01, q99 = _quantile_bounds(x, stats)
         out = (x - q01) / (q99 - q01 + 1e-6) * 2.0 - 1.0
     else:
         mean = _broadcast_stat(x, stats["mean"])
@@ -240,8 +274,7 @@ def normalize(x, stats, slices=None, *, field: str = "action"):
 def unnormalize(x, stats, slices=None, *, field: str = "action"):
     """Inverse of :func:`normalize`."""
     if _has_quantiles(stats):
-        q01 = _broadcast_stat(x, stats["q01"])
-        q99 = _broadcast_stat(x, stats["q99"])
+        q01, q99 = _quantile_bounds(x, stats)
         out = (x + 1.0) / 2.0 * (q99 - q01 + 1e-6) + q01
     else:
         mean = _broadcast_stat(x, stats["mean"])

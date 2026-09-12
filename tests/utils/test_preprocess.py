@@ -257,3 +257,66 @@ def test_compute_norm_raises_without_fk_cache(tmp_path):
     ds = CustomSingleDataset(spec, records=[rec], action_mode="delta", action_kind=EEF, root=tmp_path)
     with pytest.raises(RuntimeError, match="FK cache missing"):
         compute_norm_stats(ds, progress=False)
+
+
+def test_degenerate_quantiles_use_finite_invertible_range_for_new_stats():
+    from lbm.utils.preprocess import _Moments
+
+    values = np.zeros((1000, 2), dtype=np.float32)
+    values[-1, 0] = 10
+    moments = _Moments()
+    moments.update(values)
+    stats = moments.as_dict()
+    assert stats["q01"][0] == stats["q99"][0] == 0
+    for data in (values, torch.from_numpy(values)):
+        encoded = normalize(data, stats)
+        decoded = unnormalize(encoded, stats)
+        np.testing.assert_allclose(decoded, values, atol=1e-5)
+        peak = encoded.abs().max().item() if torch.is_tensor(encoded) else np.abs(encoded).max()
+        assert float(peak) <= 1.00001
+
+
+def test_legacy_degenerate_quantiles_keep_original_mapping():
+    stats = {"q01": np.array([0.]), "q99": np.array([0.])}
+    values = np.array([[1.]], dtype=np.float32)
+    np.testing.assert_allclose(normalize(values, stats), [[1999999.]])
+
+
+def test_failed_norm_save_preserves_previous_file(tmp_path, monkeypatch):
+    import lbm.utils.preprocess as module
+
+    path = tmp_path / "norm.json"
+    path.write_text('"previous"')
+
+    def disk_error(*args):
+        raise OSError("disk failed")
+
+    monkeypatch.setattr(module.os, "fsync", disk_error)
+    import pytest
+    with pytest.raises(OSError, match="disk failed"):
+        save_norm_stats(path, {"new": 1})
+    assert path.read_text() == '"previous"'
+    assert not list(tmp_path.glob("*.tmp"))
+
+
+def test_nonfinite_stats_do_not_replace_previous_file(tmp_path):
+    import pytest
+    path = tmp_path / "norm.json"
+    path.write_text('"previous"')
+    with pytest.raises(ValueError):
+        save_norm_stats(path, {"bad": float("nan")})
+    assert path.read_text() == '"previous"'
+    assert not list(tmp_path.glob("*.tmp"))
+
+
+def test_moments_reject_nonfinite_data_and_dimension_changes():
+    import pytest
+
+    from lbm.utils.preprocess import _Moments
+    moments = _Moments()
+    moments.update([[1., 2.]])
+    with pytest.raises(ValueError, match="finite"):
+        moments.update([[float("nan"), 2.]])
+    with pytest.raises(ValueError, match="dimension"):
+        moments.update([[1.]])
+    assert moments.count == 1

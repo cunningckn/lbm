@@ -52,11 +52,7 @@ for source in loaded.datasets:
     print('SPLIT', source.spec.name, len(groups[0]), len(groups[1]), len(tr), len(va), flush=True)
 train_ds = CustomMixtureDataset(train)
 val_ds = CustomMixtureDataset(validation, mode='val')
-# Spread the fixed validation budget over all held-out episodes and both sources.
-per_source = cfg.val_batches * cfg.batch_size // len(validation)
-val_ds._map = [(d, int(i)) for row in zip(*[
-    np.linspace(0, len(ds) - 1, per_source, dtype=int) for ds, _ in validation
-], strict=True) for d, i in enumerate(row)]
+# The runner balances validation sources and spreads the sample budget.
 mixture.load_dataset = lambda *a, mode='train', **kw: train_ds if mode == 'train' else val_ds
 original_clip = torch.nn.utils.clip_grad_norm_
 

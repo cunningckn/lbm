@@ -36,7 +36,7 @@ def build_catalog_mixture(
             missing.append(entry.name)
             print(f"[mix] skip {entry.name}: not on disk (tried {root / entry.name})", flush=True)
             continue
-        pairs.append((make_custom_dataset(path, entry.robot_type, data_cfg), 1.0))
+        pairs.append((make_custom_dataset(path, entry.robot_type, data_cfg), entry.weight))
     if missing and not skip_missing:
         raise FileNotFoundError(f"mix members not on disk: {missing}")
     if missing:

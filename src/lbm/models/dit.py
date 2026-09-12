@@ -470,10 +470,13 @@ class DiTPolicy(nn.Module):
         prefix_conditioning_prob=1.0,
         prefix_noise_scale=0.0,
         compact_prefix_conditioning=True,
+        sample_steps=None,
     ):
         """Flow-matching training loss with optional action-prefix conditioning.
         batch: state (B,14), images dict, actions (B,50,14), task_vec_clip (B,512),
         optional state_is_masked (B,) bool."""
+        if sample_steps is not None:
+            return self.sample_actions(batch, num_steps=sample_steps, noise=noise)
         state = batch["state"]
         actions = batch["actions"]
         N, T_chunk, D_action = actions.shape

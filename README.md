@@ -351,3 +351,21 @@ needs at least two episodes. Without either option, validation is disabled.
 `--val-batches 0` disables evaluation. Validation budgets are balanced across
 sources, include partial batches, and report both per-source and overall errors.
 For feature training, provide a separately prepared held-out cache.
+
+### Sampling and checkpoint recovery
+
+Training batches use sample-local random seeds and an epoch/batch cursor, so
+prefetched worker samples do not change the resumed sequence. New checkpoints
+support multiple workers; restoring the cursor does not decode preceding batches.
+Sampling changes are versioned: older replay checkpoints remain usable through
+`--ckpt` for weight initialization, but cannot promise identical continuation.
+
+Mixture weights are per-sample multipliers: a source's expected share is
+`weight * source_length / sum(weight * source_length)`. Equal weights preserve
+ordinary concatenated sampling without replacement. Unequal weights sample with
+replacement. Source lookup stores one cumulative length per source.
+
+DDP/FSDP save complete checkpoint directories, including optimizer, scheduler,
+per-rank RNG and cursor. Resume with `--resume <output>/<step>` and the same world
+size, sharding configuration and data. A directory without `complete.json` is
+incomplete and cannot be resumed. Keep input files and normalization unchanged.

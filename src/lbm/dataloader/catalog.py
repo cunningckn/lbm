@@ -24,6 +24,7 @@ class DatasetEntry:
     backend: str = "custom"
     robot_type: str = ""
     folder: str = ""
+    weight: float = 1.0
 
     def __post_init__(self) -> None:
         if not self.folder:
@@ -91,7 +92,7 @@ def parse_mix(data_mix: str) -> list[DatasetEntry] | None:
         return None
     if raw in NAMED_MIXES:
         return [
-            DatasetEntry(name=folder, robot_type=spec) for folder, _weight, spec in NAMED_MIXES[raw]
+            DatasetEntry(name=folder, robot_type=spec, weight=weight) for folder, weight, spec in NAMED_MIXES[raw]
         ]
     parts = [p.strip() for p in raw.split(",") if p.strip()]
     if not parts:

@@ -164,7 +164,7 @@ def test_invalid_checkpoint_rejected_before_model_mutation(tmp_path, corruption)
     assert_tree_equal(before, model.state_dict())
 
 
-@pytest.mark.parametrize("mode", ["ddp", "fsdp", "workers", "ckpt"])
+@pytest.mark.parametrize("mode", ["ddp", "ckpt"])
 def test_unsupported_resume_fails_before_initialization(tmp_path, monkeypatch, mode):
     path = tmp_path / "state.pt"
     path.touch()

@@ -23,6 +23,8 @@ live images and a rebuilt cache. Source observations and normalization are
 snapshotted: editing the original data does not update an existing cache.
 Encoder-weight/precision fingerprints are checked before training. The cache
 owns camera, temporal and vector IO settings; DiT weights remain trainable.
+Action-space definitions are preserved for inference. Validation must use
+the same normalization and action-space contract as training.
 
 Use a separately built held-out cache with `--val-dataset /path/to/cache` for
 independent validation. Without it the runner evaluates the training cache,
@@ -35,5 +37,5 @@ vision backbones and history lengths 1/2, preserved camera masks, BF16
 round-trip, interrupted writes, corrupt tables, encoder mismatch and training
 with checkpoint restore. A real Kai0+Agibot cache was built from 11,829
 samples across eight episodes using training-only normalization statistics.
-Initial batch 64/96/112 sweeps reached about 94/99/101 samples/s; batch 128
-exceeded the A800 80 GB limit. Final tuning results are reported separately.
+Before the prefix projection optimization, batch 64/96/112 reached about
+94/99/101 samples/s; batch 128 exceeded the A800 80 GB limit. Final tuning results are reported separately.

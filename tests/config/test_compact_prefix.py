@@ -6,7 +6,9 @@ from lbm.utils.fake_data import make_fake_batch
 from tests.helpers import tiny_dit_config
 
 
-@pytest.mark.parametrize('device,dtype', [('cpu', torch.float32), pytest.param('cuda', torch.bfloat16, marks=pytest.mark.gpu)])
+@pytest.mark.parametrize('device,dtype', [
+    ('cpu', torch.float32), pytest.param('cuda', torch.bfloat16, marks=pytest.mark.gpu),
+])
 @pytest.mark.parametrize('prefix,probability', [(0, 1.), (1, 1.), (4, 0.), (4, .5), (4, 1.)])
 def test_compact_prefix_matches_dense_loss_and_gradients(prefix, probability, device, dtype):
     if device == 'cuda' and not torch.cuda.is_available():

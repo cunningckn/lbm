@@ -15,6 +15,10 @@ p.add_argument('--repo', required=True)
 p.add_argument('--port', type=int, default=8123)
 p.add_argument('--trials', type=int, default=10)
 p.add_argument('--output', required=True)
+p.add_argument('--seed', type=int, default=7)
+p.add_argument('--suite', default='libero_spatial')
+p.add_argument('--task-id', type=int, default=0)
+p.add_argument('--init-offset', type=int, default=0)
 a = p.parse_args()
 repo = Path(a.repo)
 root = repo / 'third_party/libero/libero/libero'
@@ -30,20 +34,22 @@ from client import PolicyClient  # noqa: E402
 from libero.libero import benchmark  # noqa: E402
 from libero.libero.envs import OffScreenRenderEnv  # noqa: E402
 
-np.random.seed(7)
-suite = benchmark.get_benchmark_dict()['libero_spatial']()
-task = suite.get_task(0)
-initial = suite.get_task_init_states(0)
+np.random.seed(a.seed)
+suite = benchmark.get_benchmark_dict()[a.suite]()
+task = suite.get_task(a.task_id)
+initial = suite.get_task_init_states(a.task_id)
+if not 0 <= a.init_offset < a.init_offset + a.trials <= len(initial):
+    raise ValueError("trial range exceeds available initial states")
 client = PolicyClient(port=a.port)
 metadata = client.get_server_metadata()
 env = OffScreenRenderEnv(bddl_file_name=str(root/'bddl_files'/task.problem_folder/task.bddl_file),
                          camera_heights=256, camera_widths=256)
-env.seed(7)
+env.seed(a.seed)
 results = []
 try:
     for trial in range(a.trials):
         env.reset()
-        obs = env.set_init_state(initial[trial])
+        obs = env.set_init_state(initial[a.init_offset + trial])
         for _ in range(10):
             obs, _, _, _ = env.step([0.]*6+[-1.])
         plan = deque()
@@ -69,7 +75,8 @@ try:
             if done:
                 break
         results.append(dict(trial=trial, steps=step+1, success=bool(done)))
-        report = dict(task=task.language, seed=7, replan_steps=5, max_steps=220,
+        report = dict(task=task.language, seed=a.seed, suite=a.suite, task_id=a.task_id,
+                      init_offset=a.init_offset, replan_steps=5, max_steps=220,
                       metadata=metadata, trials=results, successes=sum(r['success'] for r in results))
         (Path(a.output)/'result.json').write_text(json.dumps(report, indent=2))
         print('ROLLOUT', results[-1], flush=True)

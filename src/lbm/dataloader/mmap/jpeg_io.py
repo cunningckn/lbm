@@ -22,7 +22,7 @@ import numpy as np  # noqa: E402
 cv2.setNumThreads(1)
 try:
     cv2.ocl.setUseOpenCL(False)
-except Exception:
+except (AttributeError, cv2.error):
     pass
 
 JpegBlob = bytes | memoryview

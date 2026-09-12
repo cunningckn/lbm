@@ -177,9 +177,6 @@ def read_frames(record: EpisodeRecord, spec: CustomSpec, cam: str, indices: list
     batch = _take(ds, idx, [col])
     if batch is None:
         return blank
-    try:
-        cells = batch[col].to_pylist() if hasattr(batch[col], "to_pylist") else list(batch[col])
-    except Exception:
-        return blank
+    cells = batch[col].to_pylist() if hasattr(batch[col], "to_pylist") else list(batch[col])
     imgs = [still_rgb(raw, hw) for raw in cells]
     return np.stack(imgs, axis=0) if imgs else blank

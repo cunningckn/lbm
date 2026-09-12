@@ -509,10 +509,7 @@ def _lerobot_mp4_span(kw: dict, *, v3_only: bool = False) -> tuple[int, int] | N
         return None
     if v3_only and not getattr(dump, "is_v3", False):
         return None
-    try:
-        idxs = dump.mp4_indices(str(cam), list(range(n)))
-    except Exception:
-        return None
+    idxs = dump.mp4_indices(str(cam), list(range(n)))
     from lbm.dataloader.custom.video import contiguous_span
 
     return contiguous_span(idxs)

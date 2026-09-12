@@ -265,14 +265,11 @@ def _decode_annexb(packets: list[bytes], need: list[int], fmt: str) -> dict[int,
         import av
     except ImportError:
         return {}
-    try:
-        av.logging.set_level(av.logging.ERROR)
-    except Exception:
-        pass
+    av.logging.set_level(av.logging.ERROR)
     name = "hevc" if any(token in fmt.lower() for token in ("265", "hevc")) else "h264"
     try:
         codec = av.codec.CodecContext.create(name, "r")
-    except Exception:
+    except av.error.FFmpegError:
         return {}
     want = set(need)
     max_i = max(want)
@@ -284,7 +281,7 @@ def _decode_annexb(packets: list[bytes], need: list[int], fmt: str) -> dict[int,
             continue
         try:
             frames = list(codec.decode(av.Packet(pkt)))
-        except Exception:
+        except av.error.FFmpegError:
             continue
         if not frames or i not in want:
             continue

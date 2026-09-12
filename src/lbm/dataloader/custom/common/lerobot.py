@@ -590,12 +590,9 @@ def _read_parquet_images(
 
 
 def _parquet_cam_column(path: Path, cam: str) -> str | None:
-    try:
-        import pyarrow.parquet as pq
+    import pyarrow.parquet as pq
 
-        names = set(pq.ParquetFile(path).schema_arrow.names)
-    except Exception:
-        return None
+    names = set(pq.ParquetFile(path).schema_arrow.names)
     for key in (cam, f"observation.images.{cam}"):
         if key in names:
             return key
@@ -661,26 +658,19 @@ def _decode_parquet_image(value, *, repo: Path | str | None = None) -> np.ndarra
 
 
 def _read_episode_parquet(path: Path, episode_index: int, columns: list[str] | None = None) -> pd.DataFrame:
-    try:
-        import pyarrow.parquet as pq
+    import pyarrow.parquet as pq
 
-        table = pq.read_table(path, columns=columns, filters=[("episode_index", "=", int(episode_index))])
-        frame = table.to_pandas()
-    except Exception:
-        frame = pd.read_parquet(path, columns=columns)
-        frame = frame[frame["episode_index"] == int(episode_index)]
+    table = pq.read_table(path, columns=columns, filters=[("episode_index", "=", int(episode_index))])
+    frame = table.to_pandas()
     if frame.empty:
         raise ValueError(f"episode_index={episode_index} missing in {path}")
     return frame.reset_index(drop=True)
 
 
 def _parquet_num_rows(path: Path) -> int:
-    try:
-        import pyarrow.parquet as pq
+    import pyarrow.parquet as pq
 
-        return int(pq.ParquetFile(path).metadata.num_rows)
-    except Exception:
-        return int(len(pd.read_parquet(path)))
+    return int(pq.ParquetFile(path).metadata.num_rows)
 
 
 def _as_td(series) -> np.ndarray:

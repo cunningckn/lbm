@@ -103,6 +103,8 @@ def parse_args(
     initialization.add_argument("--ckpt", default="", help="optional pretrained policy checkpoint")
     initialization.add_argument("--resume", default="", help="resume a trusted training checkpoint")
     p.add_argument("--max-episodes", type=int, default=None, help="optional episode cap per source for experiments")
+    p.add_argument("--feature-shard-rows", type=int, default=1024)
+    p.add_argument("--feature-split", choices=("train", "val"), default="train")
     p.add_argument("--feature-cache", default="", help="prebuilt frozen-vision policy inputs")
     p.add_argument("--compile", action="store_true")
     p.add_argument("--fsdp", action="store_true")

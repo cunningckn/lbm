@@ -44,6 +44,8 @@ def test_distributed_worker_resume_matches_updates(tmp_path, fsdp):
         pytest.skip('requires two CUDA devices')
     if fsdp:
         pytest.importorskip('megatron_fsdp')
+    # A killed earlier writer must not prevent retrying the same checkpoint step.
+    (tmp_path / 'full' / '2.incomplete').mkdir(parents=True)
     for stage in ('full', 'cut', 'resume'):
         torch.multiprocessing.spawn(_resume_worker,
                                     args=(2, _free_port(), str(tmp_path), fsdp, stage), nprocs=2, join=True)

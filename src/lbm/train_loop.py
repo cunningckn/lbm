@@ -410,6 +410,13 @@ def main(config: TrainConfig) -> None:
 
                 norms = train_ds.metadata.get('normalization', {})
                 print(f"feature_cache={config.feature_cache} sources={len(norms)}")
+                for name, stats in norms.items():
+                    if stats is not None:
+                        if Path(name).name != name or name in ('.', '..'):
+                            raise ValueError('invalid feature normalization source name')
+                        save_norm_stats(output_dir / 'normalization' / f'{name}.json',
+                                        dict(norm_stats=stats,
+                                             action_space=train_ds.metadata.get('action_spaces', {}).get(name, [])))
                 inference_norm = train_ds.inference_normalization()
                 if inference_norm is not None:
                     save_norm_stats(output_dir / 'norm_stats.json', inference_norm)

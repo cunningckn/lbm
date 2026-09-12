@@ -148,3 +148,130 @@ def test_cache_preserves_action_semantics_and_rejects_validation_scale_mismatch(
     validation.metadata['action_spaces']['demo'][0]['rep'] = 'delta'
     with pytest.raises(ValueError, match='action_spaces'):
         train.check_validation(validation)
+
+
+def test_sharded_cache_resumes_only_completed_rows_and_checks_data(tmp_path):
+    import json
+
+    from lbm.feature_shards import write_sharded_cache
+
+    config = tiny_dit_config()
+    model = DiTPolicy(config)
+    batch = _cache_batch(config, model)
+    cache = tmp_path / 'sharded'
+    starts = []
+    def interrupted(start):
+        starts.append(start)
+        yield batch
+        raise RuntimeError('interrupted')
+    with pytest.raises(RuntimeError, match='interrupted'):
+        write_sharded_cache(cache, interrupted, rows=6, metadata={}, shard_rows=2)
+    assert not cache.exists()
+    def resumed(start):
+        starts.append(start)
+        for _ in range(start, 6, 2):
+            yield batch
+    write_sharded_cache(cache, resumed, rows=6, metadata={}, shard_rows=2)
+    assert starts == [0, 2]
+    loaded = FeatureDataset(cache)
+    for index in range(6):
+        torch.testing.assert_close(loaded[index]['state'], batch['state'][index % 2])
+    assert len(loaded._shards) <= 2
+    manifest = json.loads((cache / '000001' / 'manifest.json').read_text())
+    filename = next(iter(manifest['fields'].values()))['file']
+    with (cache / '000001' / filename).open('r+b') as handle:
+        handle.seek(-1, 2)
+        value = handle.read(1)
+        handle.seek(-1, 2)
+        handle.write(bytes([value[0] ^ 1]))
+    fresh = FeatureDataset(cache)
+    with pytest.raises(ValueError, match='checksum'):
+        fresh[2]
+
+
+def test_sharded_resume_rejects_changed_contract(tmp_path):
+    from lbm.feature_shards import write_sharded_cache
+
+    def broken(start):
+        raise RuntimeError('stop')
+    with pytest.raises(RuntimeError):
+        write_sharded_cache(tmp_path / 'cache', broken, rows=2, metadata={'source': 'A'})
+    with pytest.raises(ValueError, match='changed'):
+        write_sharded_cache(tmp_path / 'cache', broken, rows=2, metadata={'source': 'B'})
+
+
+def test_feature_validation_rejects_shared_episode_identity():
+    train, validation = FeatureDataset.__new__(FeatureDataset), FeatureDataset.__new__(FeatureDataset)
+    train.metadata = {'episode_ids': ['shared']}
+    validation.metadata = {'episode_ids': ['shared', 'other']}
+    with pytest.raises(ValueError, match='episodes overlap'):
+        train.check_validation(validation)
+
+
+def test_sharded_cache_source_views_keep_global_ranges(tmp_path):
+    from lbm.feature_shards import write_sharded_cache
+
+    config = tiny_dit_config()
+    batch = _cache_batch(config, DiTPolicy(config))
+    metadata = {'sources': [dict(name='A', start=0, stop=2, weight=2),
+                            dict(name='B', start=2, stop=4, weight=1)]}
+    write_sharded_cache(tmp_path / 'cache', lambda start: iter([batch, batch]),
+                        rows=4, metadata=metadata, shard_rows=2)
+    cached = FeatureDataset(tmp_path / 'cache')
+    assert [ds.spec.name for ds in cached.datasets] == ['A', 'B']
+    assert cached.weights == [2, 1]
+    torch.testing.assert_close(cached.datasets[1][0]['state'], batch['state'][0])
+
+
+def test_feature_cache_multiworker_loader(tmp_path):
+    from lbm.training_loader import make_loader
+
+    config = tiny_dit_config()
+    batch = _cache_batch(config, DiTPolicy(config))
+    write_feature_cache(tmp_path / 'cache', [batch], rows=2, metadata={})
+    loader, _ = make_loader(FeatureDataset(tmp_path / 'cache'),
+                            config=TrainConfig(batch_size=2, num_workers=2),
+                            distributed=False, train=True, collate_fn=torch.utils.data.default_collate)
+    loaded = next(iter(loader))
+    assert loaded['state'].shape == batch['state'].shape
+
+
+def test_killed_feature_writer_recovers_completed_shard(tmp_path):
+    import select
+    import subprocess
+    import sys
+
+    from lbm.feature_shards import write_sharded_cache
+
+    script = """
+import sys, time, torch
+from lbm.feature_shards import write_sharded_cache
+batch = dict(state=torch.ones(2, 1), actions=torch.ones(2, 1, 1), task_vec_clip=torch.ones(2, 1),
+             action_mask=torch.ones(2, 1, 1, dtype=torch.bool), camera_mask=torch.ones(2, 1, dtype=torch.bool),
+             vision_features={'cam': torch.ones(2, 1, 1)})
+def batches(start):
+    yield batch
+    print('completed-shard', flush=True)
+    time.sleep(300)
+write_sharded_cache(sys.argv[1], batches, rows=4, metadata={}, shard_rows=2)
+"""
+    cache = tmp_path / 'cache'
+    proc = subprocess.Popen([sys.executable, '-c', script, str(cache)], stdout=subprocess.PIPE, text=True)
+    try:
+        ready, _, _ = select.select([proc.stdout], [], [], 60)
+        assert ready and proc.stdout.readline().strip() == 'completed-shard'
+        proc.kill()
+        proc.wait(timeout=15)
+    finally:
+        if proc.poll() is None:
+            proc.kill()
+            proc.wait(timeout=15)
+    batch = dict(state=torch.ones(2, 1), actions=torch.ones(2, 1, 1), task_vec_clip=torch.ones(2, 1),
+                 action_mask=torch.ones(2, 1, 1, dtype=torch.bool), camera_mask=torch.ones(2, 1, dtype=torch.bool),
+                 vision_features={'cam': torch.ones(2, 1, 1)})
+    def resume(start):
+        assert start == 2
+        yield batch
+    write_sharded_cache(cache, resume, rows=4, metadata={}, shard_rows=2)
+    assert len(FeatureDataset(cache)) == 4
+    assert not list(cache.glob('.*'))

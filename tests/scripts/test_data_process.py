@@ -26,7 +26,8 @@ from process import process_one  # noqa: E402
 def test_catalog_covers_mix_names():
     from lbm.dataloader.custom.datasets.mixes import ALL
 
-    assert tuple(NAMES) == ALL
+    # Download recipes are optional for locally prepared datasets.
+    assert set(NAMES) <= set(ALL)
     for name, spec in DUMPS.items():
         assert spec["urls"], name
         assert spec["urls"][0].startswith("http"), name

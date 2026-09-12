@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Prebuild parquet trajectory mmap + JPEG frame mmap (same as rank-0 training).
 
-Edit ``DATASETS`` below (or pass ``--dataset kai0,libero``). Missing folders are skipped.
+All registered datasets are selected by default (or pass ``--dataset kai0,libero``). Missing folders are skipped.
 
     uv run python scripts/prebuild_mmap.py
     uv run python scripts/prebuild_mmap.py --dataset kai0
@@ -24,21 +24,6 @@ from lbm.config import TrainConfig
 from lbm.dataloader.mixture import load_selected_dumps
 from lbm.train_cli import add_dump_list_arguments, apply_dump_list_args, dumps_from_args
 
-DATASETS = (
-    "abc",
-    "agibot",
-    "das_gripper",
-    "droid",
-    "egoverse",
-    "galaxea",
-    "hifi_umi",
-    "hy_lance",
-    "kai0",
-    "libero",
-    "rmbench",
-    "robotwin",
-)
-
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Prebuild parquet + JPEG mmap caches under each dump's .mmap/")
@@ -58,7 +43,7 @@ def main(argv: list[str] | None = None) -> None:
     cfg = apply_dump_list_args(TrainConfig(), args)
     cfg.data.use_mmap = True
     cfg.data.use_mmap_frames = True
-    mix = load_selected_dumps(cfg, dumps_from_args(args, default=DATASETS), mode="train")
+    mix = load_selected_dumps(cfg, dumps_from_args(args), mode="train")
     n_inner = len(mix.datasets)
     print(f"prebuild mmap: {n_inner} dump(s), workers={cfg.data.mmap_prebuild_workers or 'auto'}")
     for ds in mix.datasets:

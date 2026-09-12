@@ -42,8 +42,17 @@ Add one adapter module under `src/lbm/dataloader/custom/datasets/` exposing
 `NAME`, `SPEC`, `scan`, `read_vectors` and `read_frames`. The registry discovers
 that module automatically; use `dataset_spec()` and `dataset_module()` from
 `lbm.dataloader.custom` instead of adding name branches elsewhere. Add a focused
-fixture/test and update a named mixture only when the dataset should be part of
-that mixture.
+fixture/test. The `all` aliases and generic scan, mmap, normalization and
+inspection scripts automatically include registered adapters. FK defaults are
+derived from the adapter's action-space specification. An explicit
+`--dataset` / `DATASET` still selects a subset. Registration rejects duplicate
+names, mismatched specifications and missing adapter operations.
+
+Put deliberately selected or weighted recipes in `datasets/mixes.py`'s
+`EXTRA_MIXES`. Download/conversion recipes in `scripts/data/catalog.py` are
+optional for an already prepared local dataset. Adding a prepared dataset
+therefore requires one adapter plus its behavior tests, without duplicating
+its name across preprocessing scripts or the all-dataset mixture.
 
 ## Training loader changes
 

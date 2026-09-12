@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build {dump}/.cache/episodes for every on-disk dump.
-# Edit DATASETS below (or DATASET=kai0,libero).
+# Defaults to all registered datasets (or DATASET=kai0,libero).
 #
 #   ./scripts/build_scan_index.sh
 #   RESCAN=1 ./scripts/build_scan_index.sh
@@ -12,22 +12,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export PYTHONPATH="${ROOT}/src${PYTHONPATH:+:${PYTHONPATH}}"
 cd "${ROOT}"
 
-DATASETS=(
-  abc
-  agibot
-  das_gripper
-  droid
-  egoverse
-  galaxea
-  hifi_umi
-  hy_lance
-  kai0
-  libero
-  rmbench
-  robotwin
-)
-
-DATASET="${DATASET:-$(IFS=,; echo "${DATASETS[*]}")}"
+DATASET="${DATASET:-}"
 DATA_ROOT="${DATA_ROOT:-}"
 RESCAN="${RESCAN:-0}"
 

@@ -1,5 +1,7 @@
 import argparse
 
+import pytest
+
 from lbm.config import (
     DiTConfig,
     add_encoder_arguments,
@@ -27,6 +29,12 @@ def test_default_config():
 def test_rejects_incompatible_heads():
     errors = validate_model_config(DiTConfig(num_heads=5))
     assert errors
+
+
+@pytest.mark.parametrize("field", ["num_heads", "vit_num_heads", "vision_pool_num_heads", "t5_num_heads"])
+@pytest.mark.parametrize("value", [0, -1])
+def test_invalid_head_counts_return_validation_errors(field, value):
+    assert validate_model_config(DiTConfig(**{field: value}))
 
 
 def test_rejects_empty_cameras():

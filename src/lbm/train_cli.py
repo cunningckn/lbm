@@ -18,11 +18,11 @@ from lbm.config import (
 
 
 def add_dump_list_arguments(parser: argparse.ArgumentParser) -> None:
-    """Ops scripts: empty ``--dataset`` uses the script's ``DATASETS`` tuple."""
+    """Ops scripts: empty ``--dataset`` selects every registered dataset."""
     parser.add_argument(
         "--dataset",
         default="",
-        help="comma list of dump names (default: DATASETS in this script)",
+        help="comma list of dump names (default: all registered datasets)",
     )
     parser.add_argument("--data-root", default="", help="parent of dump folders (default: <repo>/datasets)")
 
@@ -72,9 +72,12 @@ def apply_dump_list_args(cfg: TrainConfig, args: argparse.Namespace) -> TrainCon
     return cfg
 
 
-def dumps_from_args(args: argparse.Namespace, *, default: tuple[str, ...]) -> tuple[str, ...]:
+def dumps_from_args(args: argparse.Namespace, *, default: tuple[str, ...] | None = None) -> tuple[str, ...]:
     from lbm.dataloader.catalog import select_dumps
+    from lbm.dataloader.custom.datasets import dataset_names
 
+    if default is None:
+        default = dataset_names()
     try:
         return select_dumps(getattr(args, "dataset", "") or "", default=default)
     except KeyError as exc:

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Compute state/action mean/std/min/max/q01/q99 next to each dump.
-# Edit DATASETS below (or DATASET=kai0,libero). Set MMAP=1 to also prebuild JPEG mmap.
+# Defaults to all registered datasets (or DATASET=kai0,libero). Set MMAP=1 to also prebuild JPEG mmap.
 #
 #   ./scripts/compute_norm.sh
 #   DATASET=libero ./scripts/compute_norm.sh
@@ -13,22 +13,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export PYTHONPATH="${ROOT}/src${PYTHONPATH:+:${PYTHONPATH}}"
 cd "${ROOT}"
 
-DATASETS=(
-  abc
-  agibot
-  das_gripper
-  droid
-  egoverse
-  galaxea
-  hifi_umi
-  hy_lance
-  kai0
-  libero
-  rmbench
-  robotwin
-)
-
-DATASET="${DATASET:-$(IFS=,; echo "${DATASETS[*]}")}"
+DATASET="${DATASET:-}"
 DATA_ROOT="${DATA_ROOT:-}"
 WORKERS="${WORKERS:-0}"
 MMAP="${MMAP:-0}"

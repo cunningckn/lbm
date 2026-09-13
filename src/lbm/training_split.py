@@ -13,12 +13,38 @@ from lbm.training_loader import make_loader
 
 
 def episode_ids(source):
-    """Identify records by canonical location and record metadata (e.g. parquet row range)."""
+    """Physical parent identity is independent of mutable annotation content."""
     if source.records:
-        return [hashlib.sha256(json.dumps(
-            [str(Path(r.path).resolve()), r.kind, r.extra], sort_keys=True, default=str
-        ).encode()).hexdigest() for r in source.records]
+        identities = []
+        for record in source.records:
+            extra = dict(record.extra)
+            parent = extra.get('parent_id')
+            extra.pop('annotation_sources', None)
+            extra.pop('instruction_segments', None)
+            identity = ['parent', parent] if parent is not None else [
+                str(Path(record.path).resolve()), record.kind, extra]
+            identities.append(hashlib.sha256(json.dumps(identity, sort_keys=True, default=str).encode()).hexdigest())
+        return identities
     return [f'memory:{id(e)}' for e in source.episodes]
+
+
+def holdout_indices(source, fraction, seed):
+    """Keep every segment/variant of a collection episode on one side of holdout."""
+    identities = episode_ids(source)
+    groups = list(dict.fromkeys(identities))
+    if len(groups) < 2:
+        raise ValueError(f'{source.spec.name}: episode holdout requires at least two independent parent episodes')
+    order = np.random.default_rng(seed).permutation(len(groups))
+    cut = min(len(groups) - 1, max(1, int(len(groups) * fraction)))
+    heldout = {groups[i] for i in order[:cut]}
+    # Preserve the previous shuffled order when records are independent episodes.
+    by_parent = {key: [] for key in groups}
+    for i, key in enumerate(identities):
+        by_parent[key].append(i)
+    train = [i for g in order[cut:] for i in by_parent[groups[g]]]
+    validation = [i for g in order[:cut] for i in by_parent[groups[g]]]
+    assert not {identities[i] for i in train} & heldout
+    return train, validation
 
 
 def episode_view(source, indices):
@@ -27,7 +53,9 @@ def episode_view(source, indices):
     view._index = None
     if source.records:
         view.records = [source.records[i] for i in indices]
-        lengths = [r.n_frames for r in view.records]
+        from lbm.dataloader.custom.instructions import sample_count
+
+        lengths = [sample_count(r) for r in view.records]
     else:
         view.episodes = [source.episodes[i] for i in indices]
         lengths = [len(e.action) for e in view.episodes]
@@ -42,12 +70,8 @@ def prepare_validation(train, validation, config):
     if config.data.val_fraction:
         pairs, heldout = [], []
         for source, weight in zip(train.datasets, train.weights, strict=True):
-            count = len(source.records or source.episodes)
-            if count < 2:
-                raise ValueError(f'{source.spec.name}: episode holdout requires at least two episodes')
-            order = np.random.default_rng(config.seed).permutation(count)
-            cut = min(count - 1, max(1, int(count * config.data.val_fraction)))
-            tr, va = episode_view(source, order[cut:]), episode_view(source, order[:cut])
+            train_indices, validation_indices = holdout_indices(source, config.data.val_fraction, config.seed)
+            tr, va = episode_view(source, train_indices), episode_view(source, validation_indices)
             # Never reuse full-corpus statistics after splitting.
             tr.norm_stats = va.norm_stats = compute_norm_stats(tr, progress=False)['norm_stats']
             pairs.append((tr, weight))
@@ -126,7 +150,8 @@ def dataset_fingerprint(dataset):
         for record in source.records:
             path = Path(record.path)
             stat = path.stat()
-            files.append((stat.st_size, stat.st_mtime_ns))
+            files.append((str(path.resolve()), stat.st_size, stat.st_mtime_ns,
+                          record.lang, record.extra))
         sources.append(dict(episodes=episode_ids(source), files=files,
                             normalization=_jsonable(source.norm_stats)))
-    return hashlib.sha256(json.dumps(sources, sort_keys=True).encode()).hexdigest()
+    return hashlib.sha256(json.dumps(sources, sort_keys=True, default=str).encode()).hexdigest()

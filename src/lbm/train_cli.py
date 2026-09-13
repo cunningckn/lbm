@@ -145,6 +145,7 @@ def parse_args(
         help="eef packed pose: default, xyz+rotvec, xyz+rot6d, xyz+quat",
     )
     p.add_argument("--no-mmap", action="store_true")
+    p.add_argument("--instruction-mode", choices=("episode", "subtask"), default=TrainConfig().data.instruction_mode)
     p.add_argument(
         "--rescan",
         action="store_true",
@@ -224,6 +225,7 @@ def build_train_config(args: argparse.Namespace) -> TrainConfig:
     cfg.data.mmap_prebuild = bool(args.mmap_prebuild) and not args.no_mmap
     cfg.data.mmap_prebuild_workers = int(args.mmap_prebuild_workers)
     cfg.data.rescan = bool(args.rescan)
+    cfg.data.instruction_mode = args.instruction_mode
     apply_encoder_args(cfg.model, args)
     apply_temporal_args(cfg.model, args)
     apply_fsdp_wrap_args(cfg.parallel, args)

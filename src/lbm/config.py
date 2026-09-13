@@ -438,6 +438,7 @@ class DataConfig:
     override_action_freq: bool = False
     max_episodes: int | None = None
     rescan: bool = False
+    instruction_mode: str = "episode"
 
 
 def validate_loader_config(data: DataConfig, *, num_workers: int) -> list[str]:
@@ -572,4 +573,5 @@ def data_cfg_from_train(config: TrainConfig) -> dict:
         "max_state_dim": d.max_state_dim,
         "max_episodes": d.max_episodes,
         "rescan": d.rescan,
+        "instruction_mode": d.instruction_mode,
     }

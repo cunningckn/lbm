@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
+from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
@@ -34,6 +36,7 @@ SPEC = make_spec(
     26,
     kind="agibot",
     action_space=_AGIBOT_SPACE,
+    scan_revision=2,
 )
 
 _CAM = {"top_head": "head", "hand_left": "hand_left", "hand_right": "hand_right"}
@@ -88,9 +91,11 @@ def _records(
     spec: CustomSpec,
 ) -> list[EpisodeRecord]:
     records: list[EpisodeRecord] = []
-    langs: dict[tuple[str, str], str] = {}
+    langs: dict[tuple[str, str], dict[str, str]] = {}
+    provenance: dict[tuple[str, str], dict[str, str | None]] = {}
     for (base, h5), n, cams in zip(pairs, ns, videos, strict=True):
-        rec = _record(base, h5, spec, n, langs, cams)
+        key = (str(base), h5.parent.parent.name)
+        rec = _record(base, h5, spec, n, langs, cams, provenance.setdefault(key, {}))
         if rec is not None:
             records.append(rec)
     return records
@@ -119,23 +124,26 @@ def _record(
     h5: Path,
     spec: CustomSpec,
     n: int,
-    langs: dict[tuple[str, str], str],
+    langs: dict[tuple[str, str], dict[str, str]],
     videos: dict[str, str],
+    annotation_sources: dict[str, str | None],
 ) -> EpisodeRecord | None:
     if n <= 0:
         return None
-    episode_id = h5.parent.name
+    episode_id = str(int(h5.parent.name))
     task_id = h5.parent.parent.name
     video_dir = _video_dir(base, h5)
     key = (str(base), task_id)
     if key not in langs:
-        langs[key] = _instruction(base, task_id)
+        langs[key] = _instructions(base, task_id, sources=annotation_sources)
     return EpisodeRecord(
         kind="agibot",
         path=str(h5),
         n_frames=n,
-        lang=langs[key],
+        lang=langs[key].get(episode_id, langs[key].get("*", "")),
         extra={
+            "annotation_sources": annotation_sources,
+            "parent_id": f"agibot:{task_id}:{episode_id}",
             "video_dir": str(video_dir),
             "task_id": task_id,
             "episode_id": episode_id,
@@ -159,19 +167,33 @@ def _cam_paths(video_dir: Path, camera_keys: tuple[str, ...]) -> dict[str, str]:
     return out
 
 
-def _instruction(root: Path, task_id: str) -> str:
+def _instructions(root: Path, task_id: str, *, sources: dict | None = None) -> dict[str, str]:
+    """Index per-episode annotations once per task, without borrowing another episode's text."""
     path = root / "task_info" / f"task_{task_id}.json"
-    if not path.is_file():
-        return ""
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return ""
-    if isinstance(data, list) and data:
-        data = data[0]
-    if isinstance(data, dict):
-        return str(data.get("english") or data.get("instruction") or data.get("task") or "")
-    return ""
+    raw = path.read_bytes() if path.is_file() else None
+    if sources is not None:
+        sources[str(path.resolve())] = hashlib.sha256(raw).hexdigest() if raw is not None else None
+    if raw is None:
+        return {}
+    data = json.loads(raw)
+    rows = data if isinstance(data, list) else [data]
+    result: dict[str, str] = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            raise ValueError(f"invalid Agibot annotation row in {path}")
+        episode = row.get("episode_id")
+        if episode is None:
+            if isinstance(data, list):
+                raise ValueError(f"per-episode Agibot annotation missing episode_id: {path}")
+            key = "*"  # Legacy task-wide dictionary.
+        else:
+            key = str(int(episode))
+        if key in result:
+            raise ValueError(f"duplicate Agibot episode_id {key} in {path}")
+        text = next((row[k] for k in ("english", "instruction", "task", "task_name")
+                     if isinstance(row.get(k), str) and row[k].strip()), "")
+        result[key] = text.strip()
+    return result
 
 
 def read_vectors(record: EpisodeRecord, spec: CustomSpec, **_kwargs) -> tuple[np.ndarray, np.ndarray]:
@@ -218,3 +240,30 @@ def read_frames(record: EpisodeRecord, spec: CustomSpec, cam: str, indices: list
         indices,
         fallback_hw=(spec.image_size, spec.image_size),
     )
+
+
+@lru_cache(maxsize=2)
+def _subtask_annotations(path: str, digest: str):
+    raw = Path(path).read_bytes()
+    if hashlib.sha256(raw).hexdigest() != digest:
+        raise ValueError('Agibot annotations changed after scanning; rescan before training')
+    data = json.loads(raw)
+    rows = data if isinstance(data, list) else [data]
+    return {str(int(row['episode_id'])): row.get('label_info', {}).get('action_config', [])
+            for row in rows if 'episode_id' in row}
+
+
+def read_subtasks(record):
+    """Use explicit [start_frame, end_frame) training windows; never extend unlabeled tails.
+
+    This conservative endpoint policy excludes end_frame. It is a training
+    policy, not a claim that the publisher formally specifies endpoint ownership.
+    """
+    sources = record.extra.get('annotation_sources', {})
+    if len(sources) != 1:
+        raise ValueError('Agibot subtask mode requires a freshly scanned annotation source')
+    path, digest = next(iter(sources.items()))
+    if digest is None:
+        raise ValueError('Agibot subtask annotation file is missing')
+    rows = _subtask_annotations(path, digest).get(record.extra['episode_id'], [])
+    return [dict(start=row['start_frame'], stop=row['end_frame'], text=row.get('action_text', '')) for row in rows]

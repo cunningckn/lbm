@@ -70,6 +70,8 @@ def main(argv=None):
             previous = int(stop)
         start += len(source)
     metadata = dict(sources=sources, episode_ranges=episode_ranges,
+                    instruction_mode=cfg.data.instruction_mode,
+                    source_revisions={ds.spec.name: ds.spec.scan_revision for ds in dataset.datasets},
                     episode_ids=[key for ds in dataset.datasets for key in episode_ids(ds)],
                     source_fingerprint=dataset_fingerprint(dataset),
                     model={key: getattr(cfg.model, key) for key in MODEL_FIELDS},

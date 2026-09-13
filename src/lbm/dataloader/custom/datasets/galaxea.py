@@ -11,7 +11,7 @@ _GALAXEA_SPACE = (
     ActionSlice("right_gripper", 13, 14, ABS, GRIPPER, QUANTILE, state_start=15, state_end=16),
 )
 
-NAME, SPEC, scan, read_vectors, read_frames = bind_lerobot(
+NAME, SPEC, _scan, read_vectors, read_frames = bind_lerobot(
     "galaxea",
     "galaxea",
     ("head_rgb", "left_wrist_rgb", "right_wrist_rgb"),
@@ -36,4 +36,41 @@ NAME, SPEC, scan, read_vectors, read_frames = bind_lerobot(
     ),
     kind="lerobot",
     action_space=_GALAXEA_SPACE,
+    scan_revision=2,
 )
+
+
+def _instruction_text(text):
+    """Galaxea's Chinese@English annotation supplies an English CLIP instruction."""
+    before, separator, after = text.partition('@')
+    if separator and any('\u4e00' <= char <= '\u9fff' for char in before) and after.strip():
+        return after.strip()
+    return text
+
+
+def scan(root, spec, *, max_episodes=None):
+    records = _scan(root, spec, max_episodes=max_episodes)
+    for record in records:
+        record.lang = _instruction_text(record.lang)
+    return records
+
+
+def read_subtasks(record):
+    """Decode fine task_index changes from physical rows, without reading video payloads."""
+    import numpy as np
+    import pandas as pd
+
+    from lbm.dataloader.custom.common.lerobot import _read_episode_parquet, lerobot_of
+    from lbm.dataloader.custom.common.lerobot_rows import load_tasks
+    from lbm.dataloader.custom.instructions import from_frame_tasks
+
+    dump = lerobot_of(record)
+    if dump is None:
+        raise ValueError('Galaxea subtask mode requires a LeRobot record')
+    columns = ['task_index', 'frame_index']
+    frame = (_read_episode_parquet(dump.parquet, dump.episode_index, columns=columns) if dump.is_v3
+             else pd.read_parquet(dump.parquet, columns=columns))
+    if len(frame) != record.n_frames or not np.array_equal(frame['frame_index'], np.arange(record.n_frames)):
+        raise ValueError('Galaxea subtask rows do not match physical episode frame coordinates')
+    tasks = {key: _instruction_text(text) for key, text in load_tasks(dump.repo/'meta').items()}
+    return from_frame_tasks(frame['task_index'].to_numpy(), tasks)

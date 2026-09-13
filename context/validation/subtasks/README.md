@@ -1,8 +1,9 @@
 # Subtask data validation — 2026-09-14
 
-Status: implementation and CPU tests are complete; real GPU smoke matrix is in
-progress. Do not interpret the short training runs as convergence or quality
-improvement. Results will be finalized after all three sources finish.
+Implementation, CPU regression and all three real GPU smoke arms are complete.
+Each arm finished ten updates and fresh-process recovery to twenty, with finite
+training loss and validation metrics. These short runs demonstrate functional
+training/recovery, not convergence or quality improvement.
 
 ## Behavior
 
@@ -75,3 +76,20 @@ under `lbm-validation-20260913/subtasks` on js_dev_1. The first Galaxea attempt
 failed because concatenated bilingual text exceeded CLIP's 77-token context;
 its output is preserved under `attempts/clip-overflow`. It was not counted as a
 completed training run. The corrected run uses source-provided English text.
+
+## Completed results
+
+| Source | Final loss | Final held-out reconstruction error | Peak allocated GPU memory |
+| --- | ---: | --- | ---: |
+| agibot | 0.9453 | agibot 0.804080 | 18.22 GiB |
+| galaxea | 2.1562 | galaxea 6.054416 | 18.22 GiB |
+| mixed | 1.1250 | agibot 0.598409, galaxea 7.856572 | 18.45 GiB |
+
+Loss values are from short independent workloads, not a controlled ranking.
+All twelve sampled camera-cache jobs were structurally ready; 36 selected
+frames decoded successfully. This is not full-corpus integrity or source-pixel
+equivalence evidence. See `summary.json` for the recorded protocol and metrics.
+
+Final CPU regression: **531 passed, 27 skipped, 14 deselected**. Ruff and Python
+syntax checks pass. The [periodic review](REVIEW.md) establishes PR45 as the
+next normalization-review baseline after merge.

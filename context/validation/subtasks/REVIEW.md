@@ -1,9 +1,8 @@
 # Five-PR normalization review — 2026-09-14
 
-Review baseline: PR40. Covered merged changes: PR41–44, plus the current subtask
-change. Base commit: `6f69c062296c627669cd8cd9cece163f86df61ed`.
-The next baseline is this subtask PR once merged; until then this review is
-pending final GPU results and CI.
+Review baseline: PR40. Covered merged changes: PR41–44, plus subtask PR45. Base commit: `6f69c062296c627669cd8cd9cece163f86df61ed`.
+The next review baseline is PR45 once merged. All three GPU smoke arms and
+recovery stages have completed; merge remains gated on final-head CI.
 
 ## Scope and findings
 

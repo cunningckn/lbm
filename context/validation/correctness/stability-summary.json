@@ -1,0 +1,38 @@
+{
+  "steps": 1000,
+  "batch": 128,
+  "resume_at": 500,
+  "resource_samples": 24,
+  "max_bytes": {
+    "gpu_allocated": 15952266240,
+    "gpu_reserved": 69394759680,
+    "gpu_peak": 67879590400,
+    "rss": 15748919296,
+    "worker_rss": 13993852928,
+    "container_unreclaimable_estimate": 8818470912,
+    "shm_used": 156524544
+  },
+  "first_memory_events": {
+    "low": 0,
+    "high": 0,
+    "max": 1607249,
+    "oom": 0,
+    "oom_kill": 0
+  },
+  "last_memory_events": {
+    "low": 0,
+    "high": 0,
+    "max": 1815234,
+    "oom": 0,
+    "oom_kill": 0
+  },
+  "last_sample": {
+    "gpu_allocated": 11815145984,
+    "gpu_reserved": 69277319168,
+    "gpu_peak": 67875199488,
+    "rss": 6890221568,
+    "worker_rss": 0,
+    "container_unreclaimable_estimate": 6627639296,
+    "shm_used": 0
+  }
+}

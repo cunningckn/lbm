@@ -1,0 +1,15 @@
+{
+  "checkpoint": {
+    "tensors_compared": 2521,
+    "bitwise_equal": true,
+    "differences": []
+  },
+  "record_files_byte_equal": {
+    "losses.jsonl": true,
+    "validation.jsonl": true,
+    "initial-weights.sha256": true
+  },
+  "resume_step": 2,
+  "final_step": 4,
+  "batch": 4
+}

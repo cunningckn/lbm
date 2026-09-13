@@ -1,0 +1,238 @@
+{
+  "complete": true,
+  "seeds": [
+    123,
+    456,
+    789
+  ],
+  "training_steps": {
+    "mixed": 3000,
+    "libero": 1500
+  },
+  "training": {
+    "mixed": {
+      "0:kai0": {
+        "per_seed": [
+          {
+            "baseline": 0.12446347282046363,
+            "candidate": 0.12234919865926107,
+            "absolute_change": -0.0021142741612025645,
+            "relative_change": -0.016987105640643402,
+            "review_required": false
+          },
+          {
+            "baseline": 0.11573003042311895,
+            "candidate": 0.11809351694016229,
+            "absolute_change": 0.0023634865170433367,
+            "relative_change": 0.020422413339063566,
+            "review_required": false
+          },
+          {
+            "baseline": 0.12584159124465216,
+            "candidate": 0.12489687783377511,
+            "absolute_change": -0.0009447134108770544,
+            "relative_change": -0.007507163581875015,
+            "review_required": false
+          }
+        ],
+        "absolute_change": {
+          "mean": -0.0002318336850120941,
+          "seed_values": [
+            -0.0021142741612025645,
+            0.0023634865170433367,
+            -0.0009447134108770544
+          ],
+          "t95_interval": [
+            -0.006001097545767672,
+            0.005537430175743484
+          ],
+          "replicates": 3,
+          "interval_scope": "training seed variability; only three seeds"
+        },
+        "relative_change": {
+          "mean": -0.0013572852944849503,
+          "seed_values": [
+            -0.016987105640643402,
+            0.020422413339063566,
+            -0.007507163581875015
+          ],
+          "t95_interval": [
+            -0.049669375143997,
+            0.046954804555027096
+          ],
+          "replicates": 3,
+          "interval_scope": "training seed variability; only three seeds"
+        },
+        "review_required": false
+      },
+      "1:agibot": {
+        "per_seed": [
+          {
+            "baseline": 0.10601031505700313,
+            "candidate": 0.10586800083969579,
+            "absolute_change": -0.00014231421730734328,
+            "relative_change": -0.0013424563188102882,
+            "review_required": false
+          },
+          {
+            "baseline": 0.0935954492742365,
+            "candidate": 0.09700416391546075,
+            "absolute_change": 0.0034087146412242475,
+            "relative_change": 0.036419662148708176,
+            "review_required": false
+          },
+          {
+            "baseline": 0.1037001945033218,
+            "candidate": 0.10165298057324959,
+            "absolute_change": -0.002047213930072206,
+            "relative_change": -0.019741659501001495,
+            "review_required": false
+          }
+        ],
+        "absolute_change": {
+          "mean": 0.00040639549794823276,
+          "seed_values": [
+            -0.00014231421730734328,
+            0.0034087146412242475,
+            -0.002047213930072206
+          ],
+          "t95_interval": [
+            -0.0064722894384010386,
+            0.0072850804342975035
+          ],
+          "replicates": 3,
+          "interval_scope": "training seed variability; only three seeds"
+        },
+        "relative_change": {
+          "mean": 0.005111848776298797,
+          "seed_values": [
+            -0.0013424563188102882,
+            0.036419662148708176,
+            -0.019741659501001495
+          ],
+          "t95_interval": [
+            -0.06601292495544499,
+            0.07623662250804257
+          ],
+          "replicates": 3,
+          "interval_scope": "training seed variability; only three seeds"
+        },
+        "review_required": false
+      }
+    },
+    "libero": {
+      "0:libero": {
+        "per_seed": [
+          {
+            "baseline": 0.25799192019871303,
+            "candidate": 0.25217155729021346,
+            "absolute_change": -0.005820362908499577,
+            "relative_change": -0.02256025267774495,
+            "review_required": false
+          },
+          {
+            "baseline": 0.24903842857905797,
+            "candidate": 0.25002856663295203,
+            "absolute_change": 0.0009901380538940574,
+            "relative_change": 0.00397584444916193,
+            "review_required": false
+          },
+          {
+            "baseline": 0.24592103617531913,
+            "candidate": 0.2300185932431902,
+            "absolute_change": -0.01590244293212892,
+            "relative_change": -0.06466483379970771,
+            "review_required": true
+          }
+        ],
+        "absolute_change": {
+          "mean": -0.006910889262244813,
+          "seed_values": [
+            -0.005820362908499577,
+            0.0009901380538940574,
+            -0.01590244293212892
+          ],
+          "t95_interval": [
+            -0.02802339414754055,
+            0.014201615623050924
+          ],
+          "replicates": 3,
+          "interval_scope": "training seed variability; only three seeds"
+        },
+        "relative_change": {
+          "mean": -0.027749747342763576,
+          "seed_values": [
+            -0.02256025267774495,
+            0.00397584444916193,
+            -0.06466483379970771
+          ],
+          "t95_interval": [
+            -0.11373406896739587,
+            0.05823457428186872
+          ],
+          "replicates": 3,
+          "interval_scope": "training seed variability; only three seeds"
+        },
+        "review_required": true
+      }
+    }
+  },
+  "closed_loop": {
+    "per_seed": [
+      {
+        "seed": 123,
+        "baseline_successes": 10,
+        "candidate_successes": 24,
+        "trials": 50,
+        "paired_outcomes": {
+          "both_success": 9,
+          "baseline_only": 1,
+          "candidate_only": 15,
+          "both_failure": 25
+        },
+        "success_rate_difference": 0.28
+      },
+      {
+        "seed": 456,
+        "baseline_successes": 2,
+        "candidate_successes": 2,
+        "trials": 50,
+        "paired_outcomes": {
+          "both_success": 0,
+          "baseline_only": 2,
+          "candidate_only": 2,
+          "both_failure": 46
+        },
+        "success_rate_difference": 0.0
+      },
+      {
+        "seed": 789,
+        "baseline_successes": 11,
+        "candidate_successes": 3,
+        "trials": 50,
+        "paired_outcomes": {
+          "both_success": 2,
+          "baseline_only": 9,
+          "candidate_only": 1,
+          "both_failure": 38
+        },
+        "success_rate_difference": -0.16
+      }
+    ],
+    "success_rate_difference": {
+      "mean": 0.04000000000000001,
+      "seed_values": [
+        0.28,
+        0.0,
+        -0.16
+      ],
+      "t95_interval": [
+        -0.5132437369469682,
+        0.5932437369469683
+      ],
+      "replicates": 3,
+      "interval_scope": "training seed variability; only three seeds"
+    },
+    "scope": "Task 0, fixed official states 0\u201349; not an unseen-task or full-suite score"
+  }
+}

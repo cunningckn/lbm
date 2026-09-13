@@ -40,3 +40,24 @@ relative error 1e-4 (FP32), 1% (BF16); aggregate gradient relative L2 1e-4
 Adam's near-zero gradient division and BF16 rounding can magnify it. Do not
 substitute parameter-relative error for update-relative error. Report repeat
 baseline noise and do not silently loosen thresholds after observing results.
+
+## User-requested validation-length amendment — 2026-09-14
+
+The user requested shorter training because this stage is validation. Preserve
+mixed runs at 3,000 updates (the final arm was already near completion). Before
+starting any LIBERO arm, reduce all six LIBERO runs to 1,500 updates with
+fresh-process recovery at 750. Retain all three paired seeds, batch 32,
+validation every 250, optimizer/warmup configuration, and 50 closed-loop initial
+states per checkpoint. The batch-128 stability run remains 1,000 updates with
+recovery at 500. No numerical or quality review threshold changes.
+
+Record the amendment in `training/protocol-shortened.json` with `training_steps`
+for both datasets; the quality summary reads these recorded targets, and the
+closed-loop runner uses the corresponding LIBERO checkpoint. Existing mixed
+results and logs are retained. Shorter LIBERO runs establish validation evidence,
+not convergence or a final task-success ceiling. Compare arms within the same
+dataset/length; do not compare their final loss to the previous 3,000-step recipe
+as if training budgets matched.
+
+Upcoming subtask and history-input experiments should first use short functional
+and paired training checks, then extend only promising or inconclusive cases.

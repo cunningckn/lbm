@@ -1,0 +1,1072 @@
+{
+  "training_complete": true,
+  "datasets": {
+    "mixed": {
+      "steps": 3000,
+      "sources": {
+        "0:kai0": {
+          "seeds": [
+            123,
+            456,
+            789
+          ],
+          "final": [
+            {
+              "baseline": 0.12446347282046363,
+              "candidate": 0.12234919865926107,
+              "absolute_change": -0.0021142741612025645,
+              "relative_change": -0.016987105640643402,
+              "review_required": false
+            },
+            {
+              "baseline": 0.11573003042311895,
+              "candidate": 0.11809351694016229,
+              "absolute_change": 0.0023634865170433367,
+              "relative_change": 0.020422413339063566,
+              "review_required": false
+            },
+            {
+              "baseline": 0.12584159124465216,
+              "candidate": 0.12489687783377511,
+              "absolute_change": -0.0009447134108770544,
+              "relative_change": -0.007507163581875015,
+              "review_required": false
+            }
+          ],
+          "mean_relative_change": -0.0013572852944849503,
+          "descriptive_seed_t95_interval": [
+            -0.049669375143997,
+            0.046954804555027096
+          ]
+        },
+        "1:agibot": {
+          "seeds": [
+            123,
+            456,
+            789
+          ],
+          "final": [
+            {
+              "baseline": 0.10601031505700313,
+              "candidate": 0.10586800083969579,
+              "absolute_change": -0.00014231421730734328,
+              "relative_change": -0.0013424563188102882,
+              "review_required": false
+            },
+            {
+              "baseline": 0.0935954492742365,
+              "candidate": 0.09700416391546075,
+              "absolute_change": 0.0034087146412242475,
+              "relative_change": 0.036419662148708176,
+              "review_required": false
+            },
+            {
+              "baseline": 0.1037001945033218,
+              "candidate": 0.10165298057324959,
+              "absolute_change": -0.002047213930072206,
+              "relative_change": -0.019741659501001495,
+              "review_required": false
+            }
+          ],
+          "mean_relative_change": 0.005111848776298797,
+          "descriptive_seed_t95_interval": [
+            -0.06601292495544499,
+            0.07623662250804257
+          ]
+        }
+      },
+      "paired_runs": [
+        {
+          "seed": 123,
+          "variant": "combined",
+          "steps": 3000,
+          "paired_random_sequences": true,
+          "validation": [
+            {
+              "step": 250,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.19070071810767764,
+                  "candidate": 0.1907466016496931,
+                  "absolute_change": 4.588354201545686e-05,
+                  "relative_change": 0.00024060497763594724,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.15522167321407435,
+                  "candidate": 0.15518597227154357,
+                  "absolute_change": -3.570094253077527e-05,
+                  "relative_change": -0.0002299997274319948,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 500,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.1870461872645787,
+                  "candidate": 0.18511570158458893,
+                  "absolute_change": -0.0019304856799897685,
+                  "relative_change": -0.010320903666745568,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.14374203190659032,
+                  "candidate": 0.14193918863932292,
+                  "absolute_change": -0.001802843267267401,
+                  "relative_change": -0.012542213598587261,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 750,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.18060071491059804,
+                  "candidate": 0.17316228594098773,
+                  "absolute_change": -0.007438428969610306,
+                  "relative_change": -0.041187151298335216,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.12454211495139382,
+                  "candidate": 0.1287150411894827,
+                  "absolute_change": 0.004172926238088889,
+                  "relative_change": 0.03350614560959957,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 1000,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.17457836696079798,
+                  "candidate": 0.1686823508853004,
+                  "absolute_change": -0.005896016075497584,
+                  "relative_change": -0.03377289052555721,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.134177070386482,
+                  "candidate": 0.1251913174715909,
+                  "absolute_change": -0.008985752914891093,
+                  "relative_change": -0.06696936286512024,
+                  "review_required": true
+                }
+              }
+            },
+            {
+              "step": 1250,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.16305567423502604,
+                  "candidate": 0.1614234833490281,
+                  "absolute_change": -0.0016321908859979473,
+                  "relative_change": -0.010010021998040568,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.13151168476451527,
+                  "candidate": 0.12842485948042437,
+                  "absolute_change": -0.003086825284090905,
+                  "relative_change": -0.023471870880661078,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 1500,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.1477870341709682,
+                  "candidate": 0.15400002161661783,
+                  "absolute_change": 0.0062129874456496315,
+                  "relative_change": 0.04204013891003527,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.13059637474291252,
+                  "candidate": 0.12779436284845525,
+                  "absolute_change": -0.002802011894457279,
+                  "relative_change": -0.021455510537510877,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 1750,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.14160402116321383,
+                  "candidate": 0.1424636749994187,
+                  "absolute_change": 0.0008596538362048711,
+                  "relative_change": 0.006070829268428952,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.10463679747147994,
+                  "candidate": 0.10485126957748875,
+                  "absolute_change": 0.00021447210600880617,
+                  "relative_change": 0.002049681481003499,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 2000,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.1369236964271182,
+                  "candidate": 0.14207098733811152,
+                  "absolute_change": 0.005147290910993307,
+                  "relative_change": 0.037592403983434004,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.12039015105276397,
+                  "candidate": 0.12039221792510062,
+                  "absolute_change": 2.066872336642378e-06,
+                  "relative_change": 1.716811814395448e-05,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 2250,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.13549070176624117,
+                  "candidate": 0.1359342620486305,
+                  "absolute_change": 0.0004435602823893159,
+                  "relative_change": 0.0032737322680236737,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.11308644959420869,
+                  "candidate": 0.11194612329656428,
+                  "absolute_change": -0.0011403262976444062,
+                  "relative_change": -0.010083668748433356,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 2500,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.13679016839890254,
+                  "candidate": 0.1344990939185733,
+                  "absolute_change": -0.0022910744803292526,
+                  "relative_change": -0.016748824181925883,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.1275073172829368,
+                  "candidate": 0.11278297193122633,
+                  "absolute_change": -0.014724345351710466,
+                  "relative_change": -0.11547843422222874,
+                  "review_required": true
+                }
+              }
+            },
+            {
+              "step": 2750,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.12206257138933455,
+                  "candidate": 0.12109001613798595,
+                  "absolute_change": -0.0009725552513485947,
+                  "relative_change": -0.007967677890763929,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.09724278247717655,
+                  "candidate": 0.095325558980306,
+                  "absolute_change": -0.0019172234968705543,
+                  "relative_change": -0.019715843665009666,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 3000,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.12446347282046363,
+                  "candidate": 0.12234919865926107,
+                  "absolute_change": -0.0021142741612025645,
+                  "relative_change": -0.016987105640643402,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.10601031505700313,
+                  "candidate": 0.10586800083969579,
+                  "absolute_change": -0.00014231421730734328,
+                  "relative_change": -0.0013424563188102882,
+                  "review_required": false
+                }
+              }
+            }
+          ]
+        },
+        {
+          "seed": 456,
+          "variant": "combined",
+          "steps": 3000,
+          "paired_random_sequences": true,
+          "validation": [
+            {
+              "step": 250,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.20111497424897692,
+                  "candidate": 0.20109122685023717,
+                  "absolute_change": -2.3747398739754066e-05,
+                  "relative_change": -0.00011807872003779882,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.1563680140177409,
+                  "candidate": 0.15638319882479582,
+                  "absolute_change": 1.518480705492431e-05,
+                  "relative_change": 9.710941940595026e-05,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 500,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.1774777385166713,
+                  "candidate": 0.1782419949486142,
+                  "absolute_change": 0.0007642564319428891,
+                  "relative_change": 0.0043062101102392565,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.14031635862408262,
+                  "candidate": 0.1385824272849343,
+                  "absolute_change": -0.0017339313391483147,
+                  "relative_change": -0.012357300005152203,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 750,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.18685429345993768,
+                  "candidate": 0.1848877498081752,
+                  "absolute_change": -0.0019665436517624646,
+                  "relative_change": -0.010524476667613204,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.13464621688380385,
+                  "candidate": 0.13658153765129322,
+                  "absolute_change": 0.001935320767489368,
+                  "relative_change": 0.014373376484535759,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 1000,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.19214131491524833,
+                  "candidate": 0.19382303692045666,
+                  "absolute_change": 0.0016817220052083304,
+                  "relative_change": 0.00875252678451858,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.14254699129046816,
+                  "candidate": 0.14256378867409447,
+                  "absolute_change": 1.6797383626310225e-05,
+                  "relative_change": 0.00011783751781952506,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 1250,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.16400713784354073,
+                  "candidate": 0.16077002570742652,
+                  "absolute_change": -0.0032371121361142174,
+                  "relative_change": -0.019737629585380317,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.11895117210619377,
+                  "candidate": 0.12672695275508997,
+                  "absolute_change": 0.007775780648896197,
+                  "relative_change": 0.06536951684641125,
+                  "review_required": true
+                }
+              }
+            },
+            {
+              "step": 1500,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.1440596035548619,
+                  "candidate": 0.14430424190702892,
+                  "absolute_change": 0.000244638352167037,
+                  "relative_change": 0.0016981745481055134,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.11505170706546668,
+                  "candidate": 0.11574545484600646,
+                  "absolute_change": 0.0006937477805397801,
+                  "relative_change": 0.006029878202024626,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 1750,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.1331943720862979,
+                  "candidate": 0.13248873392740884,
+                  "absolute_change": -0.0007056381588890492,
+                  "relative_change": -0.0052978076163147465,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.09470548398566969,
+                  "candidate": 0.09754126115278765,
+                  "absolute_change": 0.002835777167117956,
+                  "relative_change": 0.029943114672715786,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 2000,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.12616620472499301,
+                  "candidate": 0.1275374376206171,
+                  "absolute_change": 0.001371232895624075,
+                  "relative_change": 0.010868464329358075,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.10173110383929629,
+                  "candidate": 0.10531512636126894,
+                  "absolute_change": 0.003584022521972652,
+                  "relative_change": 0.03523035125652721,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 2250,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.12595146905808222,
+                  "candidate": 0.12368437449137369,
+                  "absolute_change": -0.0022670945667085246,
+                  "relative_change": -0.017999746915719254,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.09927116567438299,
+                  "candidate": 0.10217702172019265,
+                  "absolute_change": 0.00290585604580966,
+                  "relative_change": 0.029271904143254344,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 2500,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.12840947923206147,
+                  "candidate": 0.12670025598435175,
+                  "absolute_change": -0.0017092232477097236,
+                  "relative_change": -0.013310724861836851,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.10517019792036576,
+                  "candidate": 0.10793718800400243,
+                  "absolute_change": 0.002766990083636664,
+                  "relative_change": 0.0263096403577353,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 2750,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.12526234581356957,
+                  "candidate": 0.1259691601707822,
+                  "absolute_change": 0.0007068143572126206,
+                  "relative_change": 0.005642672206255713,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.1074874750773112,
+                  "candidate": 0.10788016232577237,
+                  "absolute_change": 0.000392687248461171,
+                  "relative_change": 0.003653330289680055,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 3000,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.11573003042311895,
+                  "candidate": 0.11809351694016229,
+                  "absolute_change": 0.0023634865170433367,
+                  "relative_change": 0.020422413339063566,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.0935954492742365,
+                  "candidate": 0.09700416391546075,
+                  "absolute_change": 0.0034087146412242475,
+                  "relative_change": 0.036419662148708176,
+                  "review_required": false
+                }
+              }
+            }
+          ]
+        },
+        {
+          "seed": 789,
+          "variant": "combined",
+          "steps": 3000,
+          "paired_random_sequences": true,
+          "validation": [
+            {
+              "step": 250,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.2017615472702753,
+                  "candidate": 0.20190970466250466,
+                  "absolute_change": 0.00014815739222936997,
+                  "relative_change": 0.0007343192706135507,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.15725890882087476,
+                  "candidate": 0.1571699350530451,
+                  "absolute_change": -8.897376782965316e-05,
+                  "relative_change": -0.0005657788706330046,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 500,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.18692052750360397,
+                  "candidate": 0.18810858226957775,
+                  "absolute_change": 0.0011880547659737783,
+                  "relative_change": 0.006355935230018392,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.17188977328213778,
+                  "candidate": 0.17157240896513967,
+                  "absolute_change": -0.00031736431699810885,
+                  "relative_change": -0.001846324600575224,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 750,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.1799187996273949,
+                  "candidate": 0.1783342579432896,
+                  "absolute_change": -0.001584541684105295,
+                  "relative_change": -0.008806982301942996,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.1337887226451527,
+                  "candidate": 0.1293676457260594,
+                  "absolute_change": -0.0044210769190932975,
+                  "relative_change": -0.03304521361504663,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 1000,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.18068460010346912,
+                  "candidate": 0.18309041341145835,
+                  "absolute_change": 0.002405813307989224,
+                  "relative_change": 0.013314988142938213,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.1293187702063358,
+                  "candidate": 0.12403453017726089,
+                  "absolute_change": -0.005284240029074919,
+                  "relative_change": -0.04086212713470441,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 1250,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.15806288946242558,
+                  "candidate": 0.16560826982770646,
+                  "absolute_change": 0.007545380365280879,
+                  "relative_change": 0.047736571126485404,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.1289439056858872,
+                  "candidate": 0.13063706484707918,
+                  "absolute_change": 0.001693159161191976,
+                  "relative_change": 0.013130974683802298,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 1500,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.15579747517903647,
+                  "candidate": 0.15971820740472703,
+                  "absolute_change": 0.00392073222569056,
+                  "relative_change": 0.025165569732019114,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.11153023286299273,
+                  "candidate": 0.11850227587150805,
+                  "absolute_change": 0.0069720430085153245,
+                  "relative_change": 0.06251258362456755,
+                  "review_required": true
+                }
+              }
+            },
+            {
+              "step": 1750,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.14978405816214424,
+                  "candidate": 0.15311962581816174,
+                  "absolute_change": 0.003335567656017502,
+                  "relative_change": 0.022269176686391307,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.121046406139027,
+                  "candidate": 0.12363528858531606,
+                  "absolute_change": 0.002588882446289062,
+                  "relative_change": 0.02138752011617445,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 2000,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.14023148854573567,
+                  "candidate": 0.14213871728806268,
+                  "absolute_change": 0.0019072287423270162,
+                  "relative_change": 0.013600574037299654,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.11300758708607067,
+                  "candidate": 0.10952798669988459,
+                  "absolute_change": -0.0034796003861860825,
+                  "relative_change": -0.030790856400959105,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 2250,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.13031048093523298,
+                  "candidate": 0.12950791767665318,
+                  "absolute_change": -0.0008025632585798026,
+                  "relative_change": -0.0061588542442621574,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.10323676658399178,
+                  "candidate": 0.10347044800267075,
+                  "absolute_change": 0.00023368141867896597,
+                  "relative_change": 0.0022635484082974113,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 2500,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.1313085583278111,
+                  "candidate": 0.13089056287493026,
+                  "absolute_change": -0.00041799545288084827,
+                  "relative_change": -0.003183306999969681,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.0986178057121508,
+                  "candidate": 0.09875021847811612,
+                  "absolute_change": 0.00013241276596531737,
+                  "relative_change": 0.001342686191495768,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 2750,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.1275744292849586,
+                  "candidate": 0.12927640279134114,
+                  "absolute_change": 0.0017019735063825425,
+                  "relative_change": 0.013341023870707687,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.10783182201963483,
+                  "candidate": 0.10691639871308298,
+                  "absolute_change": -0.0009154233065518519,
+                  "relative_change": -0.008489361390788376,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 3000,
+              "sources": {
+                "0:kai0": {
+                  "baseline": 0.12584159124465216,
+                  "candidate": 0.12489687783377511,
+                  "absolute_change": -0.0009447134108770544,
+                  "relative_change": -0.007507163581875015,
+                  "review_required": false
+                },
+                "1:agibot": {
+                  "baseline": 0.1037001945033218,
+                  "candidate": 0.10165298057324959,
+                  "absolute_change": -0.002047213930072206,
+                  "relative_change": -0.019741659501001495,
+                  "review_required": false
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "libero": {
+      "steps": 1500,
+      "sources": {
+        "0:libero": {
+          "seeds": [
+            123,
+            456,
+            789
+          ],
+          "final": [
+            {
+              "baseline": 0.25799192019871303,
+              "candidate": 0.25217155729021346,
+              "absolute_change": -0.005820362908499577,
+              "relative_change": -0.02256025267774495,
+              "review_required": false
+            },
+            {
+              "baseline": 0.24903842857905797,
+              "candidate": 0.25002856663295203,
+              "absolute_change": 0.0009901380538940574,
+              "relative_change": 0.00397584444916193,
+              "review_required": false
+            },
+            {
+              "baseline": 0.24592103617531913,
+              "candidate": 0.2300185932431902,
+              "absolute_change": -0.01590244293212892,
+              "relative_change": -0.06466483379970771,
+              "review_required": true
+            }
+          ],
+          "mean_relative_change": -0.027749747342763576,
+          "descriptive_seed_t95_interval": [
+            -0.11373406896739587,
+            0.05823457428186872
+          ]
+        }
+      },
+      "paired_runs": [
+        {
+          "seed": 123,
+          "variant": "combined",
+          "steps": 1500,
+          "paired_random_sequences": true,
+          "validation": [
+            {
+              "step": 250,
+              "sources": {
+                "0:libero": {
+                  "baseline": 0.27693100929260256,
+                  "candidate": 0.2768539789744786,
+                  "absolute_change": -7.703031812394956e-05,
+                  "relative_change": -0.00027815706995297187,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 500,
+              "sources": {
+                "0:libero": {
+                  "baseline": 0.30521908215114046,
+                  "candidate": 0.3106288324083601,
+                  "absolute_change": 0.0054097502572196254,
+                  "relative_change": 0.01772415479101922,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 750,
+              "sources": {
+                "0:libero": {
+                  "baseline": 0.27778295585087365,
+                  "candidate": 0.2787774794442313,
+                  "absolute_change": 0.0009945235933576657,
+                  "relative_change": 0.0035802181970141125,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 1000,
+              "sources": {
+                "0:libero": {
+                  "baseline": 0.2798104245322091,
+                  "candidate": 0.29943169048854285,
+                  "absolute_change": 0.019621265956333733,
+                  "relative_change": 0.07012342727808242,
+                  "review_required": true
+                }
+              }
+            },
+            {
+              "step": 1250,
+              "sources": {
+                "0:libero": {
+                  "baseline": 0.2560944073540824,
+                  "candidate": 0.250497784614563,
+                  "absolute_change": -0.005596622739519386,
+                  "relative_change": -0.021853748378742835,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 1500,
+              "sources": {
+                "0:libero": {
+                  "baseline": 0.25799192019871303,
+                  "candidate": 0.25217155729021346,
+                  "absolute_change": -0.005820362908499577,
+                  "relative_change": -0.02256025267774495,
+                  "review_required": false
+                }
+              }
+            }
+          ]
+        },
+        {
+          "seed": 456,
+          "variant": "combined",
+          "steps": 1500,
+          "paired_random_sequences": true,
+          "validation": [
+            {
+              "step": 250,
+              "sources": {
+                "0:libero": {
+                  "baseline": 0.2875136920383998,
+                  "candidate": 0.2869340378897531,
+                  "absolute_change": -0.0005796541486467466,
+                  "relative_change": -0.0020160923277675728,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 500,
+              "sources": {
+                "0:libero": {
+                  "baseline": 0.32321329934256415,
+                  "candidate": 0.3286230795724051,
+                  "absolute_change": 0.005409780229840955,
+                  "relative_change": 0.016737492673862066,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 750,
+              "sources": {
+                "0:libero": {
+                  "baseline": 0.2687639992577689,
+                  "candidate": 0.2572383649008615,
+                  "absolute_change": -0.0115256343569074,
+                  "relative_change": -0.04288384749719875,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 1000,
+              "sources": {
+                "0:libero": {
+                  "baseline": 0.2669763571875436,
+                  "candidate": 0.25563643864222935,
+                  "absolute_change": -0.011339918545314243,
+                  "relative_change": -0.04247536622633689,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 1250,
+              "sources": {
+                "0:libero": {
+                  "baseline": 0.2955112368719918,
+                  "candidate": 0.30026726245880125,
+                  "absolute_change": 0.0047560255868094314,
+                  "relative_change": 0.016094229231863776,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 1500,
+              "sources": {
+                "0:libero": {
+                  "baseline": 0.24903842857905797,
+                  "candidate": 0.25002856663295203,
+                  "absolute_change": 0.0009901380538940574,
+                  "relative_change": 0.00397584444916193,
+                  "review_required": false
+                }
+              }
+            }
+          ]
+        },
+        {
+          "seed": 789,
+          "variant": "combined",
+          "steps": 1500,
+          "paired_random_sequences": true,
+          "validation": [
+            {
+              "step": 250,
+              "sources": {
+                "0:libero": {
+                  "baseline": 0.31207268033708846,
+                  "candidate": 0.31212718827383856,
+                  "absolute_change": 5.450793675010335e-05,
+                  "relative_change": 0.0001746642374821982,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 500,
+              "sources": {
+                "0:libero": {
+                  "baseline": 0.2568669394084385,
+                  "candidate": 0.25701376029423306,
+                  "absolute_change": 0.00014682088579454078,
+                  "relative_change": 0.0005715834281074377,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 750,
+              "sources": {
+                "0:libero": {
+                  "baseline": 0.29875603267124723,
+                  "candidate": 0.3036945370265416,
+                  "absolute_change": 0.00493850435529436,
+                  "relative_change": 0.01653022471592638,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 1000,
+              "sources": {
+                "0:libero": {
+                  "baseline": 0.3190784406661987,
+                  "candidate": 0.3011149910518101,
+                  "absolute_change": -0.017963449614388616,
+                  "relative_change": -0.056297910873837224,
+                  "review_required": true
+                }
+              }
+            },
+            {
+              "step": 1250,
+              "sources": {
+                "0:libero": {
+                  "baseline": 0.25812527656555173,
+                  "candidate": 0.266023302759443,
+                  "absolute_change": 0.007898026193891294,
+                  "relative_change": 0.03059764738648354,
+                  "review_required": false
+                }
+              }
+            },
+            {
+              "step": 1500,
+              "sources": {
+                "0:libero": {
+                  "baseline": 0.24592103617531913,
+                  "candidate": 0.2300185932431902,
+                  "absolute_change": -0.01590244293212892,
+                  "relative_change": -0.06466483379970771,
+                  "review_required": true
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

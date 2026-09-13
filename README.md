@@ -69,6 +69,9 @@ Config knobs in `data_cfg`:
 | `action_freq` | dump fps | action sampling frequency in Hz (`chunk_length = round(length × freq)`) |
 | `history_length` | `0` | image history duration in seconds (`0` = current frame only) |
 | `history_freq` | `10.0` | image history sampling frequency in Hz |
+| `history_time_encoding` | `false` | opt-in causal visual history with relative time and validity masks |
+| `state_history_length` | `0` | optional state history duration in seconds (`0` disables the module) |
+| `state_history_freq` | `10.0` | state history sampling frequency in Hz |
 
 Native-fps stride is `round(dataset_fps / freq)`. Disable mmap with `use_mmap: false` / `use_mmap_frames: false`.
 
@@ -155,6 +158,29 @@ LeRobot proprio is read through parquet mmap (``.mmap/*.npy``) so stats match tr
 New statistics include a fallback for equal q01/q99 in sparse dimensions; old statistics keep their original mapping. Use the same action mode, kind, format, frequency and length for statistics and training.
 
 `chunk_length` is derived: `round(action_length * action_freq)`. Image history similarly uses `history_length` × `history_freq`. Fake-data smoke test: `PYTHONPATH=src python examples/train.py`.
+
+历史视觉和历史状态可分别启用，也可组合：
+
+```bash
+uv run python scripts/train.py --data-mix agibot,galaxea --instruction-mode subtask \
+  --history-time-encoding --history-length 0.3 --history-freq 10 \
+  --state-history-length 0.3 --state-history-freq 10
+```
+
+这里每种历史包含 3 个观测（包含当前时刻），目标间隔 0.1 秒。
+采样选择目标时刻及之前最近的观测；episode/subtask 边界之前和超过一个采样周期的缺失观测会被遮蔽。
+当前状态继续单独用于动作坐标变换；训练中隐藏状态时，也会隐藏全部历史状态。
+新增模式默认关闭，旧配置和旧检查点保持原路径。状态历史模块增加参数，开启后需要训练该模块；
+已有特征缓存若不包含对应历史输入，需要用相同历史参数重新构建。
+
+在线推理启用任一新历史模式时，观测必须提供 **`timestamp`（观测采集时刻，单位秒）**。
+HTTP 客户端透传 `timestamp`、`episode_id`、`subtask_id`；时间戳必须使用同一时钟，并在上下文内单调不减。
+episode/subtask ID 或 prompt 变化、以及显式 `reset` 会清空历史。
+即使 prompt 相同，新任务也应传入新的 ID 或发送 reset。缓存最多保存 64 个已缩放的 CPU 观测，
+配置最多请求 64 个历史位置；高频输入挤出的旧观测会被标记缺失。
+只在重新规划时发送观测的客户端，只能利用这些已发送观测；不会凭空补齐中间的控制帧。
+LIBERO 客户端使用 MuJoCo 的仿真时间；其他调用端需要接入其真实观测时钟后才能使用新模式，
+不应把推理耗时或回放视频帧率当作采样时间。
 
 多数据集准备、恢复训练、吞吐测试和验证边界见 [验证与复现指南](context/validation/README.md)；贡献及 CI 约定见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 

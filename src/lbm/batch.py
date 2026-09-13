@@ -238,6 +238,18 @@ def policy_batch_from_loader(
     template = next(iter(images.values()))
     out["images"] = {key: images[key] if key in images else torch.zeros_like(template) for key in camera_keys}
 
+    from lbm.history import HISTORY_TENSOR_FIELDS
+
+    for key in HISTORY_TENSOR_FIELDS:
+        if key in batch:
+            target_dtype = torch.bool if key.endswith('mask') else (torch.float32 if key.endswith('offsets') else dtype)
+            out[key] = torch.as_tensor(batch[key]).to(device=device, dtype=target_dtype,
+                                                     non_blocking=non_blocking)
+    if 'state_history' in out and state_dim:
+        if out['state_history'].shape[-1] > state_dim:
+            raise ValueError('historical state exceeds model state_dim')
+        out['state_history'] = F.pad(out['state_history'], (0, state_dim-out['state_history'].shape[-1]))
+
     if train and mask_state_ratio > 0 and state.numel():
         masked = torch.rand(state.shape[0], device=device) < mask_state_ratio
         out["state_is_masked"] = masked
@@ -249,6 +261,12 @@ def policy_batch_from_loader(
         out["state_is_masked"] = torch.as_tensor(batch["state_is_masked"]).to(
             device=device, non_blocking=non_blocking
         )
+
+    if 'state_history' in out and 'state_is_masked' in out:
+        hidden = out['state_is_masked'].bool()
+        out['state_history'] = out['state_history'].masked_fill(hidden[:, None, None], 0)
+        if 'state_history_mask' in out:
+            out['state_history_mask'] = out['state_history_mask'] & ~hidden[:, None]
 
     if tokenize_fn is not None:
         tokens, mask = tokenize_fn(langs)

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
@@ -17,6 +18,7 @@ class PolicyHTTPServer(ThreadingHTTPServer):
 
     def __init__(self, server_address, policy: Any):
         self.policy = policy
+        self.policy_lock = threading.Lock()
         super().__init__(server_address, PolicyRequestHandler)
 
 
@@ -60,7 +62,8 @@ class PolicyRequestHandler(BaseHTTPRequestHandler):
             self._send_json(400, {"error": f"invalid json: {exc}"})
             return
         if path == "/reset":
-            self.server.policy.reset()
+            with self.server.policy_lock:
+                self.server.policy.reset()
             self._send_json(200, {"ok": True})
             return
         if path != "/infer":
@@ -68,7 +71,10 @@ class PolicyRequestHandler(BaseHTTPRequestHandler):
             return
         try:
             obs = decode_obs(payload)
-            actions = self.server.policy.infer(obs)
+            # One policy owns one temporal context; concurrent HTTP requests
+            # must not mutate its observation buffers while inference is using them.
+            with self.server.policy_lock:
+                actions = self.server.policy.infer(obs)
             self._send_json(200, {"actions": encode_array(actions)})
         except Exception as exc:
             _log.exception("infer failed")

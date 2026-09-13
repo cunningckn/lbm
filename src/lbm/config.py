@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import math
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -138,6 +139,9 @@ class DiTConfig:
     action_freq: float = 10.0
     history_length: float = 0.0
     history_freq: float = 10.0
+    history_time_encoding: bool = False
+    state_history_length: float = 0.0
+    state_history_freq: float = 10.0
     camera_keys: tuple[str, ...] = ("top", "left", "right")
     task_embed_dim: int = 512
 
@@ -193,8 +197,17 @@ def validate_model_config(model: DiTConfig) -> list[str]:
     errors = []
     if min(model_dims) <= 0 or not model.camera_keys:
         errors.append("model dimensions and camera_keys must be positive/non-empty")
-    if model.history_length < 0:
+    if (not math.isfinite(model.state_history_length) or not math.isfinite(model.state_history_freq)
+            or model.state_history_length < 0 or model.state_history_freq <= 0):
+        errors.append("state history length must be nonnegative and frequency positive")
+    if model.history_time_encoding and model.history_freq <= 0:
+        errors.append("timed visual history requires positive history_freq")
+    if not math.isfinite(model.history_length) or not math.isfinite(model.history_freq) or model.history_length < 0:
         errors.append("history_length must be >= 0 (0 = current frame only)")
+    from lbm.history import MAX_HISTORY_STEPS
+    if (model.state_history_length*model.state_history_freq > MAX_HISTORY_STEPS or
+            model.history_time_encoding and model.history_length*model.history_freq > MAX_HISTORY_STEPS):
+        errors.append(f'timed history may request at most {MAX_HISTORY_STEPS} observations')
     if model.vision_encoder not in {"dino", "siglip"}:
         errors.append("vision_encoder must be 'dino' or 'siglip'")
     if model.language_encoder not in {"none", "clip", "t5"}:
@@ -521,6 +534,13 @@ def add_temporal_arguments(parser: argparse.ArgumentParser) -> None:
         help="image history sampling frequency in Hz",
     )
 
+    parser.add_argument("--history-time-encoding", action="store_true", default=None,
+                        help="enable causal timed visual history and validity masks (opt-in)")
+    parser.add_argument("--state-history-length", type=float, default=None,
+                        help="state history duration in seconds (0 disables the optional history module)")
+    parser.add_argument("--state-history-freq", type=float, default=None,
+                        help="state history sampling frequency in Hz")
+
 
 def apply_temporal_args(config: DiTConfig, args: argparse.Namespace) -> DiTConfig:
     if getattr(args, "action_length", None) is not None:
@@ -531,13 +551,19 @@ def apply_temporal_args(config: DiTConfig, args: argparse.Namespace) -> DiTConfi
         config.history_length = float(args.history_length)
     if getattr(args, "history_freq", None) is not None:
         config.history_freq = float(args.history_freq)
+    for key in ("history_time_encoding", "state_history_length", "state_history_freq"):
+        value = getattr(args, key, None)
+        if value is not None:
+            setattr(config, key, value)
     return config
 
 
 def temporal_summary(config: DiTConfig) -> str:
     return (
         f"action={config.action_length:g}s@{config.action_freq:g}Hz→{config.chunk_length} "
-        f"history={config.history_length:g}s@{config.history_freq:g}Hz→{config.history_size}"
+        f"history={config.history_length:g}s@{config.history_freq:g}Hz→{config.history_size} "
+        f"timed_vision={int(config.history_time_encoding)} "
+        f"state_history={config.state_history_length:g}s@{config.state_history_freq:g}Hz"
     )
 
 
@@ -562,6 +588,9 @@ def data_cfg_from_train(config: TrainConfig) -> dict:
         "action_freq": m.action_freq if d.override_action_freq else None,
         "history_length": m.history_length,
         "history_freq": m.history_freq,
+        "history_time_encoding": m.history_time_encoding,
+        "state_history_length": m.state_history_length,
+        "state_history_freq": m.state_history_freq,
         "data_root_dir": d.data_root_dir or str(datasets_root()),
         "data_mix": d.data_mix,
         "per_device_batch_size": config.batch_size,

@@ -87,10 +87,13 @@ class DiTCrossAttention(nn.Module):
         self.kv = nn.Linear(dim, dim * 2, bias=True)
         self.proj = nn.Linear(dim, dim, bias=True)
 
-    def forward(self, x, context):
+    def forward(self, x, context, valid=None):
         q = split_q(self.q(x), self.num_heads, self.head_dim)
         k, v = split_kv(self.kv(context), self.num_heads, self.head_dim)
-        return self.proj(attn_out(q, k, v, self.num_heads, self.head_dim))
+        if valid is None:
+            return self.proj(attn_out(q, k, v, self.num_heads, self.head_dim))
+        out = F.scaled_dot_product_attention(q, k, v, attn_mask=valid[:, None, None, :])
+        return self.proj(out.transpose(1, 2).reshape(x.shape[0], x.shape[1], -1))
 
 
 class DiTBlock(nn.Module):
@@ -121,8 +124,11 @@ class DiTBlock(nn.Module):
         x = x + self._gate_residual(gate_msa, self.attn(self._modulate(self.norm1(x), shift_msa, scale_msa)))
 
         x_normed = self._modulate(self.norm_xattn(x), shift_xattn, scale_xattn)
+        valid = None
+        if isinstance(vision_tokens, tuple):
+            vision_tokens, valid = vision_tokens
         kv = self.norm_xattn_kv(vision_tokens)
-        x = x + self._gate_residual(gate_xattn, self.cross_attn(x_normed, kv))
+        x = x + self._gate_residual(gate_xattn, self.cross_attn(x_normed, kv, valid))
 
         x = x + self._gate_residual(gate_mlp, self.mlp(self._modulate(self.norm2(x), shift_mlp, scale_mlp)))
         return x
@@ -308,6 +314,14 @@ class DiTPolicy(nn.Module):
         pos = get_1d_sincos_pos_embed(H, config.chunk_length)
         self.pos_embed.data.copy_(torch.from_numpy(pos).float().unsqueeze(0))
         self._apply_encoder_trainable()
+        self.state_history_pool = None
+        if config.state_history_length > 0:
+            from lbm.models.history import StateHistoryPool
+
+            # Keep initialization and following RNG of all existing weights unchanged.
+            device = self.x_embedder.weight.device
+            with torch.random.fork_rng(devices=[device.index] if device.type == 'cuda' else []):
+                self.state_history_pool = StateHistoryPool(H)
 
     @property
     def apool(self):
@@ -384,7 +398,8 @@ class DiTPolicy(nn.Module):
             features[cam] = tokens.reshape(bsz, history, *tokens.shape[1:])
         return features
 
-    def build_vision_tokens(self, images=None, camera_mask=None, *, features=None):
+    def build_vision_tokens(self, images=None, camera_mask=None, *, features=None,
+                            history_mask=None, history_offsets=None):
         """Pool live images or frozen-backbone cache tokens, then apply camera masks."""
         if features is not None:
             if self.config.train_vision_encoder:
@@ -392,6 +407,22 @@ class DiTPolicy(nn.Module):
             if images is not None:
                 raise ValueError("provide images or vision_features, not both")
         else:
+            if self.config.history_time_encoding:
+                from lbm.models.history import history_contract
+
+                first_image = images[self.camera_keys[0]]
+                count = first_image.shape[1] if first_image.ndim == 5 else 1
+                valid_images, _ = history_contract(history_mask, history_offsets, batch=first_image.shape[0],
+                                                   steps=count, device=first_image.device)
+                sanitized = {}
+                for i, cam in enumerate(self.camera_keys):
+                    image = images[cam]
+                    present = valid_images
+                    if camera_mask is not None:
+                        present = present & camera_mask[:, i, None].bool()
+                    expanded = present[:, :, None, None, None] if image.ndim == 5 else present[:, 0, None, None, None]
+                    sanitized[cam] = image.masked_fill(~expanded, 0)
+                images = sanitized
             features = self.encode_vision_features(images)
         if set(features) != set(self.camera_keys):
             raise ValueError("vision feature cameras must match the model")
@@ -400,11 +431,22 @@ class DiTPolicy(nn.Module):
             raise ValueError("vision features must have shape (B, history, patches, vit_embed_dim)")
         bsz, t_hist = first.shape[:2]
         time_expand = t_hist > 1
+        valid, offsets = None, None
+        if self.config.history_time_encoding:
+            from lbm.models.history import history_contract
+
+            valid, offsets = history_contract(history_mask, history_offsets, batch=bsz,
+                                              steps=t_hist, device=first.device)
         tokens_by_cam = {}
-        for cam in self.camera_keys:
+        for i, cam in enumerate(self.camera_keys):
             feature = features[cam]
             if feature.shape != first.shape:
                 raise ValueError("vision feature shapes must agree across cameras")
+            if valid is not None:
+                present = valid
+                if camera_mask is not None:
+                    present = present & camera_mask[:, i, None].bool()
+                feature = feature.masked_fill(~present[:, :, None, None], 0)
             tokens_by_cam[cam] = feature.reshape(bsz * t_hist, *feature.shape[2:])
         tokens = self.vision_pool(tokens_by_cam)
         nq = self.config.vision_pool_num_queries
@@ -419,14 +461,40 @@ class DiTPolicy(nn.Module):
             tokens = tokens.reshape(tokens.shape[0], nc, nq, hidden)
             tokens = tokens * camera_mask.to(tokens.dtype)[:, :, None, None]
             tokens = tokens.reshape(tokens.shape[0], nc * nq, hidden)
+        if valid is not None:
+            from lbm.models.history import time_features
+
+            age = time_features(offsets, tokens.shape[-1]).to(tokens.dtype)
+            tokens = tokens.reshape(bsz, t_hist, nc*nq, -1) + age[:, :, None, :]
+            mask = valid[:, :, None].expand(-1, -1, nc*nq)
+            if camera_mask is not None:
+                cameras = camera_mask[:, :, None].expand(-1, -1, nq).reshape(bsz, 1, nc*nq)
+                mask = mask & cameras.bool()
+            return tokens.reshape(bsz, t_hist*nc*nq, -1), mask.reshape(bsz, -1)
         return tokens
 
-    def compute_cond(self, state, task_h, t_cond, embodiment_id=None):
+    def encode_state_history(self, batch):
+        if self.state_history_pool is None:
+            return None
+        from lbm.models.history import history_contract
+
+        history = batch.get('state_history')
+        if history is None or history.ndim != 3 or history.shape[-1] != self.config.state_dim:
+            raise ValueError('state history conditioning requires (batch, history, state_dim)')
+        valid, offsets = history_contract(batch.get('state_history_mask'), batch.get('state_history_offsets'),
+                                          batch=history.shape[0], steps=history.shape[1], device=history.device)
+        if 'state_is_masked' in batch:
+            valid = valid & ~batch['state_is_masked'].bool()[:, None]
+        history = history.masked_fill(~valid[..., None], 0).to(self.x_embedder.weight.dtype)
+        current = self.x_embedder(batch['state'].to(self.x_embedder.weight.dtype))
+        return self.state_history_pool(current, self.x_embedder(history), valid, offsets)
+
+    def compute_cond(self, state, task_h, t_cond, embodiment_id=None, state_embedding=None):
         """state (B, D); task_h (B, hidden) from ``encode_task``; t_cond (B,) or (B,T).
         Returns conditioning c: (B,H) or (B,T,H)."""
         model_dtype = self.x_embedder.weight.dtype
         cond_dtype = self.cond_proj[0].weight.dtype
-        st_vec = self.x_embedder(state.to(model_dtype))
+        st_vec = self.x_embedder(state.to(model_dtype)) if state_embedding is None else state_embedding
         if embodiment_id is None:
             embodiment_id = torch.full(
                 (state.shape[0],),
@@ -499,20 +567,22 @@ class DiTPolicy(nn.Module):
             x_t = x_t + prefix_mask_expanded.to(x_t.dtype) * torch.randn_like(x_t) * prefix_noise_scale
 
         vision_tokens = self.build_vision_tokens(
-            batch.get("images"), batch.get("camera_mask"), features=batch.get("vision_features")
+            batch.get("images"), batch.get("camera_mask"), features=batch.get("vision_features"),
+            history_mask=batch.get("history_mask"), history_offsets=batch.get("history_offsets")
         )
         task = self.encode_task(batch)
         embodiment = batch.get("embodiment_id")
+        state_embedding = self.encode_state_history(batch)
         if prefix_mask_expanded is not None and compact_prefix_conditioning:
             sample_t = t[:, 0, 0]
-            c = (self.compute_cond(state, task, sample_t, embodiment),
-                 self.compute_cond(state, task, torch.zeros_like(sample_t), embodiment),
+            c = (self.compute_cond(state, task, sample_t, embodiment, state_embedding),
+                 self.compute_cond(state, task, torch.zeros_like(sample_t), embodiment, state_embedding),
                  prefix_mask)
             if split_prefix_conditioning:
                 c = PrefixConditioning(*c, min(max_action_prefix, T_chunk))
         else:
             t_cond = t_per_pos.squeeze(-1) if prefix_mask_expanded is not None else t[:, 0, 0]
-            c = self.compute_cond(state, task, t_cond, embodiment)
+            c = self.compute_cond(state, task, t_cond, embodiment, state_embedding)
         v_t = self.predict_velocity(x_t, c, vision_tokens)
 
         u_t = noise - actions
@@ -540,7 +610,8 @@ class DiTPolicy(nn.Module):
             )
         x_t = noise.to(device=state.device, dtype=dtype)
         vision = self.build_vision_tokens(
-            batch.get("images"), batch.get("camera_mask"), features=batch.get("vision_features")
+            batch.get("images"), batch.get("camera_mask"), features=batch.get("vision_features"),
+            history_mask=batch.get("history_mask"), history_offsets=batch.get("history_offsets")
         )
         return state, dtype, x_t, vision, self.encode_task(batch), batch.get("embodiment_id")
 
@@ -549,12 +620,13 @@ class DiTPolicy(nn.Module):
         """Euler flow integration from noise to actions.
         Vision tokens are computed once and reused across steps."""
         state, dtype, x_t, vision, task, embodiment_id = self._sample_setup(batch, noise)
+        state_embedding = self.encode_state_history(batch)
         dt = -1.0 / num_steps
         b = state.shape[0]
         for i in range(num_steps):
             t = torch.full((b,), 1.0 + i * dt, device=state.device, dtype=dtype)
             x_t = x_t + self.predict_velocity(
-                x_t, self.compute_cond(state, task, t, embodiment_id), vision
+                x_t, self.compute_cond(state, task, t, embodiment_id, state_embedding), vision
             ) * dt
         return x_t
 
@@ -562,6 +634,7 @@ class DiTPolicy(nn.Module):
     def sample_actions_rtc(self, batch, action_prefix, prefix_length: int, num_steps=10, noise=None):
         """Euler sampling with per-position action-prefix conditioning."""
         state, dtype, x_t, vision, task, embodiment_id = self._sample_setup(batch, noise)
+        state_embedding = self.encode_state_history(batch)
         action_prefix = action_prefix.to(device=state.device, dtype=dtype)
         prefix_pos = torch.arange(self.chunk_length, device=state.device) < prefix_length
         prefix_mask = prefix_pos.view(1, self.chunk_length, 1).expand_as(x_t)
@@ -577,7 +650,7 @@ class DiTPolicy(nn.Module):
             )
             t = torch.where(prefix_t_mask, torch.zeros_like(t), t)
             x_t = x_t + self.predict_velocity(
-                x_t, self.compute_cond(state, task, t, embodiment_id), vision
+                x_t, self.compute_cond(state, task, t, embodiment_id, state_embedding), vision
             ) * dt
             x_t = torch.where(prefix_mask, action_prefix, x_t)
         return x_t

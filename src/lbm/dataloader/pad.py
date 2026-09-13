@@ -147,6 +147,9 @@ def pad_loader_batch(samples: list[dict[str, Any]]) -> dict[str, Any]:
             state_mask[b, :t, :d] = True
         out["state"] = torch.from_numpy(np.ascontiguousarray(state))
         out["state_mask"] = torch.from_numpy(state_mask)
+    from lbm.history import collate_history
+
+    collate_history(samples, out)
     return out
 
 

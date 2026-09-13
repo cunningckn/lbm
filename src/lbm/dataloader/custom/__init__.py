@@ -74,6 +74,9 @@ def make_custom_dataset(
         kwargs["action_format"] = data_cfg["action_format"]
     if "action_freq" in data_cfg:
         kwargs["action_freq"] = data_cfg["action_freq"]
+    for key in ("history_time_encoding", "state_history_length", "state_history_freq"):
+        if key in data_cfg:
+            kwargs[key] = data_cfg[key]
     if "history_freq" in data_cfg:
         kwargs["history_freq"] = data_cfg["history_freq"]
     if "image_size" in data_cfg:

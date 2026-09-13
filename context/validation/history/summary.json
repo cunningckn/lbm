@@ -1,0 +1,770 @@
+{
+  "b16": {
+    "both": {
+      "mode": "both",
+      "steps": 20,
+      "batch": 16,
+      "train": [
+        {
+          "step": 5.0,
+          "loss": 1.828125,
+          "grad_norm": 16.125,
+          "steps_per_s": 1.2464174485025044
+        },
+        {
+          "step": 10.0,
+          "loss": 1.578125,
+          "grad_norm": 10.4375,
+          "steps_per_s": 2.4968716981589885
+        },
+        {
+          "step": 15.0,
+          "loss": 1.2265625,
+          "grad_norm": 5.09375,
+          "steps_per_s": 2.535223074890422
+        },
+        {
+          "step": 20.0,
+          "loss": 1.46875,
+          "grad_norm": 6.1875,
+          "steps_per_s": 2.5812917272328764
+        }
+      ],
+      "validation": [
+        {
+          "step": 20,
+          "squared_error": 35566.3037109375,
+          "count": 13920.0
+        }
+      ],
+      "input_hashes": [
+        {
+          "state": "25ce0974219d16df633fa3bd51fd7fd627f39851af207f91b864abb7e701619e",
+          "actions": "1a8a44a13c2676750da7bbee69761acb2b773a6e97558e823b056427f23a4ed5",
+          "task_vec_clip": "583d32bfd1a3b38d890d73eb4003f9a09375348603a4c30758aadedb56504fdc",
+          "cuda_rng": "aee757f068b82ca246aeb9e4d88b768273a4da45d23566991e5e2ae13228ce26"
+        },
+        {
+          "state": "c18a9ca30f600662efe20dac11f3b5175eeab25b10c8cfe6fae69601919b19b0",
+          "actions": "e931b410ce57325b925b3ca0084158b25924ce1703be1d74a44e1aff082df0ba",
+          "task_vec_clip": "c63fa80bfbc04a49a1dcc1c7bfd7a423cc06417f1b25c43bccafd48b7dc8e7c1",
+          "cuda_rng": "97733256ec14a9adc742eca2fc215ad0064b95b56cbc7426c9c305869c436fc7"
+        },
+        {
+          "state": "18e83e29a17906700a0f0600ca40734c365b7daeb2616c0afc7b0ba164452177",
+          "actions": "884f8e78688e4854aa5f049a88a217ba96dbed1f7a1cf21e8a9daeed4c2664ac",
+          "task_vec_clip": "5815ebaf9ecebf9d559a3aa767fb7fa144ef8caa94d49e028b303c6fbc4a9c8b",
+          "cuda_rng": "9ee5cef2086818723acbea4354672c721ac99f6fbeeb9bf3a5c6e89465387502"
+        }
+      ],
+      "scope": "20-step functional and throughput screening; not convergence or final optimality",
+      "shared_initial_weights_sha256": "c08c3d4befd7aa90ce850c28e13167979c50bd02a4095130f9bbe252f6d3b698",
+      "peak_gpu_bytes": 19997189632,
+      "gpu": "NVIDIA A800-SXM4-80GB",
+      "measured_samples_per_s": 40.5972291809366
+    },
+    "current": {
+      "mode": "current",
+      "steps": 20,
+      "batch": 16,
+      "train": [
+        {
+          "step": 5.0,
+          "loss": 1.796875,
+          "grad_norm": 15.625,
+          "steps_per_s": 1.5318953218074725
+        },
+        {
+          "step": 10.0,
+          "loss": 1.5546875,
+          "grad_norm": 10.8125,
+          "steps_per_s": 3.481402729584576
+        },
+        {
+          "step": 15.0,
+          "loss": 1.1796875,
+          "grad_norm": 5.1875,
+          "steps_per_s": 3.5975822129235775
+        },
+        {
+          "step": 20.0,
+          "loss": 1.3828125,
+          "grad_norm": 6.375,
+          "steps_per_s": 3.6302500418338854
+        }
+      ],
+      "validation": [
+        {
+          "step": 20,
+          "squared_error": 33630.4755859375,
+          "count": 13920.0
+        }
+      ],
+      "input_hashes": [
+        {
+          "state": "25ce0974219d16df633fa3bd51fd7fd627f39851af207f91b864abb7e701619e",
+          "actions": "1a8a44a13c2676750da7bbee69761acb2b773a6e97558e823b056427f23a4ed5",
+          "task_vec_clip": "583d32bfd1a3b38d890d73eb4003f9a09375348603a4c30758aadedb56504fdc",
+          "cuda_rng": "aee757f068b82ca246aeb9e4d88b768273a4da45d23566991e5e2ae13228ce26"
+        },
+        {
+          "state": "c18a9ca30f600662efe20dac11f3b5175eeab25b10c8cfe6fae69601919b19b0",
+          "actions": "e931b410ce57325b925b3ca0084158b25924ce1703be1d74a44e1aff082df0ba",
+          "task_vec_clip": "c63fa80bfbc04a49a1dcc1c7bfd7a423cc06417f1b25c43bccafd48b7dc8e7c1",
+          "cuda_rng": "97733256ec14a9adc742eca2fc215ad0064b95b56cbc7426c9c305869c436fc7"
+        },
+        {
+          "state": "18e83e29a17906700a0f0600ca40734c365b7daeb2616c0afc7b0ba164452177",
+          "actions": "884f8e78688e4854aa5f049a88a217ba96dbed1f7a1cf21e8a9daeed4c2664ac",
+          "task_vec_clip": "5815ebaf9ecebf9d559a3aa767fb7fa144ef8caa94d49e028b303c6fbc4a9c8b",
+          "cuda_rng": "9ee5cef2086818723acbea4354672c721ac99f6fbeeb9bf3a5c6e89465387502"
+        }
+      ],
+      "scope": "20-step functional and throughput screening; not convergence or final optimality",
+      "shared_initial_weights_sha256": "c08c3d4befd7aa90ce850c28e13167979c50bd02a4095130f9bbe252f6d3b698",
+      "peak_gpu_bytes": 19812144128,
+      "gpu": "NVIDIA A800-SXM4-80GB",
+      "measured_samples_per_s": 57.0974429243619
+    },
+    "state": {
+      "mode": "state",
+      "steps": 20,
+      "batch": 16,
+      "train": [
+        {
+          "step": 5.0,
+          "loss": 1.796875,
+          "grad_norm": 15.625,
+          "steps_per_s": 1.4714625012770286
+        },
+        {
+          "step": 10.0,
+          "loss": 1.5625,
+          "grad_norm": 10.875,
+          "steps_per_s": 3.403579210159027
+        },
+        {
+          "step": 15.0,
+          "loss": 1.1796875,
+          "grad_norm": 5.1875,
+          "steps_per_s": 3.536062688437203
+        },
+        {
+          "step": 20.0,
+          "loss": 1.3828125,
+          "grad_norm": 6.375,
+          "steps_per_s": 3.562240634277435
+        }
+      ],
+      "validation": [
+        {
+          "step": 20,
+          "squared_error": 33648.41015625,
+          "count": 13920.0
+        }
+      ],
+      "input_hashes": [
+        {
+          "state": "25ce0974219d16df633fa3bd51fd7fd627f39851af207f91b864abb7e701619e",
+          "actions": "1a8a44a13c2676750da7bbee69761acb2b773a6e97558e823b056427f23a4ed5",
+          "task_vec_clip": "583d32bfd1a3b38d890d73eb4003f9a09375348603a4c30758aadedb56504fdc",
+          "cuda_rng": "aee757f068b82ca246aeb9e4d88b768273a4da45d23566991e5e2ae13228ce26"
+        },
+        {
+          "state": "c18a9ca30f600662efe20dac11f3b5175eeab25b10c8cfe6fae69601919b19b0",
+          "actions": "e931b410ce57325b925b3ca0084158b25924ce1703be1d74a44e1aff082df0ba",
+          "task_vec_clip": "c63fa80bfbc04a49a1dcc1c7bfd7a423cc06417f1b25c43bccafd48b7dc8e7c1",
+          "cuda_rng": "97733256ec14a9adc742eca2fc215ad0064b95b56cbc7426c9c305869c436fc7"
+        },
+        {
+          "state": "18e83e29a17906700a0f0600ca40734c365b7daeb2616c0afc7b0ba164452177",
+          "actions": "884f8e78688e4854aa5f049a88a217ba96dbed1f7a1cf21e8a9daeed4c2664ac",
+          "task_vec_clip": "5815ebaf9ecebf9d559a3aa767fb7fa144ef8caa94d49e028b303c6fbc4a9c8b",
+          "cuda_rng": "9ee5cef2086818723acbea4354672c721ac99f6fbeeb9bf3a5c6e89465387502"
+        }
+      ],
+      "scope": "20-step functional and throughput screening; not convergence or final optimality",
+      "shared_initial_weights_sha256": "c08c3d4befd7aa90ce850c28e13167979c50bd02a4095130f9bbe252f6d3b698",
+      "peak_gpu_bytes": 19887309312,
+      "gpu": "NVIDIA A800-SXM4-80GB",
+      "measured_samples_per_s": 55.98771325739545
+    },
+    "vision": {
+      "mode": "vision",
+      "steps": 20,
+      "batch": 16,
+      "train": [
+        {
+          "step": 5.0,
+          "loss": 1.828125,
+          "grad_norm": 16.125,
+          "steps_per_s": 1.0116514403246384
+        },
+        {
+          "step": 10.0,
+          "loss": 1.578125,
+          "grad_norm": 10.375,
+          "steps_per_s": 2.558585769026743
+        },
+        {
+          "step": 15.0,
+          "loss": 1.2265625,
+          "grad_norm": 5.09375,
+          "steps_per_s": 2.5926505221936176
+        },
+        {
+          "step": 20.0,
+          "loss": 1.4609375,
+          "grad_norm": 6.15625,
+          "steps_per_s": 2.6174155333300857
+        }
+      ],
+      "validation": [
+        {
+          "step": 20,
+          "squared_error": 35569.97314453125,
+          "count": 13920.0
+        }
+      ],
+      "input_hashes": [
+        {
+          "state": "25ce0974219d16df633fa3bd51fd7fd627f39851af207f91b864abb7e701619e",
+          "actions": "1a8a44a13c2676750da7bbee69761acb2b773a6e97558e823b056427f23a4ed5",
+          "task_vec_clip": "583d32bfd1a3b38d890d73eb4003f9a09375348603a4c30758aadedb56504fdc",
+          "cuda_rng": "aee757f068b82ca246aeb9e4d88b768273a4da45d23566991e5e2ae13228ce26"
+        },
+        {
+          "state": "c18a9ca30f600662efe20dac11f3b5175eeab25b10c8cfe6fae69601919b19b0",
+          "actions": "e931b410ce57325b925b3ca0084158b25924ce1703be1d74a44e1aff082df0ba",
+          "task_vec_clip": "c63fa80bfbc04a49a1dcc1c7bfd7a423cc06417f1b25c43bccafd48b7dc8e7c1",
+          "cuda_rng": "97733256ec14a9adc742eca2fc215ad0064b95b56cbc7426c9c305869c436fc7"
+        },
+        {
+          "state": "18e83e29a17906700a0f0600ca40734c365b7daeb2616c0afc7b0ba164452177",
+          "actions": "884f8e78688e4854aa5f049a88a217ba96dbed1f7a1cf21e8a9daeed4c2664ac",
+          "task_vec_clip": "5815ebaf9ecebf9d559a3aa767fb7fa144ef8caa94d49e028b303c6fbc4a9c8b",
+          "cuda_rng": "9ee5cef2086818723acbea4354672c721ac99f6fbeeb9bf3a5c6e89465387502"
+        }
+      ],
+      "scope": "20-step functional and throughput screening; not convergence or final optimality",
+      "shared_initial_weights_sha256": "c08c3d4befd7aa90ce850c28e13167979c50bd02a4095130f9bbe252f6d3b698",
+      "peak_gpu_bytes": 19925768192,
+      "gpu": "NVIDIA A800-SXM4-80GB",
+      "measured_samples_per_s": 41.42920949905401
+    }
+  },
+  "b64": {
+    "both": {
+      "mode": "both",
+      "steps": 20,
+      "batch": 64,
+      "train": [
+        {
+          "step": 5.0,
+          "loss": 1.5078125,
+          "grad_norm": 11.6875,
+          "steps_per_s": 0.6989115214167086
+        },
+        {
+          "step": 10.0,
+          "loss": 1.25,
+          "grad_norm": 6.40625,
+          "steps_per_s": 1.1618667050743503
+        },
+        {
+          "step": 15.0,
+          "loss": 0.88671875,
+          "grad_norm": 3.6875,
+          "steps_per_s": 1.162197032295019
+        },
+        {
+          "step": 20.0,
+          "loss": 0.79296875,
+          "grad_norm": 4.75,
+          "steps_per_s": 1.1627671930122565
+        }
+      ],
+      "validation": [
+        {
+          "step": 20,
+          "squared_error": 106243.662109375,
+          "count": 55680.0
+        }
+      ],
+      "input_hashes": [
+        {
+          "state": "a4af4f6e19678c2e6a1dfbd3a9ec8207aebd056732ade88ae0c345ac40f0bee7",
+          "actions": "5c17219875d06c3213c40b4e108630d35fe3c5ece3a82b4856a3ac2b6df54954",
+          "task_vec_clip": "368ee2fe0af4a1009505b9663d6491bd9badf514b6dbb9b3697250c20b20fb68",
+          "cuda_rng": "aee757f068b82ca246aeb9e4d88b768273a4da45d23566991e5e2ae13228ce26"
+        },
+        {
+          "state": "427eb7b2b67ab45c794e01408c0f1076423b158978aebf340d248ab72772795d",
+          "actions": "dbd6b1985e10f97c187b970b1b1f6e1fdb544d66b38c3867720ffce793c79bb8",
+          "task_vec_clip": "3783effeddf9440859ac0e4791f2831e8d362f6dd9d5e873fce0d677cf2ee5f2",
+          "cuda_rng": "97733256ec14a9adc742eca2fc215ad0064b95b56cbc7426c9c305869c436fc7"
+        },
+        {
+          "state": "80c305463ba56e0e9c9be94f9a261f406c33e548255608c678611ac1f951d4c2",
+          "actions": "bd6394d7f52e2adeab6efb05a9225cac5f2dfe77a220cdfec33e2df62573ffff",
+          "task_vec_clip": "7683208f219ec735e1380e92819e01b38517f548ed7c4e7d2193de9c456fab51",
+          "cuda_rng": "9ee5cef2086818723acbea4354672c721ac99f6fbeeb9bf3a5c6e89465387502"
+        }
+      ],
+      "scope": "20-step functional and throughput screening; not convergence or final optimality",
+      "shared_initial_weights_sha256": "c08c3d4befd7aa90ce850c28e13167979c50bd02a4095130f9bbe252f6d3b698",
+      "peak_gpu_bytes": 27347900928,
+      "gpu": "NVIDIA A800-SXM4-80GB",
+      "measured_samples_per_s": 74.38571889786115
+    },
+    "current": {
+      "mode": "current",
+      "steps": 20,
+      "batch": 64,
+      "train": [
+        {
+          "step": 5.0,
+          "loss": 1.4765625,
+          "grad_norm": 10.9375,
+          "steps_per_s": 1.0414185857887126
+        },
+        {
+          "step": 10.0,
+          "loss": 1.234375,
+          "grad_norm": 6.75,
+          "steps_per_s": 2.2471247851872103
+        },
+        {
+          "step": 15.0,
+          "loss": 0.85546875,
+          "grad_norm": 4.125,
+          "steps_per_s": 2.235723603044483
+        },
+        {
+          "step": 20.0,
+          "loss": 0.7734375,
+          "grad_norm": 4.4375,
+          "steps_per_s": 2.2585692445719205
+        }
+      ],
+      "validation": [
+        {
+          "step": 20,
+          "squared_error": 108343.6513671875,
+          "count": 55680.0
+        }
+      ],
+      "input_hashes": [
+        {
+          "state": "a4af4f6e19678c2e6a1dfbd3a9ec8207aebd056732ade88ae0c345ac40f0bee7",
+          "actions": "5c17219875d06c3213c40b4e108630d35fe3c5ece3a82b4856a3ac2b6df54954",
+          "task_vec_clip": "368ee2fe0af4a1009505b9663d6491bd9badf514b6dbb9b3697250c20b20fb68",
+          "cuda_rng": "aee757f068b82ca246aeb9e4d88b768273a4da45d23566991e5e2ae13228ce26"
+        },
+        {
+          "state": "427eb7b2b67ab45c794e01408c0f1076423b158978aebf340d248ab72772795d",
+          "actions": "dbd6b1985e10f97c187b970b1b1f6e1fdb544d66b38c3867720ffce793c79bb8",
+          "task_vec_clip": "3783effeddf9440859ac0e4791f2831e8d362f6dd9d5e873fce0d677cf2ee5f2",
+          "cuda_rng": "97733256ec14a9adc742eca2fc215ad0064b95b56cbc7426c9c305869c436fc7"
+        },
+        {
+          "state": "80c305463ba56e0e9c9be94f9a261f406c33e548255608c678611ac1f951d4c2",
+          "actions": "bd6394d7f52e2adeab6efb05a9225cac5f2dfe77a220cdfec33e2df62573ffff",
+          "task_vec_clip": "7683208f219ec735e1380e92819e01b38517f548ed7c4e7d2193de9c456fab51",
+          "cuda_rng": "9ee5cef2086818723acbea4354672c721ac99f6fbeeb9bf3a5c6e89465387502"
+        }
+      ],
+      "scope": "20-step functional and throughput screening; not convergence or final optimality",
+      "shared_initial_weights_sha256": "c08c3d4befd7aa90ce850c28e13167979c50bd02a4095130f9bbe252f6d3b698",
+      "peak_gpu_bytes": 23192027136,
+      "gpu": "NVIDIA A800-SXM4-80GB",
+      "measured_samples_per_s": 143.81443204615107
+    },
+    "state": {
+      "mode": "state",
+      "steps": 20,
+      "batch": 64,
+      "train": [
+        {
+          "step": 5.0,
+          "loss": 1.4765625,
+          "grad_norm": 10.9375,
+          "steps_per_s": 1.009267749675086
+        },
+        {
+          "step": 10.0,
+          "loss": 1.234375,
+          "grad_norm": 6.75,
+          "steps_per_s": 2.2299938956503933
+        },
+        {
+          "step": 15.0,
+          "loss": 0.85546875,
+          "grad_norm": 4.125,
+          "steps_per_s": 2.2285011490057927
+        },
+        {
+          "step": 20.0,
+          "loss": 0.7734375,
+          "grad_norm": 4.4375,
+          "steps_per_s": 2.2288297236513737
+        }
+      ],
+      "validation": [
+        {
+          "step": 20,
+          "squared_error": 108327.146484375,
+          "count": 55680.0
+        }
+      ],
+      "input_hashes": [
+        {
+          "state": "a4af4f6e19678c2e6a1dfbd3a9ec8207aebd056732ade88ae0c345ac40f0bee7",
+          "actions": "5c17219875d06c3213c40b4e108630d35fe3c5ece3a82b4856a3ac2b6df54954",
+          "task_vec_clip": "368ee2fe0af4a1009505b9663d6491bd9badf514b6dbb9b3697250c20b20fb68",
+          "cuda_rng": "aee757f068b82ca246aeb9e4d88b768273a4da45d23566991e5e2ae13228ce26"
+        },
+        {
+          "state": "427eb7b2b67ab45c794e01408c0f1076423b158978aebf340d248ab72772795d",
+          "actions": "dbd6b1985e10f97c187b970b1b1f6e1fdb544d66b38c3867720ffce793c79bb8",
+          "task_vec_clip": "3783effeddf9440859ac0e4791f2831e8d362f6dd9d5e873fce0d677cf2ee5f2",
+          "cuda_rng": "97733256ec14a9adc742eca2fc215ad0064b95b56cbc7426c9c305869c436fc7"
+        },
+        {
+          "state": "80c305463ba56e0e9c9be94f9a261f406c33e548255608c678611ac1f951d4c2",
+          "actions": "bd6394d7f52e2adeab6efb05a9225cac5f2dfe77a220cdfec33e2df62573ffff",
+          "task_vec_clip": "7683208f219ec735e1380e92819e01b38517f548ed7c4e7d2193de9c456fab51",
+          "cuda_rng": "9ee5cef2086818723acbea4354672c721ac99f6fbeeb9bf3a5c6e89465387502"
+        }
+      ],
+      "scope": "20-step functional and throughput screening; not convergence or final optimality",
+      "shared_initial_weights_sha256": "c08c3d4befd7aa90ce850c28e13167979c50bd02a4095130f9bbe252f6d3b698",
+      "peak_gpu_bytes": 23252035072,
+      "gpu": "NVIDIA A800-SXM4-80GB",
+      "measured_samples_per_s": 142.6629166160207
+    },
+    "vision": {
+      "mode": "vision",
+      "steps": 20,
+      "batch": 64,
+      "train": [
+        {
+          "step": 5.0,
+          "loss": 1.5078125,
+          "grad_norm": 11.6875,
+          "steps_per_s": 0.6691365092090374
+        },
+        {
+          "step": 10.0,
+          "loss": 1.25,
+          "grad_norm": 6.40625,
+          "steps_per_s": 1.1667208535784406
+        },
+        {
+          "step": 15.0,
+          "loss": 0.88671875,
+          "grad_norm": 3.6875,
+          "steps_per_s": 1.1660379000858951
+        },
+        {
+          "step": 20.0,
+          "loss": 0.79296875,
+          "grad_norm": 4.71875,
+          "steps_per_s": 1.166215301926718
+        }
+      ],
+      "validation": [
+        {
+          "step": 20,
+          "squared_error": 106234.2998046875,
+          "count": 55680.0
+        }
+      ],
+      "input_hashes": [
+        {
+          "state": "a4af4f6e19678c2e6a1dfbd3a9ec8207aebd056732ade88ae0c345ac40f0bee7",
+          "actions": "5c17219875d06c3213c40b4e108630d35fe3c5ece3a82b4856a3ac2b6df54954",
+          "task_vec_clip": "368ee2fe0af4a1009505b9663d6491bd9badf514b6dbb9b3697250c20b20fb68",
+          "cuda_rng": "aee757f068b82ca246aeb9e4d88b768273a4da45d23566991e5e2ae13228ce26"
+        },
+        {
+          "state": "427eb7b2b67ab45c794e01408c0f1076423b158978aebf340d248ab72772795d",
+          "actions": "dbd6b1985e10f97c187b970b1b1f6e1fdb544d66b38c3867720ffce793c79bb8",
+          "task_vec_clip": "3783effeddf9440859ac0e4791f2831e8d362f6dd9d5e873fce0d677cf2ee5f2",
+          "cuda_rng": "97733256ec14a9adc742eca2fc215ad0064b95b56cbc7426c9c305869c436fc7"
+        },
+        {
+          "state": "80c305463ba56e0e9c9be94f9a261f406c33e548255608c678611ac1f951d4c2",
+          "actions": "bd6394d7f52e2adeab6efb05a9225cac5f2dfe77a220cdfec33e2df62573ffff",
+          "task_vec_clip": "7683208f219ec735e1380e92819e01b38517f548ed7c4e7d2193de9c456fab51",
+          "cuda_rng": "9ee5cef2086818723acbea4354672c721ac99f6fbeeb9bf3a5c6e89465387502"
+        }
+      ],
+      "scope": "20-step functional and throughput screening; not convergence or final optimality",
+      "shared_initial_weights_sha256": "c08c3d4befd7aa90ce850c28e13167979c50bd02a4095130f9bbe252f6d3b698",
+      "peak_gpu_bytes": 27287827968,
+      "gpu": "NVIDIA A800-SXM4-80GB",
+      "measured_samples_per_s": 74.64477525921099
+    }
+  },
+  "scaling": {
+    "both-b128": {
+      "mode": "both",
+      "steps": 20,
+      "batch": 128,
+      "train": [
+        {
+          "step": 5.0,
+          "loss": 1.6953125,
+          "grad_norm": 12.0625,
+          "steps_per_s": 0.42276764844441334
+        },
+        {
+          "step": 10.0,
+          "loss": 1.25,
+          "grad_norm": 5.4375,
+          "steps_per_s": 0.6364407095884589
+        },
+        {
+          "step": 15.0,
+          "loss": 0.78125,
+          "grad_norm": 3.96875,
+          "steps_per_s": 0.6361081079667539
+        },
+        {
+          "step": 20.0,
+          "loss": 0.6953125,
+          "grad_norm": 3.734375,
+          "steps_per_s": 0.6361035436514825
+        }
+      ],
+      "validation": [
+        {
+          "step": 20,
+          "squared_error": 190706.75,
+          "count": 111360.0
+        }
+      ],
+      "input_hashes": [
+        {
+          "state": "f581086a70ceae611790b0b410e3b9fd94410c3420ec461816325f988611a23f",
+          "actions": "b1abc57bac65cb533c554ffce21c19d8ce11a2532c9b6a0c4ab4db01743b448b",
+          "task_vec_clip": "6873804edcbe76588b0b91ff184166191c97b0409a066ef30c1196521c42d4c7",
+          "cuda_rng": "aee757f068b82ca246aeb9e4d88b768273a4da45d23566991e5e2ae13228ce26"
+        },
+        {
+          "state": "05d41432815eef4f92c19fd49ebefa3ecaa99fa520fc8f3867b7b3be5bea2cbf",
+          "actions": "37029effc9edb64f2df3c1233c630d2baede39f58abc8ee69f7f3ee0b9a648d2",
+          "task_vec_clip": "6273e6bf0f279d2b9f98b6061cc9080aba86b9f9e9df2f9707c6dac712af6f94",
+          "cuda_rng": "97733256ec14a9adc742eca2fc215ad0064b95b56cbc7426c9c305869c436fc7"
+        },
+        {
+          "state": "0368ca116cc2ceb8d6cffc410e2dde93ffc228c5b9bdac8eb408a3c42d3c3fdd",
+          "actions": "4ef923593b6957651e8456b113a165d2d122a5353cdb06652049a379baed546e",
+          "task_vec_clip": "99d7b0e4a6b53b96657878de16240d9b9aa955c9be07e9410b66b6b32e1245be",
+          "cuda_rng": "9ee5cef2086818723acbea4354672c721ac99f6fbeeb9bf3a5c6e89465387502"
+        }
+      ],
+      "scope": "20-step functional and throughput screening; not convergence or final optimality",
+      "shared_initial_weights_sha256": "c08c3d4befd7aa90ce850c28e13167979c50bd02a4095130f9bbe252f6d3b698",
+      "peak_gpu_bytes": 39208275456,
+      "gpu": "NVIDIA A800-SXM4-80GB",
+      "measured_samples_per_s": 81.43582906438179
+    },
+    "both-b256": {
+      "mode": "both",
+      "steps": 20,
+      "batch": 256,
+      "train": [
+        {
+          "step": 5.0,
+          "loss": 1.65625,
+          "grad_norm": 10.5,
+          "steps_per_s": 0.2301714792937578
+        },
+        {
+          "step": 10.0,
+          "loss": 1.0390625,
+          "grad_norm": 4.75,
+          "steps_per_s": 0.33241460834306336
+        },
+        {
+          "step": 15.0,
+          "loss": 0.7265625,
+          "grad_norm": 3.953125,
+          "steps_per_s": 0.3322208982997669
+        },
+        {
+          "step": 20.0,
+          "loss": 0.67578125,
+          "grad_norm": 3.078125,
+          "steps_per_s": 0.33224130323713674
+        }
+      ],
+      "validation": [
+        {
+          "step": 20,
+          "squared_error": 384646.96484375,
+          "count": 222720.0
+        }
+      ],
+      "input_hashes": [
+        {
+          "state": "562038859e1152539def1cdac4e7d6e20f81848afcc2059f58b02e0a0d7a7d8d",
+          "actions": "10391edf996ed72c840172e56b07ac2f389f6d23a9b3ab1196c856adfb7c6906",
+          "task_vec_clip": "023e53c976416e10aa7dc9d7df731239bdd4829873a3f915beda95c9441a83cb",
+          "cuda_rng": "aee757f068b82ca246aeb9e4d88b768273a4da45d23566991e5e2ae13228ce26"
+        },
+        {
+          "state": "35e3bfa7b9f2f7c28d0d40c037fa08da0f3ba47fbb6d5f27aa1e5878bc2da8b0",
+          "actions": "0905a4c810bdd1b843f1237bcaa653bddead7689ad64f1fc1402a415e3b146fe",
+          "task_vec_clip": "b53de167387bfd84cdbeffb82a909a475507dd0d4ac082c1e7439fe6ac3d95a1",
+          "cuda_rng": "97733256ec14a9adc742eca2fc215ad0064b95b56cbc7426c9c305869c436fc7"
+        },
+        {
+          "state": "a69d0ccbeefd5310fe8ce637be5648b0e632fb51a910bbd6689702d0924f965b",
+          "actions": "aaba1407230be82ec96380c6d879d428f50e96ea5d8dafbaff71a802c383d954",
+          "task_vec_clip": "05c51a3a4e55d8bc99130387db7cb1929a4ce3d20e7344399b0a324154add6b3",
+          "cuda_rng": "9ee5cef2086818723acbea4354672c721ac99f6fbeeb9bf3a5c6e89465387502"
+        }
+      ],
+      "scope": "20-step functional and throughput screening; not convergence or final optimality",
+      "shared_initial_weights_sha256": "c08c3d4befd7aa90ce850c28e13167979c50bd02a4095130f9bbe252f6d3b698",
+      "peak_gpu_bytes": 61377076224,
+      "gpu": "NVIDIA A800-SXM4-80GB",
+      "measured_samples_per_s": 85.06681529211654
+    },
+    "current-b128": {
+      "mode": "current",
+      "steps": 20,
+      "batch": 128,
+      "train": [
+        {
+          "step": 5.0,
+          "loss": 1.640625,
+          "grad_norm": 11.3125,
+          "steps_per_s": 0.6820241661985877
+        },
+        {
+          "step": 10.0,
+          "loss": 1.2265625,
+          "grad_norm": 5.65625,
+          "steps_per_s": 1.3526935933769042
+        },
+        {
+          "step": 15.0,
+          "loss": 0.74609375,
+          "grad_norm": 3.796875,
+          "steps_per_s": 1.3527452299082057
+        },
+        {
+          "step": 20.0,
+          "loss": 0.6640625,
+          "grad_norm": 3.03125,
+          "steps_per_s": 1.3511988269329132
+        }
+      ],
+      "validation": [
+        {
+          "step": 20,
+          "squared_error": 193987.390625,
+          "count": 111360.0
+        }
+      ],
+      "input_hashes": [
+        {
+          "state": "f581086a70ceae611790b0b410e3b9fd94410c3420ec461816325f988611a23f",
+          "actions": "b1abc57bac65cb533c554ffce21c19d8ce11a2532c9b6a0c4ab4db01743b448b",
+          "task_vec_clip": "6873804edcbe76588b0b91ff184166191c97b0409a066ef30c1196521c42d4c7",
+          "cuda_rng": "aee757f068b82ca246aeb9e4d88b768273a4da45d23566991e5e2ae13228ce26"
+        },
+        {
+          "state": "05d41432815eef4f92c19fd49ebefa3ecaa99fa520fc8f3867b7b3be5bea2cbf",
+          "actions": "37029effc9edb64f2df3c1233c630d2baede39f58abc8ee69f7f3ee0b9a648d2",
+          "task_vec_clip": "6273e6bf0f279d2b9f98b6061cc9080aba86b9f9e9df2f9707c6dac712af6f94",
+          "cuda_rng": "97733256ec14a9adc742eca2fc215ad0064b95b56cbc7426c9c305869c436fc7"
+        },
+        {
+          "state": "0368ca116cc2ceb8d6cffc410e2dde93ffc228c5b9bdac8eb408a3c42d3c3fdd",
+          "actions": "4ef923593b6957651e8456b113a165d2d122a5353cdb06652049a379baed546e",
+          "task_vec_clip": "99d7b0e4a6b53b96657878de16240d9b9aa955c9be07e9410b66b6b32e1245be",
+          "cuda_rng": "9ee5cef2086818723acbea4354672c721ac99f6fbeeb9bf3a5c6e89465387502"
+        }
+      ],
+      "scope": "20-step functional and throughput screening; not convergence or final optimality",
+      "shared_initial_weights_sha256": "c08c3d4befd7aa90ce850c28e13167979c50bd02a4095130f9bbe252f6d3b698",
+      "peak_gpu_bytes": 30899026944,
+      "gpu": "NVIDIA A800-SXM4-80GB",
+      "measured_samples_per_s": 173.08315771126715
+    },
+    "current-b256": {
+      "mode": "current",
+      "steps": 20,
+      "batch": 256,
+      "train": [
+        {
+          "step": 5.0,
+          "loss": 1.625,
+          "grad_norm": 10.0625,
+          "steps_per_s": 0.42927429425094754
+        },
+        {
+          "step": 10.0,
+          "loss": 1.03125,
+          "grad_norm": 5.34375,
+          "steps_per_s": 0.6903750967071893
+        },
+        {
+          "step": 15.0,
+          "loss": 0.7421875,
+          "grad_norm": 4.4375,
+          "steps_per_s": 0.5874520262240654
+        },
+        {
+          "step": 20.0,
+          "loss": 0.6796875,
+          "grad_norm": 2.78125,
+          "steps_per_s": 0.6327291620012617
+        }
+      ],
+      "validation": [
+        {
+          "step": 20,
+          "squared_error": 388184.44921875,
+          "count": 222720.0
+        }
+      ],
+      "input_hashes": [
+        {
+          "state": "562038859e1152539def1cdac4e7d6e20f81848afcc2059f58b02e0a0d7a7d8d",
+          "actions": "10391edf996ed72c840172e56b07ac2f389f6d23a9b3ab1196c856adfb7c6906",
+          "task_vec_clip": "023e53c976416e10aa7dc9d7df731239bdd4829873a3f915beda95c9441a83cb",
+          "cuda_rng": "aee757f068b82ca246aeb9e4d88b768273a4da45d23566991e5e2ae13228ce26"
+        },
+        {
+          "state": "35e3bfa7b9f2f7c28d0d40c037fa08da0f3ba47fbb6d5f27aa1e5878bc2da8b0",
+          "actions": "0905a4c810bdd1b843f1237bcaa653bddead7689ad64f1fc1402a415e3b146fe",
+          "task_vec_clip": "b53de167387bfd84cdbeffb82a909a475507dd0d4ac082c1e7439fe6ac3d95a1",
+          "cuda_rng": "97733256ec14a9adc742eca2fc215ad0064b95b56cbc7426c9c305869c436fc7"
+        },
+        {
+          "state": "a69d0ccbeefd5310fe8ce637be5648b0e632fb51a910bbd6689702d0924f965b",
+          "actions": "aaba1407230be82ec96380c6d879d428f50e96ea5d8dafbaff71a802c383d954",
+          "task_vec_clip": "05c51a3a4e55d8bc99130387db7cb1929a4ce3d20e7344399b0a324154add6b3",
+          "cuda_rng": "9ee5cef2086818723acbea4354672c721ac99f6fbeeb9bf3a5c6e89465387502"
+        }
+      ],
+      "scope": "20-step functional and throughput screening; not convergence or final optimality",
+      "shared_initial_weights_sha256": "c08c3d4befd7aa90ce850c28e13167979c50bd02a4095130f9bbe252f6d3b698",
+      "peak_gpu_bytes": 44862526976,
+      "gpu": "NVIDIA A800-SXM4-80GB",
+      "measured_samples_per_s": 162.32635132492004
+    }
+  },
+  "not_run": {
+    "current-b512-not-run": {
+      "projected_peak_bytes": 73618926592,
+      "reason": "keep VRAM margin"
+    }
+  }
+}

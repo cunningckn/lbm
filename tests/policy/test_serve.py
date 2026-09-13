@@ -73,12 +73,17 @@ def test_http_infer_roundtrip():
             },
             "prompt": "open the drawer",
             "reset": True,
+            "timestamp": 1720000000.125,
+            "episode_id": "episode-3",
+            "subtask_id": "reach",
         }
         out = client.infer(obs)
         assert out["actions"].shape == (10, 7)
         np.testing.assert_array_equal(out["actions"], np.arange(70, dtype=np.float32).reshape(10, 7))
         assert policy.last_obs["prompt"] == "open the drawer"
         assert policy.last_obs["reset"] is True
+        for key in ("timestamp", "episode_id", "subtask_id"):
+            assert policy.last_obs[key] == obs[key]
         np.testing.assert_array_equal(policy.last_obs["images"]["wrist_image"][0, 0], [7, 7, 7])
 
         client.reset()

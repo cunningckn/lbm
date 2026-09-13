@@ -49,11 +49,40 @@
     "diffusion_steps": 10
   },
   "out_of_ram_io": {
-    "status": "unverified_after_server_connection_loss",
+    "status": "unverified_old_logs_lost_rerun_blocked_readonly_cgroup",
     "physical_copies": 16,
-    "shards_copied": 288
+    "shards_copied": 288,
+    "guard_tests_passed": 9
   },
   "full_size_real_fsdp_followup": {
     "status": "not_started_ssh_connection_timeout"
+  },
+  "restored_access_followup": {
+    "libero": {
+      "suite": "libero_spatial",
+      "task_id": 0,
+      "policy_seed": 2026,
+      "simulator_seed": 17,
+      "initial_state_indices": [
+        40,
+        49
+      ],
+      "trials": 10,
+      "successes": 9,
+      "failures_at_step_limit": 1,
+      "max_steps": 220,
+      "replan_steps": 5,
+      "diffusion_steps": 10
+    },
+    "feature_train_rows": 8734,
+    "feature_train_shards": 18,
+    "single_gpu_sharded": {
+      "batch": 128,
+      "workers": 2,
+      "measured_updates": 60,
+      "seconds": 64.59285246699983,
+      "samples_per_second": 118.89860420583956,
+      "peak_allocated_mib": 75317.07080078125
+    }
   }
 }

@@ -275,3 +275,43 @@ write_sharded_cache(sys.argv[1], batches, rows=4, metadata={}, shard_rows=2)
     write_sharded_cache(cache, resume, rows=4, metadata={}, shard_rows=2)
     assert len(FeatureDataset(cache)) == 4
     assert not list(cache.glob('.*'))
+
+
+@pytest.mark.parametrize('workers', [0, 2])
+def test_sharded_bulk_read_preserves_order_duplicates_and_loader_seed(tmp_path, workers, monkeypatch):
+    from lbm.feature_shards import write_sharded_cache
+    from lbm.training_sampler import SeededDataset
+
+    cfg = tiny_dit_config()
+    batch = _cache_batch(cfg, DiTPolicy(cfg))
+    dest = tmp_path / 'shards'
+    batches = [dict(batch, state=batch['state'] + i * 100) for i in range(3)]
+    write_sharded_cache(dest, lambda start: iter(batches), rows=6, metadata={}, shard_rows=2)
+    dataset = FeatureDataset(dest)
+    indices = [0, 2, 4, 1, 3, 5, -1, 0]
+    expected = torch.utils.data.default_collate([dataset[i] for i in indices])
+    opened = []
+    original_open = FeatureDataset._open
+    def record_open(self):
+        opened.append(self.root)
+        return original_open(self)
+    with monkeypatch.context() as patch:
+        patch.setattr(FeatureDataset, '_open', record_open)
+        actual = torch.utils.data.default_collate(dataset.__getitems__(indices))
+    assert len(opened) <= 3
+    torch.testing.assert_close(actual, expected, rtol=0, atol=0)
+    loader = torch.utils.data.DataLoader(SeededDataset(dataset, 123), num_workers=workers,
+                                        batch_sampler=[[(0, p, i) for p, i in enumerate(indices)]])
+    torch.testing.assert_close(next(iter(loader)), expected, rtol=0, atol=0)
+    assert dataset.__getitems__([]) == []
+    with pytest.raises(IndexError):
+        dataset.__getitems__([len(dataset)])
+
+
+def test_validation_cache_rejects_different_encoder_fingerprint():
+    train = FeatureDataset.__new__(FeatureDataset)
+    val = FeatureDataset.__new__(FeatureDataset)
+    train.metadata = dict(episode_ids=['train'], backbone_sha256='one')
+    val.metadata = dict(episode_ids=['val'], backbone_sha256='two')
+    with pytest.raises(ValueError, match='backbone_sha256'):
+        train.check_validation(val)

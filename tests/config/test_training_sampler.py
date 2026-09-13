@@ -13,6 +13,9 @@ class Jitter:
     def __len__(self):
         return 32
 
+    def __getitems__(self, indices):
+        raise AssertionError('random transforms must use per-sample RNG isolation')
+
     def __getitem__(self, index):
         return index, random.random(), np.random.rand(), torch.rand(()).item()
 

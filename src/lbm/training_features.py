@@ -186,6 +186,23 @@ class FeatureDataset(Dataset):
                 out[key] = value
         return out
 
+    def __getitems__(self, indices):
+        """Read each shard once per batch, retaining sampler order and duplicates."""
+        if self.manifest['version'] != 2:
+            return [self[index] for index in indices]
+        groups = {}
+        for position, index in enumerate(indices):
+            if not -len(self) <= index < len(self):
+                raise IndexError(index)
+            index %= len(self)
+            shard = int(np.searchsorted(self._offsets, index, side='right'))
+            groups.setdefault(shard, []).append((position, index))
+        result = [None] * len(indices)
+        for members in groups.values():
+            for position, index in members:
+                result[position] = self[index]
+        return result
+
     def _open_shards(self):
         from lbm.feature_shards import file_sha256
 
@@ -251,7 +268,7 @@ class FeatureDataset(Dataset):
                 raise ValueError('training and validation feature episodes overlap')
         elif hasattr(self, 'root') and self.root.resolve() == other.root.resolve():
             raise ValueError('training and validation feature cache must differ')
-        for key in ('model', 'normalization', 'action_spaces'):
+        for key in ('model', 'normalization', 'action_spaces', 'backbone_sha256'):
             if self.metadata.get(key) != other.metadata.get(key):
                 raise ValueError(f'training and validation feature cache {key} differ')
 

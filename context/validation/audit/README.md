@@ -140,3 +140,34 @@ the source feature caches. Successful normal exit records `complete` and
 The full-size-model, real-sharded-data FSDP follow-up remains pending. This does
 not replace or invalidate the completed independent-process two-GPU DDP/FSDP
 checkpoint tests.
+
+## Validation after access restoration
+
+PR #38 introduced fail-closed pressure isolation. Recovery checks found that
+persistent source datasets, pretrained assets, and the task-0 LIBERO checkpoint
+survived; the temporary test worktree and caches did not. A new isolated worktree
+was populated without altering the user's checkout. Train and validation feature
+caches were rebuilt on the persistent volume with 8,734 and 3,095 rows.
+
+The full-model feature-cache FSDP check exposed an actual startup failure:
+Megatron's post-wrap state dictionary contains uneven DTensors, which the dense
+encoder fingerprint function cannot reshape/hash. Fresh-run encoder validation
+now happens before FSDP wrapping. Resume restores the trusted training checkpoint
+and checks its exact cache-manifest signature; the frozen encoder was validated
+when that checkpoint's run began. Train and validation cache metadata must also
+agree on the encoder fingerprint.
+
+Random batched feature reads now group indices by shard, then return samples in
+the original sampler order. This avoids reopening the same shard repeatedly
+within a batch, retains the two-shard LRU bound, and preserves duplicates and
+negative indices. The seeded wrapper uses bulk reads only for feature caches;
+other datasets keep per-sample RNG isolation, including datasets exposing their
+own bulk-reading API. Tests check zero/two workers, exact sample values/order,
+and a bound of one shard opening per batch per shard.
+
+LIBERO official states 40–49 were evaluated with policy seed 2026 and simulator
+seed 17: **9/10 successes**, one timeout at 220 steps, no inference or simulation
+exceptions. These extend task-0 initial-state coverage only. The policy RNG was
+restarted for this run; this is not one uninterrupted evaluation of states 10–49
+or a multi-task score. The policy service was stopped after evaluation. Offline
+MuJoCo 3.2.3 dependencies and aggregate logs now live on persistent storage.

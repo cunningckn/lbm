@@ -307,6 +307,13 @@ def main(config: TrainConfig) -> None:
         if rank == 0:
             print("torch.compile(fullgraph=True) enabled")
 
+    if feature_mode and fsdp and not config.resume:
+        # Megatron state_dict exposes uneven DTensors after wrapping. Validate
+        # the complete frozen encoder before sharding instead of hashing shards.
+        train_ds.check_backbone(model)
+        if val_ds:
+            val_ds.check_backbone(model)
+
     if fsdp:
         from lbm.distributed import wrap_policy_fsdp
 
@@ -327,10 +334,13 @@ def main(config: TrainConfig) -> None:
         step, epoch, batch_cursor = (resume_payload[key] for key in ("step", "epoch", "batch_in_epoch"))
         if config.train_steps < step:
             raise ValueError("--steps cannot be less than the saved step")
-    if feature_mode:
-        train_ds.check_backbone(model.module if fsdp else _unwrap(model))
+    # FSDP resume restores the frozen encoder from the trusted full training
+    # checkpoint. Its validated signature pins the exact training-cache manifest;
+    # that lineage was checked against complete encoder weights before wrapping.
+    if feature_mode and not fsdp:
+        train_ds.check_backbone(_unwrap(model))
         if val_ds:
-            val_ds.check_backbone(model.module if fsdp else _unwrap(model))
+            val_ds.check_backbone(_unwrap(model))
 
     module = _unwrap(model)
 

@@ -20,6 +20,15 @@ class SeededDataset(Dataset):
             raise AttributeError(name)
         return getattr(self.dataset, name)
 
+    def __getitems__(self, keys):
+        # Cached features have no random transforms. Other datasets must retain
+        # per-sample RNG isolation, even when they implement their own bulk API.
+        from lbm.training_features import FeatureDataset
+
+        if isinstance(self.dataset, FeatureDataset):
+            return self.dataset.__getitems__([key[2] for key in keys])
+        return [self[key] for key in keys]
+
     def __getitem__(self, key):
         epoch, position, index = key
         seed = int(np.random.SeedSequence([self.seed, epoch, position]).generate_state(1)[0])

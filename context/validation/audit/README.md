@@ -137,6 +137,87 @@ and remove only this run's generated output directory afterward. Do not delete
 the source feature caches. Successful normal exit records `complete` and
 `cleaned`; missing records must not be interpreted as success.
 
-The full-size-model, real-sharded-data FSDP follow-up remains pending. This does
-not replace or invalidate the completed independent-process two-GPU DDP/FSDP
-checkpoint tests.
+The full-size-model, real-sharded-data FSDP follow-up subsequently passed after
+the startup fix described below. The capacity stress run remains blocked.
+
+## Validation after access restoration
+
+PR #38 introduced fail-closed pressure isolation. Recovery checks found that
+persistent source datasets, pretrained assets, and the task-0 LIBERO checkpoint
+survived; the temporary test worktree and caches did not. A new isolated worktree
+was populated without altering the user's checkout. Train and validation feature
+caches were rebuilt on the persistent volume with 8,734 and 3,095 rows.
+
+The full-model feature-cache FSDP check exposed an actual startup failure:
+Megatron's post-wrap state dictionary contains uneven DTensors, which the dense
+encoder fingerprint function cannot reshape/hash. Fresh-run encoder validation
+now happens before FSDP wrapping. Resume restores the trusted training checkpoint
+and checks its exact cache-manifest signature; the frozen encoder was validated
+when that checkpoint's run began. Train and validation cache metadata must also
+agree on the encoder fingerprint.
+
+Random batched feature reads now group indices by shard, then return samples in
+the original sampler order. This avoids reopening the same shard repeatedly
+within a batch, retains the two-shard LRU bound, and preserves duplicates and
+negative indices. The seeded wrapper uses bulk reads only for feature caches;
+other datasets keep per-sample RNG isolation, including datasets exposing their
+own bulk-reading API. Tests check zero/two workers, exact sample values/order,
+and a bound of one shard opening per batch per shard.
+
+LIBERO official states 40–49 were evaluated with policy seed 2026 and simulator
+seed 17: **9/10 successes**, one timeout at 220 steps, no inference or simulation
+exceptions. These extend task-0 initial-state coverage only. The policy RNG was
+restarted for this run; this is not one uninterrupted evaluation of states 10–49
+or a multi-task score. The policy service was stopped after evaluation. Offline
+MuJoCo 3.2.3 dependencies and aggregate logs now live on persistent storage.
+
+The repaired complete 2,015.9M-parameter model completed two optimizer updates
+on two A800s (batch eight and two workers per rank), validation for both sources,
+and a distributed checkpoint. A new pair of processes loaded update two,
+continued through update four, validated both sources again, and saved update
+four successfully. Logged losses and gradient norms were finite. Validation
+aggregate error was 9.0240 at update two and 8.9877 at update four; four updates
+are a functionality check, not evidence of convergence. Exact loss equivalence
+is covered separately by the cached FSDP independent-process regression. The
+related cache/sampler/distributed suite passed 25 tests. Hosted static and CPU
+checks passed for the implementation commit.
+
+### Refreshed real-cache throughput
+
+These measurements use the rebuilt 8,734-row **sharded cache on persistent
+JuiceFS storage**, rather than the earlier 11,829-row local-scratch monolithic
+cache. All runs use 70 complete updates with the first ten excluded, the full
+model, BF16, frozen DINO, 150 actions, and maximum prefix four. Timing includes
+loader wait, device transfer, forward/backward, clipping and optimizer update;
+it excludes feature preparation, validation and checkpoint saving.
+
+| Configuration | Batch per GPU | Workers per GPU | Global samples/s | Max allocated GiB per GPU |
+| --- | ---: | ---: | ---: | ---: |
+| Single GPU, before bulk reads | 128 | 2 | 118.90 | 73.55 |
+| Single GPU, bulk reads | 128 | 0 | 81.72 | 73.55 |
+| Single GPU, bulk reads | 128 | 2 | 121.34 | 73.55 |
+| Two-GPU FSDP, bulk reads | 64 | 2 | 194.61 | 48.42 |
+| Two-GPU FSDP, bulk reads | 120 | 2 | 227.20 | 74.17 |
+
+The before-change zero-worker run was stopped after observing filesystem-read
+waits and did not produce a complete measurement. Its duration is not used as
+a speedup denominator. Bulk reads reduce redundant shard openings by construction
+and regression tests; the 2% measured difference at two workers is too small to
+claim a substantial training speedup from one comparison.
+
+For this measured cached workload, retain **single GPU batch 128/workers two**,
+or **FSDP batch 120/workers two per GPU, block group one**. The latter is 16.7%
+faster than per-rank batch 64 here. Global FSDP throughput uses
+`world * batch * measured_updates / max(rank_seconds)`; both rank timings are
+preserved in results.json. This is a recommendation among measured candidates,
+not a universal optimum. FSDP uses FP32 master optimizer state and a larger
+global batch, so its optimizer numerics are not identical to single-GPU BF16
+training. Earlier online-vision results remain in ../real-throughput/; cached
+throughput must not be presented as including online encoder computation.
+
+Reproduce with ../real-throughput/run.py, selecting `--mode features`, the new
+cache, `--steps 70`, and the batch/workers from the table. Add `--fsdp` under
+`torchrun --standalone --nproc_per_node=2` for two GPUs. Each refreshed candidate
+had an external 600-second timeout. Logs, feature arrays, and distributed
+checkpoints remain in the isolated persistent server validation directory;
+only these aggregate metrics are published.

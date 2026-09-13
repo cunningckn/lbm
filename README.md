@@ -158,6 +158,16 @@ New statistics include a fallback for equal q01/q99 in sparse dimensions; old st
 
 多数据集准备、恢复训练、吞吐测试和验证边界见 [验证与复现指南](context/validation/README.md)；贡献及 CI 约定见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
+Training always expands prefix conditions only across the possible prefix
+window. Optional `--compile-conditioning --fused-adamw` compiles modulation and
+gating and uses fused optimizer kernels. Conditioning compilation preserves
+BF16 intermediate casts, but fused reductions can still change rounding; it
+is mutually exclusive with full-model `--compile`. Both options default off,
+are recorded in checkpoints, and must match when resuming. Compilation adds
+startup time and may recompile for new shapes. Parameter names and checkpoint
+weight keys are unchanged. Use the measured workload recommendations below
+rather than assuming a larger batch always improves throughput.
+
 ## Simulation eval (LIBERO / RMBench)
 
 Convert dumps with `simulation/lerobot`. Train with the LBM root uv env. Closed-loop eval serves an LBM checkpoint (`scripts/serve_policy.py`); the sim venv POSTs `{state, images, prompt}` over HTTP and does not load LBM in-process.
@@ -291,8 +301,31 @@ torchrun --standalone --nproc_per_node=8 examples/train_fsdp.py
 
 ## Benchmarks
 
-Synthetic data. Inference is closed-loop (`bs=1` only). Profile scripts are the
-optimization signal: CUDA-event fwd/bwd/step plus wrap/prefetch sweeps.
+The original throughput/inference scripts use synthetic data. Inference Hz
+measures policy latency at `bs=1`; task success requires the separate LIBERO
+or RMBench simulation loop above. Profile scripts report CUDA-event
+forward/backward/optimizer timing and FSDP wrap/prefetch sweeps.
+
+For comparable training measurements, use a feature cache carrying its source
+configuration. This restores the actual model, action horizon, prefix recipe,
+training split, normalization and optimizer settings across six input modes:
+
+```bash
+PYTHONPATH=src python benchmarks/matched_throughput.py \
+  --mode live --cache /path/features-train --data-root /path/datasets \
+  --batch 128 --workers 8 --output /path/live.json
+# Repeat with features, resident-images, resident-features,
+# synthetic-images or synthetic-features. Each output must be a new file.
+```
+
+`--steps` counts measured updates after `--warmup`; synchronized stage profiling
+is a separate pass. `--split-prefix --compile-conditioning --fused-adamw`
+enables the optimized comparison. The benchmark's default keeps the old prefix
+expansion as a control; production training uses the smaller prefix expansion.
+Use `--mmap-images` to measure existing JPEG mmap images with online DINO;
+without it the online modes decode raw video. `--prefetch-factor` is available
+in both this benchmark and `scripts/train.py` (default 2 for training).
+See [matched results and reproduction](context/validation/matched/README.md).
 
 ```bash
 # 1-GPU train throughput

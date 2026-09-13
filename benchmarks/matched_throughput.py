@@ -75,6 +75,8 @@ def matched_config(metadata, *, batch, workers, data_root):
     cfg.bf16 = source['bf16']
     cfg.batch_size, cfg.num_workers = batch, workers
     cfg.data.data_root_dir = data_root
+    # Input encoding is an explicit experiment axis, not inherited silently.
+    cfg.data.use_mmap = cfg.data.use_mmap_frames = False
     cfg.data.mmap_prebuild = False
     if cfg.model.train_vision_encoder or cfg.model.language_encoder != 'none':
         raise ValueError('comparison requires a frozen vision encoder and language_encoder=none')

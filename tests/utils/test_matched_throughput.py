@@ -13,6 +13,7 @@ def test_cache_recipe_controls_all_matched_modes():
     source.model.state_dim = 20
     source.model.action_dim = 22
     cfg = matched_config({'source_config': asdict(source)}, batch=128, workers=2, data_root='/data')
+    assert not cfg.data.use_mmap and not cfg.data.use_mmap_frames
     assert cfg.model.chunk_length == 150
     assert cfg.flow.max_action_prefix == 4
     baseline, digest = contract(cfg)

@@ -19,7 +19,8 @@ and 14 integration deselections. The subsequent audit passed 507 full-suite
 cases plus a newly added killed-writer recovery case; see the audit below
 for completed checks and the server-connectivity blocker.
 
-Latest follow-up: [validation, recovery and feature-shard audit](audit/README.md).
+Latest follow-up: [matched workload tests and conditioning optimization](matched/README.md).
+Previous: [validation, recovery and feature-shard audit](audit/README.md).
 
 | Work | Evidence |
 | --- | --- |

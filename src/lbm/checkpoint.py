@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import os
 import random
+import zipfile
 from pathlib import Path
 
 import numpy as np
@@ -58,7 +59,16 @@ def save_checkpoint(path, model, optimizer, scheduler, *, step, epoch, batch_in_
 
 def load_checkpoint(path, model, optimizer, scheduler, *, signature):
     """Validate replay compatibility before applying any state; restore RNG later."""
-    payload = torch.load(path, map_location="cpu", weights_only=False)
+    # Modern path-based checkpoints can stay file-backed until used, avoiding a
+    # full anonymous CPU copy before DataLoader workers fork. Private mappings
+    # keep CPU optimizer updates from changing the saved checkpoint on disk.
+    mapped = os.name == "posix" and isinstance(path, (str, os.PathLike)) and zipfile.is_zipfile(path)
+    if mapped:
+        with torch.serialization.set_default_mmap_options(torch.serialization.MAP_PRIVATE):
+            payload = torch.load(path, map_location="cpu", weights_only=False, mmap=True)
+    else:
+        # Preserve legacy serialization and seekable stream support.
+        payload = torch.load(path, map_location="cpu", weights_only=False)
     required = {
         "model", "optimizer", "scheduler", "step", "epoch", "batch_in_epoch", "epoch_rng", "rng_state", "signature",
     }

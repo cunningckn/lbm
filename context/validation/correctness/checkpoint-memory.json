@@ -1,0 +1,48 @@
+{
+  "host": "js_dev_1",
+  "checkpoint_step": 1500,
+  "checkpoint_bytes": 11748176486,
+  "tensors": 2521,
+  "measurements": {
+    "copy": {
+      "before": {
+        "VmRSS": 426225664,
+        "RssAnon": 230502400,
+        "RssFile": 195723264,
+        "RssShmem": 0
+      },
+      "after_load": {
+        "VmRSS": 12184379392,
+        "RssAnon": 11987025920,
+        "RssFile": 197353472,
+        "RssShmem": 0
+      },
+      "after_touch": {
+        "VmRSS": 12188229632,
+        "RssAnon": 11987079168,
+        "RssFile": 201150464,
+        "RssShmem": 0
+      }
+    },
+    "mmap": {
+      "before": {
+        "VmRSS": 426213376,
+        "RssAnon": 230498304,
+        "RssFile": 195715072,
+        "RssShmem": 0
+      },
+      "after_load": {
+        "VmRSS": 432861184,
+        "RssAnon": 235520000,
+        "RssFile": 197341184,
+        "RssShmem": 0
+      },
+      "after_touch": {
+        "VmRSS": 12181282816,
+        "RssAnon": 235831296,
+        "RssFile": 11945451520,
+        "RssShmem": 0
+      }
+    }
+  }
+}

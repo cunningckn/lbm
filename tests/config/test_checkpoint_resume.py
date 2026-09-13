@@ -1,6 +1,9 @@
 """Exercise the next optimizer update and the real training-loop resume path."""
 
 import copy
+import hashlib
+import io
+import os
 import random
 
 import numpy as np
@@ -64,6 +67,40 @@ def test_checkpoint_restores_next_update_and_rng(tmp_path, device):
     assert_tree_equal(restored.state_dict(), model.state_dict())
     assert_tree_equal(opt2.state_dict(), opt.state_dict())
     assert_tree_equal(sched2.state_dict(), scheduler.state_dict())
+
+
+@pytest.mark.parametrize("storage", ["modern", "legacy", "stream"])
+def test_resume_keeps_checkpoint_immutable_after_cpu_optimizer_update(tmp_path, storage):
+    model = torch.nn.Linear(3, 2)
+    opt = torch.optim.AdamW(model.parameters())
+    scheduler = torch.optim.lr_scheduler.StepLR(opt, 1)
+    model(torch.ones(1, 3)).sum().backward()
+    opt.step()
+    signature = {"batches_per_epoch": 2}
+    path = tmp_path / "state.pt"
+    save_checkpoint(path, model, opt, scheduler, step=1, epoch=0, batch_in_epoch=1,
+                    epoch_rng=capture_rng_state(), signature=signature)
+    expected = torch.load(path, weights_only=False)
+    if storage == "legacy":
+        torch.save(expected, path, _use_new_zipfile_serialization=False)
+    original = path.read_bytes()
+    source = io.BytesIO(original) if storage == "stream" else path
+    # Even a caller's shared-mapping default must not make resumed Adam state
+    # writable in the checkpoint file. The caller's setting is restored.
+    if os.name == "posix":
+        with torch.serialization.set_default_mmap_options(torch.serialization.MAP_SHARED):
+            loaded = load_checkpoint(source, model, opt, scheduler, signature=signature)
+            assert torch.serialization.get_default_mmap_options() == torch.serialization.MAP_SHARED
+    else:
+        loaded = load_checkpoint(source, model, opt, scheduler, signature=signature)
+    assert_tree_equal(loaded, expected)
+    opt.zero_grad(set_to_none=True)
+    model(torch.ones(1, 3)).square().sum().backward()
+    opt.step()
+    assert hashlib.sha256(path.read_bytes()).digest() == hashlib.sha256(original).digest()
+    if storage == "stream":
+        assert source.getvalue() == original
+    assert_tree_equal(torch.load(path, weights_only=False), expected)
 
 
 @pytest.mark.parametrize("cut", [1, 3, 4])

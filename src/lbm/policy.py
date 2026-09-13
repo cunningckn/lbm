@@ -19,6 +19,7 @@ from lbm.action_space import (
 from lbm.config import ClipConfig, DiTConfig, FlowConfig
 from lbm.dataloader.custom.datasets import CUSTOM_SPECS
 from lbm.dataloader.paths import resolve_dataset
+from lbm.history import ObservationHistory
 from lbm.models.clip import CLIPTextEmbedder
 from lbm.models.dit import DiTPolicy, load_pretrained
 from lbm.temporal import n_steps
@@ -154,6 +155,10 @@ class LBMPolicy:
         self._history: dict[str, deque[np.ndarray]] = {
             cam: deque(maxlen=max(1, config.history_size)) for cam in config.camera_keys
         }
+        self._observations = ObservationHistory(horizon=max(
+            config.history_length if config.history_time_encoding else 0.,
+            config.state_history_length,
+        ))
         self.task_vec = torch.zeros(1, config.task_embed_dim, device=device, dtype=dtype)
 
     @classmethod
@@ -252,6 +257,8 @@ class LBMPolicy:
     def reset(self) -> None:
         for buf in self._history.values():
             buf.clear()
+        self._observations.reset()
+        self._last_raw_state = None
 
     def metadata(self) -> dict[str, Any]:
         cfg = self.model_config
@@ -261,6 +268,11 @@ class LBMPolicy:
             "action_dim": int(self.action_dim),
             "chunk_length": int(self.output_steps),
             "history_size": int(cfg.history_size),
+            "history_freq": float(cfg.history_freq),
+            "history_time_encoding": bool(cfg.history_time_encoding),
+            "state_history_length": float(cfg.state_history_length),
+            "state_history_freq": float(cfg.state_history_freq),
+            "requires_timestamp": bool(cfg.history_time_encoding or cfg.state_history_length > 0),
             "diffusion_steps": int(self.diffusion_steps),
             "embodiment_id": int(self.embodiment_id),
         }
@@ -314,6 +326,53 @@ class LBMPolicy:
         out[:n, :dim] = normalize(fitted, self.norm_stats["actions"], self.action_space)
         return out
 
+    def _temporal_inputs(self, obs: dict[str, Any], state: np.ndarray, prompt: str) -> dict:
+        """Snapshot bounded CPU observations and sample both modalities in seconds."""
+        cfg = self.model_config
+        if not (cfg.history_time_encoding or cfg.state_history_length > 0):
+            return {}
+        if 'timestamp' not in obs:
+            raise ValueError('history conditioning requires observation timestamp in seconds')
+        timestamp = float(obs['timestamp'])
+        if not np.isfinite(timestamp):
+            raise ValueError('observation timestamp must be finite seconds')
+        images = {}
+        if cfg.history_time_encoding:
+            for cam in self.camera_keys:
+                if cam not in obs['images']:
+                    raise KeyError(f'missing camera {cam!r}')
+                images[cam] = resize_pad_normalize(_hwc_to_chw(obs['images'][cam])).cpu().clone()
+        context = (obs.get('episode_id'), obs.get('subtask_id'), prompt)
+        if self._observations.append(timestamp, (images, state.copy()), context=context):
+            for buf in self._history.values():
+                buf.clear()
+        out = {}
+
+        def selection_fields(selection, prefix):
+            out[f'{prefix}mask'] = torch.as_tensor(selection.valid, device=self.device).unsqueeze(0)
+            out[f'{prefix}offsets'] = torch.as_tensor(
+                selection.offsets, device=self.device, dtype=torch.float32,
+            ).unsqueeze(0)
+
+        if cfg.history_time_encoding:
+            values, selection = self._observations.select(length=cfg.history_length, frequency=cfg.history_freq)
+            selected = {cam: torch.stack([value[0][cam] for value in values]).unsqueeze(0).to(
+                device=self.device, dtype=self.dtype,
+            ) for cam in self.camera_keys}
+            template = next(iter(selected.values()))
+            out['images'] = {cam: selected[cam] if cam in selected else torch.zeros_like(template)
+                             for cam in cfg.camera_keys}
+            selection_fields(selection, 'history_')
+        if cfg.state_history_length > 0:
+            values, selection = self._observations.select(
+                length=cfg.state_history_length, frequency=cfg.state_history_freq,
+            )
+            out['state_history'] = torch.as_tensor(
+                np.stack([value[1] for value in values]), device=self.device, dtype=self.dtype,
+            ).unsqueeze(0)
+            selection_fields(selection, 'state_history_')
+        return out
+
     @torch.no_grad()
     def infer(self, obs: dict[str, Any]) -> np.ndarray:
         if obs.get("reset"):
@@ -323,12 +382,14 @@ class LBMPolicy:
         state = normalize(raw_state, self.norm_stats["state"], self.action_space, field="state")
         state = _fit_vector(state, self.model_config.state_dim)
         prompt = str(obs.get("prompt") or "")
+        temporal = self._temporal_inputs(obs, state, prompt)
         batch = {
             "state": torch.from_numpy(state).unsqueeze(0).to(device=self.device, dtype=self.dtype),
-            "images": self._images(obs["images"]),
+            "images": temporal['images'] if 'images' in temporal else self._images(obs["images"]),
             "task_vec_clip": self._task_vec(prompt),
             "embodiment_id": torch.tensor([self.embodiment_id], device=self.device, dtype=torch.long),
         }
+        batch.update(temporal)
         batch['camera_mask'] = torch.tensor(
             [[cam in self.camera_keys for cam in self.model_config.camera_keys]],
             device=self.device, dtype=torch.bool,

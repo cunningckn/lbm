@@ -12,22 +12,34 @@ from tests.helpers import tiny_dit_config
 
 @pytest.mark.parametrize('history', [1, 2])
 @pytest.mark.parametrize('encoder', ['dino', 'siglip'])
-def test_cached_features_preserve_loss_gradients_and_sampling(history, encoder):
+@pytest.mark.parametrize('timed', [False, True])
+@pytest.mark.parametrize('device', ['cpu', pytest.param('cuda', marks=pytest.mark.gpu)])
+def test_cached_features_preserve_loss_gradients_and_sampling(history, encoder, timed, device):
+    if device == 'cuda' and not torch.cuda.is_available():
+        pytest.skip('CUDA GPU required')
+    dtype = torch.bfloat16 if device == 'cuda' else torch.float32
     config = tiny_dit_config(vision_encoder=encoder)
-    model = DiTPolicy(config).train()
+    config.history_time_encoding = timed
+    config.state_history_length = .2 if timed else 0.
+    model = DiTPolicy(config).to(device=device, dtype=dtype).train()
     for p in model.parameters():
         if p.requires_grad:
             torch.nn.init.normal_(p, std=.03)
-    live = make_fake_batch(config, 2, device='cpu', image_size=32)
+    live = make_fake_batch(config, 2, device=device, dtype=dtype, image_size=32)
     if history > 1:
         live['images'] = {cam: value[:, None].expand(-1, history, -1, -1, -1)
                           for cam, value in live['images'].items()}
-    live['camera_mask'] = torch.ones(2, len(config.camera_keys), dtype=torch.bool)
+    if timed:
+        live['history_mask'] = torch.ones(2, history, dtype=torch.bool, device=device)
+        live['history_offsets'] = torch.arange(1-history, 1, device=device).float().expand(2, -1)/10
+        if history > 1:
+            live['history_mask'][:, 0] = False
+    live['camera_mask'] = torch.ones(2, len(config.camera_keys), dtype=torch.bool, device=device)
     live['camera_mask'][:, -1] = False
     cached = {k: v for k, v in live.items() if k != 'images'}
     cached['vision_features'] = model.encode_vision_features(live['images'])
     noise = torch.randn_like(live['actions'])
-    t = torch.full((2, 1, 1), .3)
+    t = torch.full((2, 1, 1), .3, device=device, dtype=dtype)
     loss = model(live, noise=noise, t=t)
     loss.backward()
     grads = {name: p.grad.clone() for name, p in model.named_parameters() if p.grad is not None}
@@ -44,6 +56,21 @@ def test_cached_features_preserve_loss_gradients_and_sampling(history, encoder):
     config.train_vision_encoder = True
     with pytest.raises(ValueError, match='frozen'):
         model(cached)
+
+
+def test_old_feature_cache_defaults_remain_compatible_but_reject_requested_history():
+    from lbm.training_features import HISTORY_MODEL_FIELDS
+
+    model = tiny_dit_config()
+    dataset = FeatureDataset.__new__(FeatureDataset)
+    dataset.metadata = {'model': {key: getattr(model, key) for key in MODEL_FIELDS
+                                  if key not in HISTORY_MODEL_FIELDS}}
+    cfg = TrainConfig(model=model)
+    dataset.apply_config(cfg)
+    assert not cfg.model.history_time_encoding and cfg.model.state_history_length == 0
+    cfg.model.state_history_length = .3
+    with pytest.raises(ValueError, match='rebuild cache'):
+        dataset.apply_config(cfg)
 
 
 def _cache_batch(config, model):
@@ -78,10 +105,14 @@ def test_cache_roundtrip_bfloat16_and_partial_failure(tmp_path):
         FeatureDataset(dest)
 
 
-def test_feature_training_and_resume_use_cached_inputs(tmp_path, monkeypatch):
+@pytest.mark.parametrize('timed', [False, True])
+def test_feature_training_and_resume_use_cached_inputs(tmp_path, monkeypatch, timed):
     from lbm import train_loop
 
     config = tiny_dit_config()
+    config.history_time_encoding = timed
+    config.history_length = .2 if timed else 0.
+    config.state_history_length = .2 if timed else 0.
     torch.manual_seed(123)
     model = DiTPolicy(config)
     batch = _cache_batch(config, model)

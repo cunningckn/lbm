@@ -14,11 +14,19 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset, Subset
 
+from lbm.config import DiTConfig
+
+HISTORY_MODEL_FIELDS = ('history_time_encoding', 'state_history_length', 'state_history_freq')
 MODEL_FIELDS = (
     'camera_keys', 'state_dim', 'action_dim', 'action_length', 'action_freq',
     'history_length', 'history_freq', 'vision_encoder', 'vit_embed_dim',
     'vit_depth', 'vit_num_heads', 'task_embed_dim', 'language_encoder',
-)
+) + HISTORY_MODEL_FIELDS
+
+
+def _model_contract(metadata):
+    defaults = DiTConfig()
+    return {**{key: getattr(defaults, key) for key in HISTORY_MODEL_FIELDS}, **metadata.get('model', {})}
 
 
 def backbone_fingerprint(backbone):
@@ -262,8 +270,14 @@ class FeatureDataset(Dataset):
             raise ValueError('feature cache instruction mode differs; rebuild task embeddings for the selected mode')
         if config.model.train_vision_encoder or config.model.language_encoder != 'none':
             raise ValueError('feature caches require frozen vision and language_encoder=none')
+        contract = _model_contract(self.metadata)
+        defaults = DiTConfig()
+        for key in HISTORY_MODEL_FIELDS:
+            requested = getattr(config.model, key)
+            if requested != getattr(defaults, key) and requested != contract[key]:
+                raise ValueError(f'feature cache {key} differs from requested history; rebuild cache')
         for key in MODEL_FIELDS:
-            value = self.metadata['model'][key]
+            value = contract[key]
             setattr(config.model, key, tuple(value) if key == 'camera_keys' else value)
         if config.model.language_encoder != 'none':
             raise ValueError('feature cache language contract is unsupported')
@@ -283,7 +297,9 @@ class FeatureDataset(Dataset):
             raise ValueError('training and validation feature cache must differ')
         if self.metadata.get('instruction_mode', 'episode') != other.metadata.get('instruction_mode', 'episode'):
             raise ValueError('training and validation feature instruction modes differ')
-        for key in ('model', 'normalization', 'action_spaces', 'backbone_sha256'):
+        if _model_contract(self.metadata) != _model_contract(other.metadata):
+            raise ValueError('training and validation feature cache model differ')
+        for key in ('normalization', 'action_spaces', 'backbone_sha256'):
             if self.metadata.get(key) != other.metadata.get(key):
                 raise ValueError(f'training and validation feature cache {key} differ')
 

@@ -66,3 +66,19 @@ def test_apply_temporal_args_updates_chunk_length():
 def test_dit_config_rejects_chunk_length_kwarg():
     with pytest.raises(TypeError):
         DiTConfig(chunk_length=8)
+
+
+def test_new_history_cli_and_resource_limits():
+    from lbm.config import validate_model_config
+
+    parser = argparse.ArgumentParser()
+    add_temporal_arguments(parser)
+    cfg = apply_temporal_args(DiTConfig(), parser.parse_args([
+        '--history-time-encoding', '--state-history-length', '.3', '--state-history-freq', '10',
+    ]))
+    assert cfg.history_time_encoding and cfg.state_history_length == .3
+    assert not validate_model_config(cfg)
+    cfg.state_history_length = 10.
+    assert any('64' in error for error in validate_model_config(cfg))
+    cfg.state_history_length = float('nan')
+    assert any('state history' in error for error in validate_model_config(cfg))

@@ -165,6 +165,8 @@ def eval_libero(args: Args) -> None:
                                 "wrist_image": wrist_img,
                             },
                             "prompt": str(task_description),
+                            "timestamp": float(env.sim.data.time),
+                            "episode_id": f'{task_id}:{episode_idx}',
                         }
                         if need_reset:
                             element["reset"] = True

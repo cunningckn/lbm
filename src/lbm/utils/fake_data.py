@@ -8,6 +8,7 @@ import torch
 from torch.utils.data import Dataset
 
 from lbm.config import DiTConfig
+from lbm.history import HISTORY_TENSOR_FIELDS, history_offsets
 
 IMAGE_SIZE = 224
 
@@ -52,6 +53,20 @@ def make_fake_batch(
     batch["task_token_mask"] = (tokens != 0).to(dtype=dtype)
     if include_actions:
         batch["actions"] = rand(batch_size, config.chunk_length, config.action_dim)
+    if config.history_time_encoding and config.history_size > 1:
+        # Keep current images and common random draws identical across modes.
+        batch['images'] = {cam: image.unsqueeze(1).expand(-1, config.history_size, -1, -1, -1)
+                           for cam, image in batch['images'].items()}
+    for enabled, length, frequency, prefix in (
+        (config.history_time_encoding, config.history_length, config.history_freq, 'history_'),
+        (config.state_history_length > 0, config.state_history_length, config.state_history_freq, 'state_history_'),
+    ):
+        if enabled:
+            offsets = torch.as_tensor(history_offsets(length, frequency), device=device, dtype=torch.float32)
+            batch[prefix+'offsets'] = offsets.unsqueeze(0).expand(batch_size, -1)
+            batch[prefix+'mask'] = torch.ones(batch_size, len(offsets), device=device, dtype=torch.bool)
+            if prefix == 'state_history_':
+                batch['state_history'] = batch['state'].unsqueeze(1).expand(-1, len(offsets), -1)
     return batch
 
 
@@ -81,6 +96,7 @@ def make_fake_sample(
     }
     if include_actions:
         sample["actions"] = batch["actions"][0]
+    sample.update({key: batch[key][0] for key in HISTORY_TENSOR_FIELDS if key in batch})
     return sample
 
 
@@ -100,6 +116,9 @@ def collate_samples(samples: list[dict[str, Any]]) -> dict[str, Any]:
         out["actions"] = torch.stack([s["actions"] for s in samples], dim=0)
     if "state_is_masked" in first:
         out["state_is_masked"] = torch.stack([s["state_is_masked"] for s in samples], dim=0)
+    for key in HISTORY_TENSOR_FIELDS:
+        if key in first:
+            out[key] = torch.stack([s[key] for s in samples])
     return out
 
 

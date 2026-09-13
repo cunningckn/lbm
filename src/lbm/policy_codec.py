@@ -36,6 +36,9 @@ def encode_obs(obs: dict[str, Any]) -> dict[str, Any]:
     }
     if obs.get("reset"):
         payload["reset"] = True
+    for key in ("timestamp", "episode_id", "subtask_id"):
+        if key in obs:
+            payload[key] = obs[key]
     return payload
 
 
@@ -46,4 +49,5 @@ def decode_obs(payload: dict[str, Any]) -> dict[str, Any]:
         "images": {key: decode_array(image) for key, image in images.items()},
         "prompt": str(payload.get("prompt") or ""),
         "reset": bool(payload.get("reset", False)),
+        **{key: payload[key] for key in ("timestamp", "episode_id", "subtask_id") if key in payload},
     }

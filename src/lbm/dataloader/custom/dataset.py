@@ -100,6 +100,9 @@ class CustomSingleDataset(Dataset):
         action_freq: float | None = None,
         history_length: float = 0.0,
         history_freq: float | None = None,
+        history_time_encoding: bool = False,
+        state_history_length: float = 0.0,
+        state_history_freq: float = 10.0,
         image_size: int | None = None,
         use_mmap: bool = False,
         use_mmap_frames: bool | None = None,
@@ -167,7 +170,18 @@ class CustomSingleDataset(Dataset):
 
             norm_stats = load_dump_norm_stats(self.root, freq, self.action_length, slices)
         self.norm_stats = norm_stats
-        hist_freq = float(history_freq or spec.fps)
+        self.history_time_encoding = bool(history_time_encoding)
+        self.history_length = float(history_length)
+        self.history_freq = float(history_freq or spec.fps)
+        self.state_history_length = float(state_history_length)
+        self.state_history_freq = float(state_history_freq)
+        from lbm.history import history_offsets
+
+        # Validate before allocating delta arrays, including direct dataset API use.
+        history_offsets(self.state_history_length, self.state_history_freq)
+        if self.history_time_encoding:
+            history_offsets(self.history_length, self.history_freq)
+        hist_freq = self.history_freq
         self.chunk_length = n_steps(self.action_length, freq)
         self.action_deltas = delta_indices(self.action_length, freq, spec.fps, past=False)
         self.history_deltas = delta_indices(history_length, hist_freq, spec.fps, past=True)
@@ -297,7 +311,25 @@ class CustomSingleDataset(Dataset):
             state = np.asarray(
                 normalize(state, self.norm_stats["state"], slices, field="state"), dtype=np.float32
             )
+        history = {}
+        if self.history_time_encoding or self.state_history_length > 0:
+            from lbm.history import frame_history
+
+            if self.history_time_encoding:
+                selection = frame_history(t, lower=lower, fps=self.spec.fps,
+                                          length=self.history_length, frequency=self.history_freq)
+                history.update(history_mask=selection.valid, history_offsets=selection.offsets.astype(np.float32))
+            if self.state_history_length > 0:
+                selection = frame_history(t, lower=lower, fps=self.spec.fps,
+                                          length=self.state_history_length, frequency=self.state_history_freq)
+                past_states = np.asarray(state_arr[selection.indices], dtype=np.float32)
+                if self.norm_stats is not None:
+                    past_states = np.asarray(normalize(past_states, self.norm_stats["state"], slices,
+                                                      field="state"), dtype=np.float32)
+                history.update(state_history=past_states, state_history_mask=selection.valid,
+                               state_history_offsets=selection.offsets.astype(np.float32))
         return {
+            **history,
             "image": images,
             "action": action,
             "state": state,
@@ -316,7 +348,14 @@ class CustomSingleDataset(Dataset):
         arr = np.asarray(frames)
         if arr.ndim == 3:
             arr = arr[None]
-        idx = np.clip(t + self.history_deltas.astype(np.int64), 0, min(n, arr.shape[0]) - 1)
+        if self.history_time_encoding:
+            from lbm.history import frame_history
+
+            idx = frame_history(t, lower=0, fps=self.spec.fps, length=self.history_length,
+                                frequency=self.history_freq).indices
+            idx = np.minimum(idx, min(n, arr.shape[0])-1)
+        else:
+            idx = np.clip(t + self.history_deltas.astype(np.int64), 0, min(n, arr.shape[0]) - 1)
         return arr[idx]
 
     def _blank_history(self) -> np.ndarray:
@@ -336,7 +375,13 @@ class CustomSingleDataset(Dataset):
 
         if not camera_has_source(record, self.spec, cam):
             return self._blank_history(), False
-        idx = np.clip(t + self.history_deltas.astype(np.int64), lower, max(n - 1, lower)).tolist()
+        if self.history_time_encoding:
+            from lbm.history import frame_history
+
+            idx = frame_history(t, lower=lower, fps=self.spec.fps, length=self.history_length,
+                                frequency=self.history_freq).indices.tolist()
+        else:
+            idx = np.clip(t + self.history_deltas.astype(np.int64), lower, max(n - 1, lower)).tolist()
         try:
             gathered = self._read_record_frames(record, cam, idx)
         except KeyError:

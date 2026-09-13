@@ -81,3 +81,25 @@ run. Supply CLIP model and BPE files under `LBM_CHECKPOINTS/clip` and set
 For an environment expected to have those assets, use
 `pytest --require-pretrained-assets` to make missing files a failure.
 A run with skipped pretrained/GPU/data tests is not full integration coverage.
+
+## Periodic normalization review
+
+After every five merged PRs, perform a detailed review alongside the next
+change. Record the last reviewed commit and covered PRs in
+`context/validation/matched/README.md` (or the subsequent dated review).
+Count merged PRs, not individual commits; an active review covers its own PR.
+
+Check that dataset definitions remain in the adapter registry, new options
+have one shared default, and training/validation/resume use the same factories.
+Remove obsolete entry points or repair and test them. Review error paths,
+resource bounds and checkpoint compatibility, then run Ruff, syntax checks,
+CPU/GPU regressions and representative real-data tests for affected behavior.
+Performance changes require matched measurements with warmup and memory
+reported. Publish aggregate metrics and reproducible commands, not dataset
+rows, normalization arrays or checkpoints. Keep capacity/OOM experiments in a
+bounded child cgroup; a shared server without that isolation is not suitable.
+
+Prefix condition projection and modulation live in `models/conditioning.py`;
+`DiTPolicy.configure_conditioning()` selects kernels per model without changing
+checkpoint keys. Optimizer selection remains in `optim.build_adamw()` so
+benchmarks and the production runner share parameter groups and hyperparameters.

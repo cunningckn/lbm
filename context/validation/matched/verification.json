@@ -1,0 +1,54 @@
+{
+  "base_commit": "d07e9748cefeec224b2a663c0dbb6535a696d6f0",
+  "implementation_commit": "75fb031efea6857dadcdaaef79297915b913bc99",
+  "single_gpu_regression": {
+    "passed": 529,
+    "skipped": 0,
+    "seconds": 124.93
+  },
+  "distributed_regression": {
+    "passed": 19,
+    "skipped": 0,
+    "seconds": 189.62
+  },
+  "followup_tests": {
+    "prefetch_cli_loader": 34,
+    "mmap_mode_and_acceleration": 12,
+    "final_contract": 9,
+    "counts_overlap": true
+  },
+  "production_single": {
+    "train_updates": 40,
+    "resumed_total_updates": 44,
+    "batch": 32,
+    "workers": 2,
+    "validation": true,
+    "checkpoint": true
+  },
+  "production_fsdp": {
+    "world": 2,
+    "batch_per_rank": 8,
+    "workers_per_rank": 2,
+    "train_updates": 2,
+    "resumed_total_updates": 4,
+    "validation": true,
+    "checkpoint": true,
+    "validation_reconstruction": [
+      9.0244,
+      8.9879
+    ]
+  },
+  "legacy_gpu_kernel_profiler": "passed",
+  "mmap_camera_streams": {
+    "built": 0,
+    "reused": 18
+  },
+  "container_memory_events": {
+    "oom": 0,
+    "oom_kill": 0
+  },
+  "limitations": [
+    "Short throughput and recovery tests do not establish long-run convergence equivalence.",
+    "Capacity pressure test requires a writable bounded child cgroup and was not run."
+  ]
+}

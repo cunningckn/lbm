@@ -98,6 +98,8 @@ def parse_args(
     p.add_argument("--lr", type=float, default=TRAIN_DEFAULTS.learning_rate)
     p.add_argument("--seed", type=int, default=TRAIN_DEFAULTS.seed)
     p.add_argument("--num-workers", type=int, default=TRAIN_DEFAULTS.num_workers)
+    p.add_argument("--prefetch-factor", type=int, default=TRAIN_DEFAULTS.prefetch_factor,
+                   help="batches prefetched per worker; ignored with zero workers")
     p.add_argument("--output-dir", default=str(default_checkpoints_dir()))
     initialization = p.add_mutually_exclusive_group()
     initialization.add_argument("--ckpt", default="", help="optional pretrained policy checkpoint")
@@ -106,7 +108,11 @@ def parse_args(
     p.add_argument("--feature-shard-rows", type=int, default=1024)
     p.add_argument("--feature-split", choices=("train", "val"), default="train")
     p.add_argument("--feature-cache", default="", help="prebuilt frozen-vision policy inputs")
-    p.add_argument("--compile", action="store_true")
+    compilation = p.add_mutually_exclusive_group()
+    compilation.add_argument("--compile", action="store_true")
+    compilation.add_argument("--compile-conditioning", action="store_true",
+                             help="compile only modulation/gating kernels; preserves checkpoint keys")
+    p.add_argument("--fused-adamw", action="store_true", help="opt in to fused AdamW kernels")
     p.add_argument("--fsdp", action="store_true")
     p.add_argument("--bf16", default=True, action=argparse.BooleanOptionalAction)
     p.add_argument("--log-every", type=int, default=TRAIN_DEFAULTS.log_every)
@@ -192,6 +198,8 @@ def build_train_config(args: argparse.Namespace) -> TrainConfig:
         resume=args.resume,
         pretrained_encoders=bool(args.pretrained_encoders),
         compile=bool(args.compile),
+        compile_conditioning=bool(args.compile_conditioning),
+        fused_adamw=bool(args.fused_adamw),
         bf16=bool(args.bf16),
         fsdp=bool(args.fsdp),
         log_every=args.log_every,
@@ -204,6 +212,7 @@ def build_train_config(args: argparse.Namespace) -> TrainConfig:
     )
     cfg.optim.learning_rate = args.lr
     apply_dataset_location_args(cfg, args)
+    cfg.data.prefetch_factor = args.prefetch_factor
     cfg.data.val_dataset = args.val_dataset
     cfg.data.val_fraction = args.val_fraction
     cfg.data.video_backend = args.video_backend

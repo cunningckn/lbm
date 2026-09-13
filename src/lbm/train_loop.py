@@ -143,6 +143,9 @@ def _resume_signature(config, train_loader, device):
         identity['source_fingerprint'] = dataset_fingerprint(train_loader.dataset)
     return {
         **identity,
+        # Omit disabled new options to preserve legacy default checkpoint signatures.
+        **({"compile_conditioning": True} if config.compile_conditioning else {}),
+        **({"fused_adamw": True} if config.fused_adamw else {}),
         **{key: values[key] for key in fields},
         "batches_per_epoch": len(train_loader),
         "dataset_length": len(train_loader.dataset),
@@ -163,6 +166,8 @@ def main(config: TrainConfig) -> None:
     if config.data.val_fraction and (config.data.val_dataset or config.feature_cache):
         errors.append("val_fraction requires online data without an explicit val_dataset")
     errors.extend(validate_loader_config(config.data, num_workers=config.num_workers))
+    if config.compile and config.compile_conditioning:
+        errors.append("choose full-model compilation or conditioning-only compilation")
     if config.fsdp:
         errors.extend(validate_parallel_config(config.parallel))
     if (
@@ -286,7 +291,9 @@ def main(config: TrainConfig) -> None:
     if use_bf16 and hasattr(model.img_backbone, "set_bfloat16"):
         model.img_backbone.set_bfloat16(True)
 
-    optimizer = build_adamw(model, config.optim)
+    if config.compile_conditioning:
+        model.configure_conditioning(compile=True)
+    optimizer = build_adamw(model, config.optim, fused=True if config.fused_adamw else None)
     scheduler = torch.optim.lr_scheduler.LambdaLR(
         optimizer, lambda step: min((step + 1) / max(config.optim.lr_warmup_steps, 1), 1.0)
     )

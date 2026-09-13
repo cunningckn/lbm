@@ -14,12 +14,37 @@ This is the main 1-GPU optimization signal. For FSDP wrap/prefetch use
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
 
 import torch
-from _common import cuda_ms, profile_train_step, resolve_device
+
+try:
+    from ._common import cuda_ms, profile_train_step, resolve_device
+except ImportError:  # direct script execution
+    from _common import cuda_ms, profile_train_step, resolve_device
 
 from lbm import DiTConfig, DiTPolicy, make_fake_batch, validate_model_config
 from lbm.models.attention import configure_torch_sdp, set_use_flash_attn
+
+
+@contextmanager
+def record_model_sections(model):
+    """Preserve current/future call signatures and restore methods after profiling."""
+    originals = {name: getattr(model, name) for name in ('build_vision_tokens', 'predict_velocity')}
+
+    def wrap(fn, label):
+        def call(*args, **kwargs):
+            with torch.autograd.profiler.record_function(label):
+                return fn(*args, **kwargs)
+        return call
+
+    try:
+        for name, label in (('build_vision_tokens', 'vision'), ('predict_velocity', 'dit_blocks')):
+            setattr(model, name, wrap(originals[name], label))
+        yield
+    finally:
+        for name, fn in originals.items():
+            setattr(model, name, fn)
 
 
 def parse_args() -> argparse.Namespace:
@@ -127,26 +152,14 @@ def main() -> None:
     if not args.kernels:
         return
 
-    orig_vis = model.build_vision_tokens
-    orig_dit = model.predict_velocity
-
-    def vis_wrap(images):
-        with torch.autograd.profiler.record_function("vision"):
-            return orig_vis(images)
-
-    def dit_wrap(x_t_, c_, vision_tokens):
-        with torch.autograd.profiler.record_function("dit_blocks"):
-            return orig_dit(x_t_, c_, vision_tokens)
-
-    model.build_vision_tokens = vis_wrap
-    model.predict_velocity = dit_wrap
     activities = [torch.profiler.ProfilerActivity.CPU, torch.profiler.ProfilerActivity.CUDA]
-    for _ in range(2):
-        train_step()
-    torch.cuda.synchronize(device)
-    with torch.profiler.profile(activities=activities, record_shapes=False) as prof:
-        train_step()
-    torch.cuda.synchronize(device)
+    with record_model_sections(model):
+        for _ in range(2):
+            train_step()
+        torch.cuda.synchronize(device)
+        with torch.profiler.profile(activities=activities, record_shapes=False) as prof:
+            train_step()
+            torch.cuda.synchronize(device)
     print(prof.key_averages().table(sort_by="self_cuda_time_total", row_limit=25))
     print(prof.key_averages().table(sort_by="cuda_time_total", row_limit=15))
 

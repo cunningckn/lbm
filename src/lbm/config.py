@@ -68,7 +68,7 @@ class FlowConfig:
     """Rectified-flow matching + action-prefix conditioning."""
 
     mask_state_ratio: float = 0.1
-    max_action_prefix: int = 4
+    max_action_prefix: int = 4  # exclusive upper bound: samples lengths 0..3 by default
     prefix_conditioning_prob: float = 1.0
     prefix_noise_scale: float = 0.05
     num_diffusion_steps: int = 10
@@ -472,6 +472,8 @@ class TrainConfig:
     resume: str = ""
     pretrained_encoders: bool = True
     compile: bool = False
+    compile_conditioning: bool = False
+    fused_adamw: bool = False
     bf16: bool = True
     fsdp: bool = False
 

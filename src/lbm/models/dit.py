@@ -13,32 +13,15 @@ from lbm.config import DiTConfig
 from lbm.dataloader.pad import DEFAULT_EMBODIMENT_ID
 from lbm.models.attention import attn_out, configure_torch_sdp, split_kv, split_q, split_qkv
 from lbm.models.common import DiTMlp, FeedForward, run_maybe_frozen
+from lbm.models.conditioning import (
+    PrefixConditioning,
+    compiled_conditioning_functions,
+    conditioning_chunks,
+    gate_residual,
+    modulate,
+)
 from lbm.models.encoders import build_language_encoder, build_vision_backbone
 from lbm.models.weights import load_into
-
-
-def modulate(x, shift, scale):
-    if shift.ndim == 2:
-        shift = shift.unsqueeze(1)
-        scale = scale.unsqueeze(1)
-    return x * (1 + scale) + shift
-
-
-def gate_residual(gate, residual):
-    if gate.ndim == 2:
-        gate = gate.unsqueeze(1)
-    return gate * residual
-
-
-def conditioning_chunks(layer, conditioning, count):
-    """Project repeated prefix/non-prefix conditions once per sample."""
-    if isinstance(conditioning, tuple):
-        normal, prefix, mask = conditioning
-        normal = layer(normal).chunk(count, dim=-1)
-        prefix = layer(prefix).chunk(count, dim=-1)
-        return tuple(torch.where(mask[..., None], p[:, None], n[:, None])
-                     for n, p in zip(normal, prefix))
-    return layer(conditioning).chunk(count, dim=-1)
 
 
 def get_1d_sincos_pos_embed(embed_dim, length):
@@ -115,6 +98,7 @@ class DiTBlock(nn.Module):
 
     def __init__(self, hidden_size, num_heads, mlp_ratio=4.0):
         super().__init__()
+        self._modulate, self._gate_residual = modulate, gate_residual
         self.norm1 = nn.LayerNorm(hidden_size, elementwise_affine=False, eps=1e-6)
         self.attn = DiTAttention(hidden_size, num_heads)
         self.norm2 = nn.LayerNorm(hidden_size, elementwise_affine=False, eps=1e-6)
@@ -134,13 +118,13 @@ class DiTBlock(nn.Module):
             shift_mlp, scale_mlp, gate_mlp,
         ) = conditioning_chunks(self.adaLN_modulation, c, 9)
 
-        x = x + gate_residual(gate_msa, self.attn(modulate(self.norm1(x), shift_msa, scale_msa)))
+        x = x + self._gate_residual(gate_msa, self.attn(self._modulate(self.norm1(x), shift_msa, scale_msa)))
 
-        x_normed = modulate(self.norm_xattn(x), shift_xattn, scale_xattn)
+        x_normed = self._modulate(self.norm_xattn(x), shift_xattn, scale_xattn)
         kv = self.norm_xattn_kv(vision_tokens)
-        x = x + gate_residual(gate_xattn, self.cross_attn(x_normed, kv))
+        x = x + self._gate_residual(gate_xattn, self.cross_attn(x_normed, kv))
 
-        x = x + gate_residual(gate_mlp, self.mlp(modulate(self.norm2(x), shift_mlp, scale_mlp)))
+        x = x + self._gate_residual(gate_mlp, self.mlp(self._modulate(self.norm2(x), shift_mlp, scale_mlp)))
         return x
 
 
@@ -167,6 +151,7 @@ class DiTBlockGroup(nn.Module):
 class FinalLayer(nn.Module):
     def __init__(self, hidden_size, action_dim):
         super().__init__()
+        self._modulate = modulate
         self.norm_final = nn.LayerNorm(hidden_size, elementwise_affine=False, eps=1e-6)
         self.linear = nn.Linear(hidden_size, action_dim, bias=True)
         self.adaLN_modulation = nn.Sequential(
@@ -175,7 +160,7 @@ class FinalLayer(nn.Module):
 
     def forward(self, x, c):
         shift, scale = conditioning_chunks(self.adaLN_modulation, c, 2)
-        return self.linear(modulate(self.norm_final(x), shift, scale))
+        return self.linear(self._modulate(self.norm_final(x), shift, scale))
 
 
 class AttentionPoolBlock(nn.Module):
@@ -374,6 +359,15 @@ class DiTPolicy(nn.Module):
             )
         return self.language_pool_proj(x, attention_mask=mask)
 
+    def configure_conditioning(self, *, compile=False):
+        """Select pointwise kernels without changing parameters or checkpoint keys."""
+        modulation, gating = compiled_conditioning_functions() if compile else (modulate, gate_residual)
+        for module in self.modules():
+            if isinstance(module, (DiTBlock, FinalLayer)):
+                module._modulate = modulation
+            if isinstance(module, DiTBlock):
+                module._gate_residual = gating
+
     def encode_vision_features(self, images):
         """Raw backbone tokens (B, history, patches, width), before trainable pooling."""
         first = images[self.camera_keys[0]]
@@ -470,6 +464,7 @@ class DiTPolicy(nn.Module):
         prefix_conditioning_prob=1.0,
         prefix_noise_scale=0.0,
         compact_prefix_conditioning=True,
+        split_prefix_conditioning=True,
         sample_steps=None,
     ):
         """Flow-matching training loss with optional action-prefix conditioning.
@@ -513,6 +508,8 @@ class DiTPolicy(nn.Module):
             c = (self.compute_cond(state, task, sample_t, embodiment),
                  self.compute_cond(state, task, torch.zeros_like(sample_t), embodiment),
                  prefix_mask)
+            if split_prefix_conditioning:
+                c = PrefixConditioning(*c, min(max_action_prefix, T_chunk))
         else:
             t_cond = t_per_pos.squeeze(-1) if prefix_mask_expanded is not None else t[:, 0, 0]
             c = self.compute_cond(state, task, t_cond, embodiment)

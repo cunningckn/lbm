@@ -14,7 +14,7 @@ def _unwrap(model: nn.Module) -> nn.Module:
     return model
 
 
-def build_adamw(model: nn.Module, optim: OptimConfig) -> torch.optim.AdamW:
+def build_adamw(model: nn.Module, optim: OptimConfig, *, fused: bool | None = None) -> torch.optim.AdamW:
     """Build AdamW, skipping frozen params. Vision encoder gets ``vision_lr_scale``."""
     root = _unwrap(model)
     backbone = getattr(root, "img_backbone", None)
@@ -34,6 +34,7 @@ def build_adamw(model: nn.Module, optim: OptimConfig) -> torch.optim.AdamW:
         betas=(optim.adam_beta1, optim.adam_beta2),
         eps=optim.adam_epsilon,
         weight_decay=optim.weight_decay,
+        fused=fused,
     )
 
 

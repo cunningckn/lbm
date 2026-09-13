@@ -8,7 +8,7 @@ import torch
 from tests.distributed.test_fsdp import _free_port
 
 
-def _resume_worker(rank, world, port, root, fsdp, stage, cached):
+def _resume_worker(rank, world, port, root, fsdp, stage, cached, accelerated):
     os.environ.update(MASTER_ADDR='127.0.0.1', MASTER_PORT=str(port), RANK=str(rank),
                       WORLD_SIZE=str(world), LOCAL_RANK=str(rank))
     from lbm import train_loop
@@ -32,6 +32,7 @@ def _resume_worker(rank, world, port, root, fsdp, stage, cached):
         cfg.fake_data = False
         cfg.feature_cache = root + '/cache-train'
         cfg.data.val_dataset = root + '/cache-val'
+    cfg.compile_conditioning = cfg.fused_adamw = accelerated
     cfg.optim.learning_rate = 1e-3
     cfg.optim.lr_warmup_steps = 1
     if stage != 'full':
@@ -44,8 +45,10 @@ def _resume_worker(rank, world, port, root, fsdp, stage, cached):
 
 
 @pytest.mark.gpu
-@pytest.mark.parametrize('fsdp,cached', [(False, False), (True, False), (True, True)])
-def test_distributed_worker_resume_matches_updates(tmp_path, fsdp, cached):
+@pytest.mark.parametrize('fsdp,cached,accelerated', [
+    (False, False, False), (True, False, False), (True, True, False), (True, True, True),
+])
+def test_distributed_worker_resume_matches_updates(tmp_path, fsdp, cached, accelerated):
     if torch.cuda.device_count() < 2:
         pytest.skip('requires two CUDA devices')
     if fsdp:
@@ -71,7 +74,8 @@ def test_distributed_worker_resume_matches_updates(tmp_path, fsdp, cached):
     (tmp_path / 'full' / '2.incomplete').mkdir(parents=True)
     for stage in ('full', 'cut', 'resume'):
         torch.multiprocessing.spawn(_resume_worker,
-                                    args=(2, _free_port(), str(tmp_path), fsdp, stage, cached), nprocs=2, join=True)
+                                    args=(2, _free_port(), str(tmp_path), fsdp, stage, cached, accelerated),
+                                    nprocs=2, join=True)
     for rank in range(2):
         full = torch.load(tmp_path / f'full-{rank}.pt')
         split = torch.load(tmp_path / f'cut-{rank}.pt') + torch.load(tmp_path / f'resume-{rank}.pt')

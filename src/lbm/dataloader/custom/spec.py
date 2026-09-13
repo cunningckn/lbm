@@ -24,6 +24,7 @@ class CustomSpec:
     language_column: str = "task"
     image_size: int = 224
     kind: str = "auto"
+    scan_revision: int = 1
     action_space: tuple[ActionSlice, ...] = ()
 
     def as_policy_io(self, *, chunk_length: int) -> dict:

@@ -248,7 +248,18 @@ class FeatureDataset(Dataset):
     def weights(self):
         return [group.get('weight', 1.0) for group in self.metadata.get('sources', [])]
 
+    def _check_source_revisions(self):
+        from lbm.dataloader.custom.datasets import CUSTOM_SPECS
+
+        revisions = self.metadata.get('source_revisions', {})
+        for source in self.metadata.get('sources', []):
+            spec = CUSTOM_SPECS.get(source['name'])
+            if spec is not None and revisions.get(spec.name, 1) != spec.scan_revision:
+                raise ValueError(f'{spec.name}: feature cache predates adapter correction; rebuild task embeddings')
     def apply_config(self, config):
+        self._check_source_revisions()
+        if self.metadata.get('instruction_mode', 'episode') != config.data.instruction_mode:
+            raise ValueError('feature cache instruction mode differs; rebuild task embeddings for the selected mode')
         if config.model.train_vision_encoder or config.model.language_encoder != 'none':
             raise ValueError('feature caches require frozen vision and language_encoder=none')
         for key in MODEL_FIELDS:
@@ -262,12 +273,16 @@ class FeatureDataset(Dataset):
             raise ValueError('feature cache was built with different encoder weights or precision')
 
     def check_validation(self, other):
+        self._check_source_revisions()
+        other._check_source_revisions()
         left, right = self.metadata.get('episode_ids'), other.metadata.get('episode_ids')
         if left is not None and right is not None:
             if set(left) & set(right):
                 raise ValueError('training and validation feature episodes overlap')
         elif hasattr(self, 'root') and self.root.resolve() == other.root.resolve():
             raise ValueError('training and validation feature cache must differ')
+        if self.metadata.get('instruction_mode', 'episode') != other.metadata.get('instruction_mode', 'episode'):
+            raise ValueError('training and validation feature instruction modes differ')
         for key in ('model', 'normalization', 'action_spaces', 'backbone_sha256'):
             if self.metadata.get(key) != other.metadata.get(key):
                 raise ValueError(f'training and validation feature cache {key} differ')

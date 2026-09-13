@@ -78,3 +78,26 @@ def test_validation_covers_short_episodes_between_long_ones():
     indices = balanced_indices(source, 20)
     assert len(indices) == len(set(indices)) == 20
     assert {0, 1, 10002} <= set(indices)
+
+
+def test_parent_holdout_keeps_variants_together_and_content_fingerprint_changes(tmp_path):
+    from lbm.training_split import dataset_fingerprint, episode_ids, holdout_indices
+
+    path = tmp_path/'episode'
+    path.touch()
+    records = [SimpleNamespace(path=str(path), kind='demo', lang='task', n_frames=3,
+                               extra={'parent_id': parent, 'annotation_sources': {'annotation': str(i)}})
+               for i, parent in enumerate(('A', 'B', 'A', 'C', 'B'))]
+    source = SimpleNamespace(records=records, spec=SimpleNamespace(name='demo'), norm_stats={})
+    identities = episode_ids(source)
+    tr, va = holdout_indices(source, .4, 7)
+    assert not set(identities[i] for i in tr) & set(identities[i] for i in va)
+    assert sorted(tr+va) == list(range(5))
+    mixture = SimpleNamespace(datasets=[source])
+    before = dataset_fingerprint(mixture)
+    records[0].lang = 'changed task'
+    assert dataset_fingerprint(mixture) != before
+    assert episode_ids(source) == identities
+    source.records = [records[0], records[2]]
+    with pytest.raises(ValueError, match='independent parent'):
+        holdout_indices(source, .4, 7)

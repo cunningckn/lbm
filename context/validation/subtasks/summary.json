@@ -1,0 +1,124 @@
+{
+  "complete": true,
+  "sources": [
+    {
+      "dataset": "agibot",
+      "stages": [
+        {
+          "dataset": "agibot",
+          "completed_steps": 10,
+          "resumed_from": false,
+          "batch": 16,
+          "max_episodes_per_source": 4,
+          "val_fraction": 0.25,
+          "action_length": 1.0,
+          "requested_action_freq": 15.0,
+          "peak_gpu_bytes": 19566921216,
+          "scope": "short real-data functional validation, not convergence or matched throughput evidence"
+        },
+        {
+          "dataset": "agibot",
+          "completed_steps": 20,
+          "resumed_from": true,
+          "batch": 16,
+          "max_episodes_per_source": 4,
+          "val_fraction": 0.25,
+          "action_length": 1.0,
+          "requested_action_freq": 15.0,
+          "peak_gpu_bytes": 19568403968,
+          "scope": "short real-data functional validation, not convergence or matched throughput evidence"
+        }
+      ],
+      "final_loss": 0.9453,
+      "validation": {
+        "0:agibot": "0.804080"
+      }
+    },
+    {
+      "dataset": "galaxea",
+      "stages": [
+        {
+          "dataset": "galaxea",
+          "completed_steps": 10,
+          "resumed_from": false,
+          "batch": 16,
+          "max_episodes_per_source": 4,
+          "val_fraction": 0.25,
+          "action_length": 1.0,
+          "requested_action_freq": 15.0,
+          "peak_gpu_bytes": 19568448000,
+          "scope": "short real-data functional validation, not convergence or matched throughput evidence"
+        },
+        {
+          "dataset": "galaxea",
+          "completed_steps": 20,
+          "resumed_from": true,
+          "batch": 16,
+          "max_episodes_per_source": 4,
+          "val_fraction": 0.25,
+          "action_length": 1.0,
+          "requested_action_freq": 15.0,
+          "peak_gpu_bytes": 19563573760,
+          "scope": "short real-data functional validation, not convergence or matched throughput evidence"
+        }
+      ],
+      "final_loss": 2.1562,
+      "validation": {
+        "0:galaxea": "6.054416"
+      }
+    },
+    {
+      "dataset": "mixed",
+      "stages": [
+        {
+          "dataset": "mixed",
+          "completed_steps": 10,
+          "resumed_from": false,
+          "batch": 16,
+          "max_episodes_per_source": 4,
+          "val_fraction": 0.25,
+          "action_length": 1.0,
+          "requested_action_freq": 15.0,
+          "peak_gpu_bytes": 19812144128,
+          "scope": "short real-data functional validation, not convergence or matched throughput evidence"
+        },
+        {
+          "dataset": "mixed",
+          "completed_steps": 20,
+          "resumed_from": true,
+          "batch": 16,
+          "max_episodes_per_source": 4,
+          "val_fraction": 0.25,
+          "action_length": 1.0,
+          "requested_action_freq": 15.0,
+          "peak_gpu_bytes": 19809736704,
+          "scope": "short real-data functional validation, not convergence or matched throughput evidence"
+        }
+      ],
+      "final_loss": 1.125,
+      "validation": {
+        "0:agibot": "0.598409",
+        "1:galaxea": "7.856572"
+      }
+    }
+  ],
+  "cache_audit": {
+    "scope": "two episodes per source; structural readiness and three decoded frames per camera, not full corpus integrity or source pixel equivalence",
+    "sources": [
+      {
+        "dataset": "agibot",
+        "episodes": 2,
+        "camera_jobs": 6,
+        "ready_jobs": 6,
+        "decoded_cache_frames": 18
+      },
+      {
+        "dataset": "galaxea",
+        "episodes": 2,
+        "camera_jobs": 6,
+        "ready_jobs": 6,
+        "decoded_cache_frames": 18
+      }
+    ]
+  }
+}

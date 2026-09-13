@@ -53,6 +53,13 @@ def make_custom_dataset(
     if max_episodes is not None:
         max_episodes = int(max_episodes)
     records = scan_root(root, spec, max_episodes=max_episodes, rescan=bool(data_cfg["rescan"]))
+    instruction_mode = data_cfg.get("instruction_mode", "episode")
+    if instruction_mode == "subtask":
+        from lbm.dataloader.custom.instructions import with_subtasks
+
+        records = with_subtasks(records, spec)
+    elif instruction_mode != "episode":
+        raise ValueError(f"unknown instruction_mode: {instruction_mode}")
     kwargs: dict[str, Any] = {
         "action_length": float(data_cfg["action_length"]),
         "history_length": float(data_cfg["history_length"]),

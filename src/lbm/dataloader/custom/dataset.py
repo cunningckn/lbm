@@ -25,6 +25,7 @@ from lbm.action_space import (
     stores_file_delta,
 )
 from lbm.dataloader.custom.common.lerobot import lerobot_of, read_lerobot_frames, read_lerobot_vectors
+from lbm.dataloader.custom.instructions import frame_instruction, locate_frame, sample_count
 from lbm.dataloader.custom.spec import CustomSpec
 from lbm.temporal import delta_indices, n_steps, native_stride
 
@@ -183,7 +184,7 @@ class CustomSingleDataset(Dataset):
         if self.episodes:
             self._offsets = np.cumsum([len(e.action) for e in self.episodes], dtype=np.int64)
         else:
-            lengths = np.array([max(int(r.n_frames), 0) for r in self.records], dtype=np.int64)
+            lengths = np.array([max(int(sample_count(r)), 0) for r in self.records], dtype=np.int64)
             if not len(lengths) or int(lengths.sum()) <= 0:
                 raise ValueError(f"{spec.name}: no frames")
             self._offsets = np.cumsum(lengths)
@@ -199,7 +200,8 @@ class CustomSingleDataset(Dataset):
         index = int(index)
         epi = int(np.searchsorted(self._offsets, index, side="right"))
         prev = 0 if epi == 0 else int(self._offsets[epi - 1])
-        return epi, index - prev
+        local = index - prev
+        return epi, locate_frame(self.records[epi], local) if self.records else local
 
     @property
     def policy_io(self) -> dict[str, Any]:
@@ -273,15 +275,18 @@ class CustomSingleDataset(Dataset):
         epi_i, t = self._locate(index)
         state_arr, action_arr, slices = self._policy_vectors(epi_i)
         n = int(action_arr.shape[0])
-        action = self._gather_vector(action_arr, t, self.action_deltas, n)
+        lower, upper, lang = (frame_instruction(self.records[epi_i], t) if self.records else
+                              (0, n, self.episodes[epi_i].lang))
+        if upper > n:
+            raise ValueError('instruction interval exceeds available action frames')
+        action = self._gather_vector(action_arr, t, self.action_deltas, upper)
         state = state_arr[min(t, n - 1)]
         images = []
         camera_mask = []
         for cam in self.spec.camera_keys:
-            gathered, present = self._cam_frames(epi_i, cam, t, n)
+            gathered, present = self._cam_frames(epi_i, cam, t, upper, lower=lower)
             images.append(_resize_u8(gathered, self.image_size))
             camera_mask.append(present)
-        lang = self.episodes[epi_i].lang if self.episodes else self.records[epi_i].lang
         action = action.astype(np.float32, copy=False)
         state = np.asarray(state, dtype=np.float32)
         action = actions_in_train_space(action, state, slices)
@@ -319,7 +324,7 @@ class CustomSingleDataset(Dataset):
         size = self.image_size
         return np.zeros((n_hist, size, size, 3), dtype=np.uint8)
 
-    def _cam_frames(self, epi_i: int, cam: str, t: int, n: int) -> tuple[np.ndarray, bool]:
+    def _cam_frames(self, epi_i: int, cam: str, t: int, n: int, *, lower: int = 0) -> tuple[np.ndarray, bool]:
         """History window for ``cam``. Missing views are black zeros, not copies of another cam."""
         if self.episodes:
             frames = self.episodes[epi_i].images.get(cam)
@@ -331,7 +336,7 @@ class CustomSingleDataset(Dataset):
 
         if not camera_has_source(record, self.spec, cam):
             return self._blank_history(), False
-        idx = np.clip(t + self.history_deltas.astype(np.int64), 0, max(n - 1, 0)).tolist()
+        idx = np.clip(t + self.history_deltas.astype(np.int64), lower, max(n - 1, lower)).tolist()
         try:
             gathered = self._read_record_frames(record, cam, idx)
         except KeyError:

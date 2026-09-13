@@ -6,6 +6,7 @@ A missing directory is a cold start; anything incomplete or mismatched raises.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import asdict
 from pathlib import Path
@@ -77,6 +78,7 @@ def load_scan_index(root: Path | str, spec: CustomSpec) -> list[EpisodeRecord] |
     man = json.loads(paths[0].read_text(encoding="utf-8"))
     _check_manifest(man, Path(root), spec, dest)
     records = _unpack(_read_repos(paths[1]), pd.read_parquet(paths[2]))
+    _check_annotations(records, dest)
     n_records = int(_need(man, "n_records"))
     if len(records) != n_records:
         raise _fail(dest, f"episode count {len(records)} != manifest n_records {n_records}")
@@ -87,6 +89,18 @@ def load_scan_index(root: Path | str, spec: CustomSpec) -> list[EpisodeRecord] |
     return records
 
 
+def _check_annotations(records: list[EpisodeRecord], dest: Path) -> None:
+    """Check each distinct source once; absent annotations becoming available also invalidate."""
+    observed: dict[str, str | None] = {}
+    for record in records:
+        for raw, expected in record.extra.get("annotation_sources", {}).items():
+            if raw not in observed:
+                path = Path(raw)
+                observed[raw] = hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() else None
+            if observed[raw] != expected:
+                raise _fail(dest, f"annotation source changed: {raw}")
+
+
 def _spec_fields(spec: CustomSpec) -> dict[str, Any]:
     return {"name": spec.name, "camera_keys": list(spec.camera_keys), "kind": spec.kind, "fps": float(spec.fps)}
 
@@ -94,6 +108,7 @@ def _spec_fields(spec: CustomSpec) -> dict[str, Any]:
 def _manifest(root: Path, spec: CustomSpec, records: list[EpisodeRecord]) -> dict[str, Any]:
     return {
         "scanner_version": SCANNER_VERSION,
+        "adapter_revision": spec.scan_revision,
         "spec": _spec_fields(spec),
         "root": str(root),
         "n_records": len(records),
@@ -127,6 +142,8 @@ def _is_na(value: Any) -> bool:
 def _check_manifest(man: dict, root: Path, spec: CustomSpec, dest: Path) -> None:
     if int(_need(man, "scanner_version")) != SCANNER_VERSION:
         raise _fail(dest, f"scanner_version {man['scanner_version']!r} != {SCANNER_VERSION}")
+    if man.get("adapter_revision", 1) != spec.scan_revision:
+        raise _fail(dest, "adapter revision changed; cached instructions may be stale")
     if _need(man, "complete") is not True:
         raise _fail(dest, "scan index is not marked complete")
     stored = _need(man, "spec")

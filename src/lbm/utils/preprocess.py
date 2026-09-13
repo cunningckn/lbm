@@ -199,18 +199,24 @@ def compute_norm_stats(dataset, *, progress: bool | None = None, leave: bool = T
             n = int(action.shape[0])
             if n == 0:
                 continue
-            if slide:
-                deltas = dataset.action_deltas
-                for t in range(n):
-                    chunk = dataset._gather_vector(action, t, deltas, n)
-                    st = state[min(t, n - 1)]
-                    chunk = actions_in_train_space(chunk, st, slices)
-                    action_m.update(chunk)
-                    state_m.update(st)
-            else:
-                packed = actions_in_train_space(action, state[0], slices)
-                state_m.update(state)
-                action_m.update(packed)
+            intervals = (dataset.records[epi_i].extra.get('instruction_segments') if dataset.records else None)
+            intervals = intervals or [dict(start=0, stop=n)]
+            for interval in intervals:
+                start, stop = interval['start'], interval['stop']
+                if stop > n:
+                    raise ValueError('normalization interval exceeds available action frames')
+                if slide:
+                    deltas = dataset.action_deltas
+                    for t in range(start, stop):
+                        chunk = dataset._gather_vector(action, t, deltas, stop)
+                        st = state[min(t, n - 1)]
+                        chunk = actions_in_train_space(chunk, st, slices)
+                        action_m.update(chunk)
+                        state_m.update(st)
+                else:
+                    packed = actions_in_train_space(action[start:stop], state[start], slices)
+                    state_m.update(state[start:stop])
+                    action_m.update(packed)
         payload = {
             "norm_stats": {
                 "state": state_m.as_dict(),

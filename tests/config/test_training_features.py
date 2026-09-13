@@ -315,3 +315,28 @@ def test_validation_cache_rejects_different_encoder_fingerprint():
     val.metadata = dict(episode_ids=['val'], backbone_sha256='two')
     with pytest.raises(ValueError, match='backbone_sha256'):
         train.check_validation(val)
+
+
+def test_feature_cache_rejects_stale_episode_instruction_mode():
+    cache = FeatureDataset.__new__(FeatureDataset)
+    cache.metadata = {}
+    config = TrainConfig()
+    config.data.instruction_mode = 'subtask'
+    with pytest.raises(ValueError, match='instruction mode'):
+        cache.apply_config(config)
+    other = FeatureDataset.__new__(FeatureDataset)
+    other.metadata = {'instruction_mode': 'subtask', 'episode_ids': ['heldout']}
+    cache.metadata['episode_ids'] = ['train']
+    with pytest.raises(ValueError, match='instruction modes'):
+        cache.check_validation(other)
+
+
+def test_old_agibot_feature_cache_requires_rebuild_after_instruction_fix():
+    cache = FeatureDataset.__new__(FeatureDataset)
+    cache.metadata = {'sources': [{'name': 'agibot'}]}
+    with pytest.raises(ValueError, match='predates adapter correction'):
+        cache.apply_config(TrainConfig())
+    fresh = FeatureDataset.__new__(FeatureDataset)
+    fresh.metadata = {'sources': [{'name': 'agibot'}], 'source_revisions': {'agibot': 2}}
+    with pytest.raises(ValueError, match='predates adapter correction'):
+        fresh.check_validation(cache)

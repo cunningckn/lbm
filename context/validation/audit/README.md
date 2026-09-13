@@ -99,20 +99,44 @@ feature cache (288 shards). Its capacity check required the copied bytes to
 exceed the host's approximately 200 GiB RAM. These are duplicated real features
 for IO stress, not additional independent training examples.
 
-After copying, SSH to js_dev_2 stopped responding. The jump host remained
-reachable, but its TCP connection to the target's port 22 timed out. The final
-read throughput, RSS and cleanup status could not be retrieved and are **not
-claimed as passing**. The driver normally deletes its own test copies in a
-`finally` block; `/tmp/lbm-audit-pressure-cache` must be checked after connectivity
-returns. Do not delete the source feature caches.
+After copying, SSH stopped responding. After access returned, the temporary
+cache and logs were absent. The prior stress result cannot be recovered and is
+**not claimed as passing**. The current container has a 200 GiB memory limit,
+no swap, and a 200 GiB `/dev/shm` mount which consumes that same memory budget.
+Its new OOM counters cannot establish what happened before the restart, and
+previous kernel logs are inaccessible. OOM remains a hypothesis.
+
+The driver now refuses to copy anything unless it starts alone in a dedicated
+cgroup v2 with `memory.max <= 32 GiB`, `memory.swap.max = 0`, and
+`memory.oom.group = 1`. Workers inherit that limit. Size is compared with this
+smaller budget, so stressing beyond available cache memory does not require
+exceeding the entire server's memory. Defaults are batch 16, one worker and
+prefetch one. Progress includes cgroup memory/cache/shmem counters and `/dev/shm`
+usage, flushed with fsync after each copy group and read batch. Store the report
+on a persistent volume; `/tmp` and `/dev/shm` reports are rejected.
+
+The current server mounts cgroup v2 read-only and exposes only its container
+root. The isolation guard correctly rejects it before data access. All nine
+guard regression tests passed on the server. A delegated writable child cgroup
+(or a separately limited test container exposing an appropriate child cgroup)
+is required before another capacity stress run. A soft RSS monitor is not a
+substitute for this kernel-enforced limit.
+
+Run from the repository root, after entering that isolated cgroup, with a
+persistent report destination:
 
 ```sh
-PYTHONPATH=src CUDA_VISIBLE_DEVICES= python context/validation/audit/cache_pressure.py \
-  --source /scratch/features-train --output /scratch/pressure-copy \
-  --report /scratch/pressure-result.json --copies 16
+PYTHONPATH=src:. CUDA_VISIBLE_DEVICES= python context/validation/audit/cache_pressure.py \
+  --source /persistent/features-train --output /scratch/pressure-copy \
+  --report /persistent/pressure-result.json --copies 2
 ```
 
-An additional full-size-model, real-sharded-data FSDP run could not start because
-of the same SSH connection failure. This does not replace or invalidate the
-completed independent-process two-GPU DDP/FSDP checkpoint tests; it remains an
-additional scale check to finish when the server is reachable.
+Choose enough copies to exceed the dedicated memory limit. A whole-group OOM
+kill cannot execute Python's `finally` cleanup: inspect the persisted progress
+and remove only this run's generated output directory afterward. Do not delete
+the source feature caches. Successful normal exit records `complete` and
+`cleaned`; missing records must not be interpreted as success.
+
+The full-size-model, real-sharded-data FSDP follow-up remains pending. This does
+not replace or invalidate the completed independent-process two-GPU DDP/FSDP
+checkpoint tests.

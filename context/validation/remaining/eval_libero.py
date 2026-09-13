@@ -19,7 +19,11 @@ p.add_argument('--seed', type=int, default=7)
 p.add_argument('--suite', default='libero_spatial')
 p.add_argument('--task-id', type=int, default=0)
 p.add_argument('--init-offset', type=int, default=0)
+p.add_argument('--independent-trials', action='store_true', help='reset simulator RNG for each official initial state')
 a = p.parse_args()
+report_path = Path(a.output)/'result.json'
+if report_path.exists():
+    raise FileExistsError(report_path)
 repo = Path(a.repo)
 root = repo / 'third_party/libero/libero/libero'
 config = Path(a.output) / 'config'
@@ -46,8 +50,16 @@ env = OffScreenRenderEnv(bddl_file_name=str(root/'bddl_files'/task.problem_folde
                          camera_heights=256, camera_widths=256)
 env.seed(a.seed)
 results = []
+report = dict(task=task.language, seed=a.seed, independent_trials=a.independent_trials,
+              suite=a.suite, task_id=a.task_id, init_offset=a.init_offset,
+              replan_steps=5, max_steps=220, metadata=metadata, trials=results,
+              successes=0, requested_trials=a.trials, complete=False, errors=[])
+report_path.write_text(json.dumps(report, indent=2))
 try:
     for trial in range(a.trials):
+        if a.independent_trials:
+            np.random.seed(a.seed + a.init_offset + trial)
+            env.seed(a.seed + a.init_offset + trial)
         env.reset()
         obs = env.set_init_state(initial[a.init_offset + trial])
         for _ in range(10):
@@ -74,12 +86,17 @@ try:
             obs, _, done, _ = env.step(plan.popleft().tolist())
             if done:
                 break
-        results.append(dict(trial=trial, steps=step+1, success=bool(done)))
-        report = dict(task=task.language, seed=a.seed, suite=a.suite, task_id=a.task_id,
-                      init_offset=a.init_offset, replan_steps=5, max_steps=220,
-                      metadata=metadata, trials=results, successes=sum(r['success'] for r in results))
-        (Path(a.output)/'result.json').write_text(json.dumps(report, indent=2))
+        results.append(dict(trial=trial, initial_state=a.init_offset+trial, steps=step+1, success=bool(done)))
+        report['successes'] = sum(r['success'] for r in results)
+        report_path.write_text(json.dumps(report, indent=2))
         print('ROLLOUT', results[-1], flush=True)
+    report['complete'] = True
+    report_path.write_text(json.dumps(report, indent=2))
+except Exception as error:
+    report['errors'].append(dict(type=type(error).__name__, message=str(error),
+                                initial_state=a.init_offset + len(results)))
+    report_path.write_text(json.dumps(report, indent=2))
+    raise
 finally:
     env.close()
 print('CLOSED_LOOP ' + json.dumps(report), flush=True)

@@ -55,7 +55,27 @@
     "guard_tests_passed": 9
   },
   "full_size_real_fsdp_followup": {
-    "status": "not_started_ssh_connection_timeout"
+    "status": "passed_train_validate_save_independent_resume",
+    "world_size": 2,
+    "batch_per_rank": 8,
+    "workers_per_rank": 2,
+    "train_updates": 2,
+    "restored_updates": 2,
+    "checkpoint_steps": [
+      2,
+      4
+    ],
+    "validation_step_2": {
+      "kai0": 14.743622,
+      "agibot": 5.384271,
+      "aggregate": 9.024
+    },
+    "validation_step_4": {
+      "kai0": 14.691006,
+      "agibot": 5.358316,
+      "aggregate": 8.9877
+    },
+    "scope": "four-update functionality check, not convergence or loss-equivalence evidence"
   },
   "restored_access_followup": {
     "libero": {
@@ -76,13 +96,64 @@
     },
     "feature_train_rows": 8734,
     "feature_train_shards": 18,
-    "single_gpu_sharded": {
+    "feature_val_rows": 3095,
+    "related_regression_passed": 25,
+    "single_gpu_bulk_reads": [
+      {
+        "batch": 128,
+        "workers": 0,
+        "measured_updates": 60,
+        "seconds": 93.97443900899998,
+        "samples_per_second": 81.7243505892542,
+        "peak_allocated_mib": 75318.25830078125
+      },
+      {
+        "batch": 128,
+        "workers": 2,
+        "measured_updates": 60,
+        "seconds": 63.2916914880002,
+        "samples_per_second": 121.34294122090404,
+        "peak_allocated_mib": 75317.82080078125
+      }
+    ],
+    "fsdp_bulk_reads": [
+      {
+        "batch_per_rank": 64,
+        "workers_per_rank": 2,
+        "measured_updates": 60,
+        "rank_seconds": [
+          39.46278171100039,
+          39.462779703999786
+        ],
+        "global_samples_per_second": 194.61375166716067,
+        "rank_peak_allocated_mib": [
+          49581.4345703125,
+          49578.50341796875
+        ]
+      },
+      {
+        "batch_per_rank": 120,
+        "workers_per_rank": 2,
+        "measured_updates": 60,
+        "rank_seconds": [
+          63.38024632300039,
+          63.38032410000005
+        ],
+        "global_samples_per_second": 227.19984797300822,
+        "rank_peak_allocated_mib": [
+          75952.80126953125,
+          75955.0224609375
+        ]
+      }
+    ],
+    "single_gpu_sharded_before_bulk": {
       "batch": 128,
       "workers": 2,
       "measured_updates": 60,
       "seconds": 64.59285246699983,
       "samples_per_second": 118.89860420583956,
       "peak_allocated_mib": 75317.07080078125
-    }
+    },
+    "before_bulk_zero_worker_status": "stopped_after_observed_filesystem_wait_no_throughput_result"
   }
 }

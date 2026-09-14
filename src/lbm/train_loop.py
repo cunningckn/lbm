@@ -13,7 +13,7 @@ import torch
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-from lbm.batch import infer_policy_io, policy_batch_from_loader
+from lbm.batch import cast_prepared_batch, infer_policy_io, policy_batch_from_loader
 from lbm.checkpoint import capture_rng_state, load_checkpoint, restore_rng_state, save_standard_checkpoint
 from lbm.config import (
     TrainConfig,
@@ -219,9 +219,10 @@ def main(config: TrainConfig) -> None:
     if feature_mode:
         from lbm.training_features import FeatureDataset
 
-        train_ds = FeatureDataset(config.feature_cache)
+        train_ds = FeatureDataset(config.feature_cache, max_open_shards=config.feature_cache_open_shards)
         train_ds.apply_config(config)
-        val_ds = FeatureDataset(config.data.val_dataset) if config.data.val_dataset else ()
+        val_ds = FeatureDataset(config.data.val_dataset, max_open_shards=config.feature_cache_open_shards) \
+            if config.data.val_dataset else ()
         if val_ds:
             train_ds.check_validation(val_ds)
             if train_ds.root.resolve() == val_ds.root.resolve():
@@ -365,12 +366,7 @@ def main(config: TrainConfig) -> None:
     def to_policy(raw, *, train: bool):
         if config.fake_data or feature_mode:
             batch = move_batch_to_device(raw, device, non_blocking=True)
-            if dtype != torch.float32:
-                for key, value in list(batch.items()):
-                    if key == "images":
-                        batch[key] = {cam: img.to(dtype=dtype) for cam, img in value.items()}
-                    elif torch.is_tensor(value) and value.is_floating_point():
-                        batch[key] = value.to(dtype=dtype)
+            batch = cast_prepared_batch(batch, dtype)
             if feature_mode and train and config.flow.mask_state_ratio > 0:
                 masked = torch.rand(len(batch['state']), device=device) < config.flow.mask_state_ratio
                 batch['state_is_masked'] = masked

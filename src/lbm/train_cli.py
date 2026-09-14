@@ -108,6 +108,8 @@ def parse_args(
     p.add_argument("--feature-shard-rows", type=int, default=1024)
     p.add_argument("--feature-split", choices=("train", "val"), default="train")
     p.add_argument("--feature-cache", default="", help="prebuilt frozen-vision policy inputs")
+    p.add_argument("--feature-cache-open-shards", type=int, default=TRAIN_DEFAULTS.feature_cache_open_shards,
+                   help="maximum resident mmap shard handles per process (1–64; payloads remain file-backed)")
     compilation = p.add_mutually_exclusive_group()
     compilation.add_argument("--compile", action="store_true")
     compilation.add_argument("--compile-conditioning", action="store_true",
@@ -195,6 +197,7 @@ def build_train_config(args: argparse.Namespace) -> TrainConfig:
         output_dir=args.output_dir,
         fake_data=not real,
         feature_cache=args.feature_cache,
+        feature_cache_open_shards=args.feature_cache_open_shards,
         load_pretrained=args.ckpt,
         resume=args.resume,
         pretrained_encoders=bool(args.pretrained_encoders),

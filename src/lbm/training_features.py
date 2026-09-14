@@ -14,7 +14,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset, Subset
 
-from lbm.config import DiTConfig
+from lbm.config import TRAIN_DEFAULTS, DiTConfig
 
 HISTORY_MODEL_FIELDS = ('history_time_encoding', 'state_history_length', 'state_history_freq')
 MODEL_FIELDS = (
@@ -105,7 +105,10 @@ def write_feature_cache(path, batches, *, rows, metadata):
 
 
 class FeatureDataset(Dataset):
-    def __init__(self, path, *, verify=True, shard=False):
+    def __init__(self, path, *, verify=True, shard=False, max_open_shards=TRAIN_DEFAULTS.feature_cache_open_shards):
+        if type(max_open_shards) is not int or not 1 <= max_open_shards <= 64:
+            raise ValueError("max_open_shards must be an integer in [1, 64]")
+        self.max_open_shards = max_open_shards
         self.root = Path(path)
         raw = (self.root / 'manifest.json').read_bytes()
         self.fingerprint = hashlib.sha256(raw).hexdigest()
@@ -176,7 +179,7 @@ class FeatureDataset(Dataset):
                 child = self.root / self.manifest['shards'][shard]['directory']
                 self._shards[shard] = FeatureDataset(child, verify=shard not in self._verified, shard=True)
                 self._verified.add(shard)
-                if len(self._shards) > 2:
+                if len(self._shards) > self.max_open_shards:
                     self._shards.popitem(last=False)
             self._shards.move_to_end(shard)
             return self._shards[shard][index - start]
@@ -302,6 +305,13 @@ class FeatureDataset(Dataset):
         for key in ('normalization', 'action_spaces', 'backbone_sha256'):
             if self.metadata.get(key) != other.metadata.get(key):
                 raise ValueError(f'training and validation feature cache {key} differ')
+
+        left_extraction = self.metadata.get('extraction', {})
+        right_extraction = other.metadata.get('extraction', {})
+        for key in ('version', 'dtype', 'device_type', 'image_sizes', 'preprocessing_sha256',
+                    'text_backbone_sha256', 'tokenizer_sha256'):
+            if left_extraction and right_extraction and left_extraction.get(key) != right_extraction.get(key):
+                raise ValueError(f'training and validation feature extraction {key} differ')
 
     def inference_normalization(self):
         norms = self.metadata.get('normalization', {})

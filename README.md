@@ -475,8 +475,8 @@ an arbitrary member. Run separately for each dataset when preparing local caches
 Pass the printed path to training:
 
 ```bash
-python scripts/train.py --feature-cache /data/agibot/.cache/dino/prebuilt/<fingerprint>/train \
-  --instruction-mode subtask --batch-size 64 --steps 100
+python scripts/train.py --feature-cache "/data/agibot/.cache/dino/prebuilt/<fingerprint>/train" \
+  --instruction-mode subtask --batch-size 64 --num-workers 2 --feature-cache-open-shards 32 --steps 100
 ```
 
 For held-out evaluation, build both splits with the same `--val-fraction`, seed

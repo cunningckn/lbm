@@ -1,0 +1,289 @@
+{
+  "mode": "both",
+  "steps": 250,
+  "batch": 64,
+  "train": [
+    {
+      "step": 205.0,
+      "loss": 0.0673828125,
+      "grad_norm": 1.0,
+      "steps_per_s": 0.06226624175715302
+    },
+    {
+      "step": 210.0,
+      "loss": 0.051513671875,
+      "grad_norm": 0.8828125,
+      "steps_per_s": 3.4981797092288316
+    },
+    {
+      "step": 215.0,
+      "loss": 0.044677734375,
+      "grad_norm": 1.4375,
+      "steps_per_s": 3.466058756182204
+    },
+    {
+      "step": 220.0,
+      "loss": 0.059814453125,
+      "grad_norm": 2.03125,
+      "steps_per_s": 3.048061093332213
+    },
+    {
+      "step": 225.0,
+      "loss": 0.061279296875,
+      "grad_norm": 1.140625,
+      "steps_per_s": 3.4816716750049475
+    },
+    {
+      "step": 230.0,
+      "loss": 0.06298828125,
+      "grad_norm": 1.3671875,
+      "steps_per_s": 2.8190570230502563
+    },
+    {
+      "step": 235.0,
+      "loss": 0.041015625,
+      "grad_norm": 1.0078125,
+      "steps_per_s": 3.497404626039763
+    },
+    {
+      "step": 240.0,
+      "loss": 0.056396484375,
+      "grad_norm": 0.9375,
+      "steps_per_s": 3.4430408561624857
+    },
+    {
+      "step": 245.0,
+      "loss": 0.0302734375,
+      "grad_norm": 0.640625,
+      "steps_per_s": 3.402495290275659
+    },
+    {
+      "step": 250.0,
+      "loss": 0.03955078125,
+      "grad_norm": 0.60546875,
+      "steps_per_s": 3.4820391181808032
+    }
+  ],
+  "validation": [],
+  "input_hashes": [
+    {
+      "state": "6c4f8ee6ce94fb9a57712faff466429af0f7f50d2a5f515e9f9d3884c9685f57",
+      "actions": "4c39850a08689ee03edb6477f39f06dc7298a50d4c6d04ff197c0da5bfbfb64a",
+      "task_vec_clip": "8e23d40f0c9f086e64e8acf81c5edd55f544ae3bf20df6fd34ed11fdfc935800",
+      "cuda_rng": "6ca244240d76758834e792c03a4c28948f274daa6d5460edb91660a6e9669d13"
+    },
+    {
+      "state": "d37b7511562c17506aa174081aba6c03598b43ff7ae368873f114fa98fc26729",
+      "actions": "16dae4d098ce47637246802bd7bfe09f7322b6afd393fcc4905b3a8a3758529c",
+      "task_vec_clip": "f061b88285e51a4cb8380a1ce6203b31464a264e0d29c6d50c2ec58cfde59187",
+      "cuda_rng": "4764fad83ddde3a7dcfdc80440d10628b7d40aee5b3175bcaca5dca0ca94c547"
+    },
+    {
+      "state": "bb1eee90b6bdfb12663f5b6f41bd99cb63867342fd91dcd6b40015361c2c4005",
+      "actions": "6ebfac3399eb0bd9b4640d72ce0bc4ff2e54bf501dfa2395461dbf835a1c4a86",
+      "task_vec_clip": "7dfdbb835f74ae638d31bd686f4c56b7c509e08cf5daae1f14f8de88a6b5c83a",
+      "cuda_rng": "e87cd0a6206efa396ed932737303ff2808174dbc07e3633c0ef4697c0c4369cb"
+    }
+  ],
+  "scope": "matched real-data throughput and finite-loss stability; not convergence",
+  "feature_cache": true,
+  "workers": 2,
+  "open_shards": 32,
+  "resources": [
+    {
+      "step": 205,
+      "time": 1789357147.417308,
+      "gpu_allocated": 15957747712,
+      "gpu_reserved": 25677529088,
+      "gpu_peak": 24071815168,
+      "rss": 16600969216,
+      "worker_rss": 7185711104,
+      "container_memory": 148207890432,
+      "memory_events": {
+        "low": 0,
+        "high": 0,
+        "max": 2531888,
+        "oom": 0,
+        "oom_kill": 0
+      },
+      "container_unreclaimable_estimate": 6680461312,
+      "shm_used": 348643328
+    },
+    {
+      "step": 210,
+      "time": 1789357148.8465314,
+      "gpu_allocated": 15961122816,
+      "gpu_reserved": 25677529088,
+      "gpu_peak": 24074043904,
+      "rss": 16529780736,
+      "worker_rss": 8969293824,
+      "container_memory": 148133949440,
+      "memory_events": {
+        "low": 0,
+        "high": 0,
+        "max": 2531888,
+        "oom": 0,
+        "oom_kill": 0
+      },
+      "container_unreclaimable_estimate": 6595371008,
+      "shm_used": 348643328
+    },
+    {
+      "step": 215,
+      "time": 1789357150.2890427,
+      "gpu_allocated": 15957878784,
+      "gpu_reserved": 25677529088,
+      "gpu_peak": 24074043904,
+      "rss": 16297394176,
+      "worker_rss": 10750554112,
+      "container_memory": 147871870976,
+      "memory_events": {
+        "low": 0,
+        "high": 0,
+        "max": 2531888,
+        "oom": 0,
+        "oom_kill": 0
+      },
+      "container_unreclaimable_estimate": 6335201280,
+      "shm_used": 57344
+    },
+    {
+      "step": 220,
+      "time": 1789357151.9295366,
+      "gpu_allocated": 15935956992,
+      "gpu_reserved": 25677529088,
+      "gpu_peak": 24074043904,
+      "rss": 16625442816,
+      "worker_rss": 12520849408,
+      "container_memory": 148227895296,
+      "memory_events": {
+        "low": 0,
+        "high": 0,
+        "max": 2531888,
+        "oom": 0,
+        "oom_kill": 0
+      },
+      "container_unreclaimable_estimate": 6684676096,
+      "shm_used": 348876800
+    },
+    {
+      "step": 225,
+      "time": 1789357153.3654199,
+      "gpu_allocated": 15939594240,
+      "gpu_reserved": 25677529088,
+      "gpu_peak": 24074043904,
+      "rss": 16297398272,
+      "worker_rss": 13931487232,
+      "container_memory": 147881123840,
+      "memory_events": {
+        "low": 0,
+        "high": 0,
+        "max": 2531888,
+        "oom": 0,
+        "oom_kill": 0
+      },
+      "container_unreclaimable_estimate": 6335967232,
+      "shm_used": 57344
+    },
+    {
+      "step": 230,
+      "time": 1789357155.1392488,
+      "gpu_allocated": 15936088064,
+      "gpu_reserved": 25677529088,
+      "gpu_peak": 24074043904,
+      "rss": 16461012992,
+      "worker_rss": 15290818560,
+      "container_memory": 148236230656,
+      "memory_events": {
+        "low": 0,
+        "high": 0,
+        "max": 2531888,
+        "oom": 0,
+        "oom_kill": 0
+      },
+      "container_unreclaimable_estimate": 6686470144,
+      "shm_used": 348876800
+    },
+    {
+      "step": 235,
+      "time": 1789357156.5689235,
+      "gpu_allocated": 15936350208,
+      "gpu_reserved": 25677529088,
+      "gpu_peak": 24074043904,
+      "rss": 16615784448,
+      "worker_rss": 16450822144,
+      "container_memory": 148239077376,
+      "memory_events": {
+        "low": 0,
+        "high": 0,
+        "max": 2531888,
+        "oom": 0,
+        "oom_kill": 0
+      },
+      "container_unreclaimable_estimate": 6686670848,
+      "shm_used": 348643328
+    },
+    {
+      "step": 240,
+      "time": 1789357158.0208743,
+      "gpu_allocated": 15956207616,
+      "gpu_reserved": 25677529088,
+      "gpu_peak": 24074043904,
+      "rss": 16413605888,
+      "worker_rss": 17546158080,
+      "container_memory": 148009754624,
+      "memory_events": {
+        "low": 0,
+        "high": 0,
+        "max": 2531888,
+        "oom": 0,
+        "oom_kill": 0
+      },
+      "container_unreclaimable_estimate": 6455353344,
+      "shm_used": 116252672
+    },
+    {
+      "step": 245,
+      "time": 1789357159.4904926,
+      "gpu_allocated": 15957223424,
+      "gpu_reserved": 25677529088,
+      "gpu_peak": 24074043904,
+      "rss": 16529801216,
+      "worker_rss": 18615066624,
+      "container_memory": 148209250304,
+      "memory_events": {
+        "low": 0,
+        "high": 0,
+        "max": 2531888,
+        "oom": 0,
+        "oom_kill": 0
+      },
+      "container_unreclaimable_estimate": 6687879168,
+      "shm_used": 348643328
+    },
+    {
+      "step": 250,
+      "time": 1789357160.926556,
+      "gpu_allocated": 15960238080,
+      "gpu_reserved": 25677529088,
+      "gpu_peak": 24075584000,
+      "rss": 16636755968,
+      "worker_rss": 19711328256,
+      "container_memory": 148248858624,
+      "memory_events": {
+        "low": 0,
+        "high": 0,
+        "max": 2531888,
+        "oom": 0,
+        "oom_kill": 0
+      },
+      "container_unreclaimable_estimate": 6690779136,
+      "shm_used": 348643328
+    }
+  ],
+  "shared_initial_weights_sha256": "dae6dc37cf2cc8543f1d941acba3db52a34606f49332ce8b21967d5eb3138094",
+  "peak_gpu_bytes": 24075584000,
+  "gpu": "NVIDIA A800-SXM4-80GB",
+  "resumed": true,
+  "initial_hash_scope": "model construction before optional resume restore"
+}

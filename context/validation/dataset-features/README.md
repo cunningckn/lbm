@@ -85,3 +85,57 @@ trainable pooling runs later in `build_vision_tokens`. The 197 positions are the
 CLS token plus all 196 spatial patches exposed to the online DINO policy, not
 pooled/mean embeddings. Internal backbone storage tokens are not part of that
 policy interface, either online or cached.
+
+## Warm cloud mapping comparison and recovery
+
+A same-code repeat with the original two-mapping limit, after the 32-mapping
+runs, measured **173.67 samples/s** (updates 6–100, batch64/workers2). The 32-mapping
+run's 217.24 is about 25% higher. Logged losses match exactly, so this configuration
+changes reading overhead rather than input order or model math. The trials were
+sequential on shared infrastructure, not randomized repeated confidence bounds.
+
+The 32-mapping configuration then completed 200 updates (over five training
+epochs), saved the standard checkpoint and restored it in a fresh process for
+50 more updates, reaching step250. The first recovery attempt was correctly
+rejected because the validation driver changed val_every with the target step
+count. Keeping val_every fixed corrected the driver; checkpoint checks were not
+weakened and the failed log was retained.
+
+From step25 through 200, allocated GPU memory was 14.815–14.840 GiB and reserved
+memory 24.170 GiB. Main-process RSS was 4.211–4.534 GiB; aggregate worker RSS rose
+as file-backed mappings populated (13.35–28.20 GiB), and includes shared mapped
+pages rather than unique anonymous ownership. The container's estimated
+anonymous/SHM/kernel footprint was 5.954–6.497 GiB, and SHM at sampled points was
+at most 0.541 GiB. No memory.max/OOM/OOM-kill event counter increased during either
+measured training segment. These are bounded multi-epoch checks, not proof of
+multi-day stability; the rolling checkpoint remains at update200 because the
+50-update extension did not reach another save interval.
+
+See `cloud2-repeat.json`, `stability200.json`, `stability250.json` and
+`run_stability.py`. Use `PYTHONPATH=src:.` for the stability driver so it can reuse
+the existing benchmark/resource helpers. The canonical feature arrays stay on
+the cloud filesystem throughout these tests.
+
+## Cloud batch-size screening
+
+With 32 retained mappings and two workers, the same real 2,482-sample historical
+cache was trained for 100 updates at each larger batch:
+
+| Batch | Samples/s, updates 6–100 | Peak allocated GPU GiB |
+|---:|---:|---:|
+| 64 | 217.24 | 22.40 |
+| 128 | 271.68 | 30.64 |
+| 256 | 278.80 | 45.56 |
+
+B256 is the highest measured throughput, but only 2.6% faster than B128 while
+using 14.91 GiB more peak GPU memory. B128 is the practical speed/memory choice
+for this workload; the small speed difference is not established beyond run
+variation. B512 was not attempted: extrapolating the observed B128→B256 memory
+increase, with 10% headroom, predicts 82.93 GiB, exceeding the 68 GiB allocation
+budget. No intentional OOM test was used. Eight A800 GPU parity tests passed for
+cached/live loss, gradients and denoising across both encoders and history modes.
+
+These measurements use full pre-pooling tokens on cloud storage. They are not
+the theoretical fake-data maximum or directly comparable with a different action
+horizon, mixture, image/history size or cold working set. See `cloud-b128.json`
+and `cloud-b256.json` for the finite training/resource logs.

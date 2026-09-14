@@ -75,3 +75,22 @@ are omitted from this offscreen client. Keep the MuJoCo pin unless a replacement
 has passed real environment creation/reset/step tests with robosuite.
 
 Server cameras are `image` / `wrist_image` (agent view rotated 180° to match training). History, if any, comes from the checkpoint's `train_config.json` (`history_length` × `history_freq`), not client flags.
+
+### Bounded closed-loop checks
+
+Select a small task/trial range before evaluating a whole suite:
+
+```bash
+bash simulation/libero/eval_env.sh --task-ids 0 --num-trials-per-task 2 \
+  --init-offset 0 --no-save-video --result-path /tmp/libero-smoke/result.json
+```
+
+The result path must be new. Reports record completed trials, success counts,
+server metadata and errors; inference or simulator errors exit unsuccessfully
+and are not counted as ordinary task failures. Environments close on both
+success and failure. Optional videos use a separate run directory and unique
+task/trial names. Official initial-state ranges are checked before running.
+Simulator seeds reset to `seed + initial_state` per trial; this does not fix the
+policy's diffusion RNG. Use a separately seeded policy server for matched
+comparisons. History receives timestamps and episode IDs at replanning points;
+use `--replan-steps 1` when every control observation must reach the policy.

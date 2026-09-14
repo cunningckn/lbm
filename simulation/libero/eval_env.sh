@@ -13,7 +13,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "${SCRIPT_DIR}/../env.sh"
 
 EXAMPLE_DIR="${SCRIPT_DIR}"
-VENV_DIR="${EXAMPLE_DIR}/.venv"
+VENV_DIR="${LIBERO_VENV}"
 VENV_PYTHON="${VENV_DIR}/bin/python"
 
 cd "${LBM_ROOT}"

@@ -1,0 +1,4 @@
+# Keyboard teleoperation is not used by the offscreen evaluation client.
+pynput
+evdev
+python-xlib

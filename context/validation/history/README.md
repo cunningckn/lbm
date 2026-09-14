@@ -55,8 +55,8 @@ runtime dependencies, plus MuJoCo 3.12 drift. The check used the existing system
 Python 3.10, isolated extra dependencies and **MuJoCo 3.2.3**, the version already
 recorded in the project's requirements file. Server network failures were handled
 by downloading/building small wheels locally and transferring them via SCP.
-No original environment files were overwritten. The installer should separately
-be made to install those runtime dependencies and honor the tested MuJoCo version.
+No original environment files were overwritten. The installer correction and its isolated runtime validation are recorded in
+[LIBERO_RUNTIME.md](LIBERO_RUNTIME.md).
 
 ## Real matched training
 

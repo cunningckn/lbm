@@ -1,0 +1,283 @@
+{
+  "mode": "both",
+  "steps": 100,
+  "batch": 128,
+  "train": [
+    {
+      "step": 5.0,
+      "loss": 1.1171875,
+      "grad_norm": 20.5,
+      "steps_per_s": 0.24622721529378733
+    },
+    {
+      "step": 10.0,
+      "loss": 0.9921875,
+      "grad_norm": 17.25,
+      "steps_per_s": 2.314411420405909
+    },
+    {
+      "step": 15.0,
+      "loss": 0.478515625,
+      "grad_norm": 9.5,
+      "steps_per_s": 2.32057531859066
+    },
+    {
+      "step": 20.0,
+      "loss": 0.3359375,
+      "grad_norm": 4.375,
+      "steps_per_s": 1.6847604792412643
+    },
+    {
+      "step": 25.0,
+      "loss": 0.28125,
+      "grad_norm": 2.5,
+      "steps_per_s": 2.312143697954288
+    },
+    {
+      "step": 30.0,
+      "loss": 0.2265625,
+      "grad_norm": 1.9296875,
+      "steps_per_s": 2.3166263973549213
+    },
+    {
+      "step": 35.0,
+      "loss": 0.19921875,
+      "grad_norm": 1.90625,
+      "steps_per_s": 2.3185141522749753
+    },
+    {
+      "step": 40.0,
+      "loss": 0.1171875,
+      "grad_norm": 1.6953125,
+      "steps_per_s": 1.7659441948311747
+    },
+    {
+      "step": 45.0,
+      "loss": 0.2734375,
+      "grad_norm": 4.90625,
+      "steps_per_s": 2.3204994379019617
+    },
+    {
+      "step": 50.0,
+      "loss": 0.2138671875,
+      "grad_norm": 2.828125,
+      "steps_per_s": 2.3156971490203913
+    },
+    {
+      "step": 55.0,
+      "loss": 0.1591796875,
+      "grad_norm": 2.5625,
+      "steps_per_s": 2.3198007626039887
+    },
+    {
+      "step": 60.0,
+      "loss": 0.11767578125,
+      "grad_norm": 1.1015625,
+      "steps_per_s": 1.6452347529158848
+    },
+    {
+      "step": 65.0,
+      "loss": 0.078125,
+      "grad_norm": 1.078125,
+      "steps_per_s": 2.3157657904802855
+    },
+    {
+      "step": 70.0,
+      "loss": 0.107421875,
+      "grad_norm": 2.390625,
+      "steps_per_s": 2.3201595741543084
+    },
+    {
+      "step": 75.0,
+      "loss": 0.0966796875,
+      "grad_norm": 1.578125,
+      "steps_per_s": 2.3219240345198924
+    },
+    {
+      "step": 80.0,
+      "loss": 0.08642578125,
+      "grad_norm": 3.125,
+      "steps_per_s": 1.7705948148783688
+    },
+    {
+      "step": 85.0,
+      "loss": 0.0751953125,
+      "grad_norm": 1.90625,
+      "steps_per_s": 2.3140583812630835
+    },
+    {
+      "step": 90.0,
+      "loss": 0.1025390625,
+      "grad_norm": 2.34375,
+      "steps_per_s": 2.3146754970605787
+    },
+    {
+      "step": 95.0,
+      "loss": 0.0927734375,
+      "grad_norm": 2.234375,
+      "steps_per_s": 2.3195705992786477
+    },
+    {
+      "step": 100.0,
+      "loss": 0.08251953125,
+      "grad_norm": 2.328125,
+      "steps_per_s": 1.7291452416969906
+    }
+  ],
+  "validation": [
+    {
+      "step": 100,
+      "squared_error": 0.0,
+      "count": 0.0
+    }
+  ],
+  "input_hashes": [
+    {
+      "state": "0a7dedd5e28838f40d2259e1b8de8c61e2b52feb26369f38b14aabab034d29bd",
+      "actions": "9b6ae31527626c06aaebd292ec88f4b21d5f40e1072298c448c6367bb35af021",
+      "task_vec_clip": "9602a359ef7e331638073e57df9af563211660dc5797098b13cca98a67ca921c",
+      "cuda_rng": "aee757f068b82ca246aeb9e4d88b768273a4da45d23566991e5e2ae13228ce26"
+    },
+    {
+      "state": "4bd0c3ac8e5c4dffe00e1855ff54d2858fcbcc43b89061bb1e54ca547477d517",
+      "actions": "75d6458294fa6066b69031743af41ee03b53133488965b80670e11cf1a05ca81",
+      "task_vec_clip": "c13d4f301d319692cd0136f338ed1ecd126732f4a90312ca6936bcaebc0855a6",
+      "cuda_rng": "97733256ec14a9adc742eca2fc215ad0064b95b56cbc7426c9c305869c436fc7"
+    },
+    {
+      "state": "dba7a381e2de4c293425f3a380ba1fb47a2b35a37b03ffb65e469ca71696c6ed",
+      "actions": "c81ed2a352168f3ee18996a27bf121928fa80f9d4b156c66c4b0e2bf974238d3",
+      "task_vec_clip": "2b4933acbf9fe6b4a9b5f40e5aed2bba21ff5c0ac0bd25dbf199cdb90d85c443",
+      "cuda_rng": "9ee5cef2086818723acbea4354672c721ac99f6fbeeb9bf3a5c6e89465387502"
+    }
+  ],
+  "scope": "matched real-data throughput and finite-loss stability; not convergence",
+  "feature_cache": true,
+  "workers": 2,
+  "open_shards": 32,
+  "resources": [
+    {
+      "step": 5,
+      "peak_rss_kib": 8854996,
+      "gpu_allocated": 16150463488,
+      "shm_used": 571576320
+    },
+    {
+      "step": 10,
+      "peak_rss_kib": 8854996,
+      "gpu_allocated": 16149480448,
+      "shm_used": 587427840
+    },
+    {
+      "step": 15,
+      "peak_rss_kib": 8854996,
+      "gpu_allocated": 16149808128,
+      "shm_used": 572411904
+    },
+    {
+      "step": 20,
+      "peak_rss_kib": 8854996,
+      "gpu_allocated": 16149480448,
+      "shm_used": 1407377408
+    },
+    {
+      "step": 25,
+      "peak_rss_kib": 8854996,
+      "gpu_allocated": 16149808128,
+      "shm_used": 677838848
+    },
+    {
+      "step": 30,
+      "peak_rss_kib": 8854996,
+      "gpu_allocated": 16149480448,
+      "shm_used": 670261248
+    },
+    {
+      "step": 35,
+      "peak_rss_kib": 8854996,
+      "gpu_allocated": 16149808128,
+      "shm_used": 57344
+    },
+    {
+      "step": 40,
+      "peak_rss_kib": 8854996,
+      "gpu_allocated": 16149480448,
+      "shm_used": 1357111296
+    },
+    {
+      "step": 45,
+      "peak_rss_kib": 8854996,
+      "gpu_allocated": 16149808128,
+      "shm_used": 676569088
+    },
+    {
+      "step": 50,
+      "peak_rss_kib": 8854996,
+      "gpu_allocated": 16149480448,
+      "shm_used": 665047040
+    },
+    {
+      "step": 55,
+      "peak_rss_kib": 8854996,
+      "gpu_allocated": 16149808128,
+      "shm_used": 57344
+    },
+    {
+      "step": 60,
+      "peak_rss_kib": 8854996,
+      "gpu_allocated": 16149480448,
+      "shm_used": 647630848
+    },
+    {
+      "step": 65,
+      "peak_rss_kib": 8854996,
+      "gpu_allocated": 16149808128,
+      "shm_used": 648052736
+    },
+    {
+      "step": 70,
+      "peak_rss_kib": 8854996,
+      "gpu_allocated": 16149480448,
+      "shm_used": 687542272
+    },
+    {
+      "step": 75,
+      "peak_rss_kib": 8854996,
+      "gpu_allocated": 16149808128,
+      "shm_used": 57344
+    },
+    {
+      "step": 80,
+      "peak_rss_kib": 8854996,
+      "gpu_allocated": 16149480448,
+      "shm_used": 675995648
+    },
+    {
+      "step": 85,
+      "peak_rss_kib": 8854996,
+      "gpu_allocated": 16149808128,
+      "shm_used": 697667584
+    },
+    {
+      "step": 90,
+      "peak_rss_kib": 8854996,
+      "gpu_allocated": 16149480448,
+      "shm_used": 634040320
+    },
+    {
+      "step": 95,
+      "peak_rss_kib": 8854996,
+      "gpu_allocated": 16149808128,
+      "shm_used": 57344
+    },
+    {
+      "step": 100,
+      "peak_rss_kib": 8854996,
+      "gpu_allocated": 16149480448,
+      "shm_used": 697667584
+    }
+  ],
+  "shared_initial_weights_sha256": "dae6dc37cf2cc8543f1d941acba3db52a34606f49332ce8b21967d5eb3138094",
+  "peak_gpu_bytes": 32903497216,
+  "gpu": "NVIDIA A800-SXM4-80GB"
+}

@@ -1,4 +1,4 @@
-"""Short matched full-size history runs on real mixed subtask data; no bulk preprocessing."""
+"""Matched live/cached historical training on a bounded real Agibot subset."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 
 import torch
+from context.validation.correctness.train_comparison import memory_sample
 
 from lbm import train_loop
 from lbm.config import TrainConfig
@@ -25,31 +26,37 @@ def main():
     parser.add_argument("--output", required=True)
     parser.add_argument("--steps", type=int, default=20)
     parser.add_argument("--batch", type=int, default=16)
-    parser.add_argument("--seed", type=int, default=123)
-    parser.add_argument("--val-batches", type=int, default=2)
+    parser.add_argument("--feature-cache", default="")
+    parser.add_argument("--workers", type=int, default=2)
+    parser.add_argument("--open-shards", type=int, default=2)
+    parser.add_argument("--resume", default="")
+    parser.add_argument("--checkpoint-every", type=int, default=200)
     args = parser.parse_args()
     if not torch.cuda.is_available():
         raise RuntimeError("real CUDA GPU required")
     output = Path(args.output)
-    if output.exists():
+    if output.exists() and not args.resume:
         raise FileExistsError(output)
     cfg = TrainConfig(
         output_dir=str(output),
-        seed=args.seed,
+        seed=123,
+        feature_cache=args.feature_cache,
+        resume=args.resume,
+        feature_cache_open_shards=args.open_shards,
         batch_size=args.batch,
-        num_workers=2,
+        num_workers=args.workers,
         train_steps=args.steps,
-        val_every=args.steps,
-        val_batches=args.val_batches,
-        ckpt_every=args.steps + 1,
+        val_every=args.checkpoint_every,
+        val_batches=2,
+        ckpt_every=args.checkpoint_every,
         log_every=5,
         dump_batch=False,
     )
-    cfg.data.data_mix = "agibot,galaxea"
+    cfg.data.dataset = "agibot"
     cfg.data.instruction_mode = "subtask"
     cfg.data.rescan = True
-    cfg.data.max_episodes = 4
-    cfg.data.val_fraction = 0.25
+    cfg.data.max_episodes = 2
+    cfg.data.val_fraction = 0.0
     cfg.data.mmap_prebuild = False
     cfg.model.action_length = 1.0
     cfg.model.action_freq = 15.0
@@ -61,14 +68,18 @@ def main():
     cfg.optim.lr_warmup_steps = 10
     record = dict(
         mode=args.mode,
-        seed=args.seed,
-        validation_seed=2026,
+        resumed=bool(args.resume),
+        initial_hash_scope="model construction before optional resume restore",
         steps=args.steps,
         batch=args.batch,
         train=[],
         validation=[],
         input_hashes=[],
-        scope="short matched validation; not convergence or final optimality",
+        scope="matched real-data throughput and finite-loss stability; not convergence",
+        feature_cache=bool(args.feature_cache),
+        workers=args.workers,
+        open_shards=args.open_shards,
+        resources=[],
     )
     original_load = mixture.load_dataset
 
@@ -110,6 +121,7 @@ def main():
 
     def log_train(**kw):
         original_train(**kw)
+        record['resources'].append(dict(step=int(kw['step']), **memory_sample()))
         record["train"].append({key: float(kw[key]) for key in ("step", "loss", "grad_norm", "steps_per_s")})
 
     def log_val(stats, *, step, logger=None):
@@ -118,18 +130,10 @@ def main():
 
     train_loop.log_train_metrics = log_train
     train_loop.log_validation_metrics = log_val
-    original_evaluate = train_loop.evaluate_actions
-
-    def evaluate(*a, **kw):
-        with torch.random.fork_rng(devices=[torch.cuda.current_device()]):
-            torch.manual_seed(2026)
-            return original_evaluate(*a, **kw)
-
-    train_loop.evaluate_actions = evaluate
     train_loop.main(cfg)
     record["peak_gpu_bytes"] = torch.cuda.max_memory_allocated()
     record["gpu"] = torch.cuda.get_device_name()
-    (output / "summary.json").write_text(json.dumps(record, indent=2) + "\n")
+    (output / f"summary-{args.steps}.json").write_text(json.dumps(record, indent=2) + "\n")
 
 
 if __name__ == "__main__":

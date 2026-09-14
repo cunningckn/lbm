@@ -111,3 +111,13 @@ Reproduce an arm from the repository with existing data/cache/assets:
 PYTHONPATH=src:. OMP_NUM_THREADS=2 python context/validation/history/run_matched.py \
   --mode both --batch 64 --steps 20 --output /new/private/output
 ```
+
+
+## Subsequent validation
+
+[QUALITY.md](QUALITY.md) records two-seed, four-mode held-out short training.
+[LIBERO_HISTORY.md](LIBERO_HISTORY.md) records historical-policy training, fresh
+process recovery and an actual two-trial deployment check (0/2 task successes).
+[../dataset-features/README.md](../dataset-features/README.md) covers complete-token
+cloud mmap caches, throughput, resource monitoring and recovery.
+[REVIEW.md](REVIEW.md) records the five-PR normalization review and next baseline.

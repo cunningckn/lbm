@@ -1,0 +1,40 @@
+{
+  "cache_output": "/home/tione/workspace/kainingchen/Datasets/molmo-motion-1m-mmap/v1/subsets/ytvis",
+  "checksums_equal": true,
+  "dataset": "ytvis",
+  "limitations": [
+    "This is a warm-cache single-process numeric-window benchmark.",
+    "RGB/video decode, PyTorch workers, and GPU transfer are not measured.",
+    "Setup/index construction is excluded from both timed paths."
+  ],
+  "measured_at": "2026-09-14T17:21:32.654835Z",
+  "mmap_npy_parquet_index": {
+    "checksum": 34812522.30449173,
+    "elapsed_seconds": 0.020700888242572546,
+    "latency_ms_mean": 0.16147834685398266,
+    "latency_ms_p50": 0.15999190509319305,
+    "latency_ms_p95": 0.17669913358986375,
+    "samples": 128,
+    "samples_per_second": 6183.3095517496085
+  },
+  "parameters": {
+    "frames": 8,
+    "points": 32,
+    "samples": 128,
+    "seed": 20260915,
+    "source_records_per_track_kind": 64,
+    "warmup": 16,
+    "workers": 8
+  },
+  "raw_tar_npz": {
+    "checksum": 34812522.30449173,
+    "elapsed_seconds": 0.44536019675433636,
+    "latency_ms_mean": 3.47885694282013,
+    "latency_ms_p50": 3.4037460573017597,
+    "latency_ms_p95": 5.080836010165512,
+    "samples": 128,
+    "samples_per_second": 287.407812671247
+  },
+  "status": "completed",
+  "throughput_speedup": 21.51406217625135
+}

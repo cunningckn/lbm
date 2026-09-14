@@ -1,0 +1,38 @@
+{
+  "cache_output": "/home/tione/workspace/kainingchen/Datasets/molmo-motion-1m-mmap/v1/subsets/droid",
+  "checksums_equal": true,
+  "limitations": [
+    "OS page cache was warm; this is not a cold-disk benchmark.",
+    "The DROID pilot has no reconstructed video frames, so MP4 frame decode is not measured.",
+    "Both paths perform the same NumPy window materialization and checksum."
+  ],
+  "measured_at": "2026-09-14T17:19:31.304981Z",
+  "method": "warm-cache randomized window reads; source path decodes paired NPZ members from tar and caches parsed camera JSON; cache path reads NPY memmaps after one Parquet index load",
+  "mmap_npy_parquet_index": {
+    "checksum": 23251196.136913203,
+    "elapsed_seconds": 0.022505593951791525,
+    "latency_ms_mean": 0.1754193326632958,
+    "latency_ms_p50": 0.1269176136702299,
+    "latency_ms_p95": 0.16938280314207066,
+    "samples": 128,
+    "samples_per_second": 5687.474868434243
+  },
+  "parameters": {
+    "frames": 8,
+    "points": 32,
+    "samples": 128,
+    "seed": 20260915,
+    "warmup": 16
+  },
+  "raw_tar_npz_json": {
+    "checksum": 23251196.136913203,
+    "elapsed_seconds": 0.6069033937528729,
+    "latency_ms_mean": 4.740627777209738,
+    "latency_ms_p50": 4.633537027984858,
+    "latency_ms_p95": 6.227754196152091,
+    "samples": 128,
+    "samples_per_second": 210.9067131895472
+  },
+  "status": "completed",
+  "throughput_speedup": 26.966779683882162
+}

@@ -1,0 +1,40 @@
+{
+  "components": {
+    "assets": {
+      "sha256sums_sha256": "923ea447cb3b47dedea232636f28d953fa8a14c84dcaaea5c5676d2301bef518",
+      "status": "manifest-verified"
+    },
+    "droid": {
+      "sha256sums_sha256": "ed94398d3e73a981708c957d5a354b74b2a94e2e0acda1fa5a40d303f9c64953",
+      "status": "manifest-verified"
+    },
+    "egodex": {
+      "sha256sums_sha256": "601d6d4e2469a67eace43478d59ec3273ca89309acab835040f63e23304e3a8f",
+      "status": "manifest-verified"
+    },
+    "hdepic": {
+      "sha256sums_sha256": "0738d15545896cda6fe6990d2a1978e4504238b28e0324e6e5e6f8f550cf8958",
+      "status": "manifest-verified"
+    },
+    "molmospaces": {
+      "sha256sums_sha256": "2a9962f6d0465d794ab883d920921a7b935e00eaa4ed6892981b8b60c12afc0d",
+      "status": "manifest-verified"
+    },
+    "stereo4d": {
+      "sha256sums_sha256": "c3319a8c960a08c331ce2bedac636f906d011422c86a2353b6d5f8d6c7104768",
+      "status": "manifest-verified"
+    },
+    "xperience": {
+      "sha256sums_sha256": "be693c3d01d342694485298f401d40c763cb75fb686045cd161e0d4304baaa0d",
+      "status": "manifest-verified"
+    },
+    "ytvis": {
+      "sha256sums_sha256": "aa8f7edcf82bed9ee3e26ea23f282bdd677d9ae228488f39f93ce07b083e2453",
+      "status": "manifest-verified"
+    }
+  },
+  "output": "/home/tione/workspace/kainingchen/Datasets/molmo-motion-1m-mmap/v1",
+  "status": "passed",
+  "verified_at": "2026-09-14T17:14:33.342934Z",
+  "verify_files": false
+}

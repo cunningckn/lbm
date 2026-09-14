@@ -4,7 +4,8 @@
 
 工作分支：`feature/tc_covert_adapt`
 
-状态：实施中；本文是持续追加的工程记录，最终结果以同目录全量报告和成品根目录的 `READY.json` 为准。
+状态：已完成。生产成品根目录的 `READY.json`、7 个子集 `READY.json` 和 assets
+`READY.json` 均已生成；完整结果见 `MOLMO_MOTION_FULL_CONVERSION_REPORT_20260915.md`。
 
 ## 1. 目标与固定路径
 
@@ -60,8 +61,9 @@ Xperience `tracks-0000.tar` 约 3.65 GB 处发生 `IncompleteRead`；随后缩�
 
 ## 4. 已完成验证
 
-- 独立工具自动测试：6/6 通过，覆盖 DROID reader、tar offset NPZ、轴顺序、
-  NumPy pickle 兼容、100 CPU/0 GPU 请求、完整发布组件校验。
+- 独立工具自动测试：7/7 通过，覆盖 DROID reader、tar offset NPZ、轴顺序、
+  NumPy pickle 兼容、100 CPU/0 GPU 请求、完整发布组件校验，以及 MolmoSpaces
+  零字节 3D 成员的缺失值保留策略。
 - 真实数据 adapter 小样：EgoDex、HD-EPIC、MolmoSpaces、YTVIS 均完成构建，
   并通过源 NPZ/相机与成品 NPY 的逐字段抽检。
 - NumPy 兼容：源中的对象数组由 NumPy 2.x 写入；腾讯云现有验证环境为 NumPy 1.26，
@@ -75,6 +77,12 @@ Xperience `tracks-0000.tar` 约 3.65 GB 处发生 `IncompleteRead`；随后缩�
   Xperience 4、YTVIS 2、Stereo4D 2 条记录全部完成，顶层状态为 `pilot-ready`。
 - Xperience 额外字段基准自检：32 次相同请求原始 387.81 samples/s、mmap
   2,751.91 samples/s，校验和（含 `trust_weights`/`keep_mask`）一致，约 7.10 倍。
+- 生产任务 `train-1673540587627874048` 使用单实例 100 CPU、0 GPU，运行 382 秒后成功。
+  它复用首次任务已发布的 DROID、EgoDex、HD-EPIC，完成 MolmoSpaces、Xperience、
+  YTVIS、Stereo4D 和 assets；顶层 `READY.json` 状态为 `ready`。
+- 完整发布的 8 个组件清单复验、再对清单中全部 20,990 个文件重算 SHA-256 均通过。
+- 以全量成品进行的统一 128 次窗口加载基准完成；DROID 和五个通用数值子集的
+  原始/成品 checksum 均一致，具体吞吐和磁盘占用记录在最终报告。
 
 ## 5. 踩坑与处理
 
@@ -90,14 +98,16 @@ Xperience `tracks-0000.tar` 约 3.65 GB 处发生 `IncompleteRead`；随后缩�
 | 资产重复 hash 会额外读取数百 GB | MP4/H5 是已校验源文件的 hardlink | 生成清单时复用已通过 preflight 的 LFS SHA-256；迁移端仍可全量重算 |
 | 首次 TI-ONE API 调用无响应 | tc_dev 直连 API endpoint 超时 | SDK `HttpProfile.proxy` 固定使用可达内网代理 |
 | CPU-only 请求返回 `InvalidParameter [gpu]` | 沿用了 GPU 任务的 `GpuType=HCC-BW1000` | 按官方 CPU 示例改为 `Gpu=0`、`GpuType=""` |
+| MolmoSpaces 任务中断 | 发布 tar 内 `tracks/...exo_camera_1_3d.npz` 是零字节成员，`np.load` 抛出 `EOFError` | 增加回归测试；保留 2D/相机，3D 写入 NaN 和全 false visibility，并在 `source_anomalies` 显式标记；修复提交 `e5256c8` 后恢复任务 |
+| 首次任务遗留 78 GB partial | 失败时 staging 目录按设计保留，避免丢失诊断证据 | 成功后移入首次任务 `_jobs/.../failed_molmospaces_partial-*` 审计目录，不计入正式发布组件尺寸 |
 
 ## 6. 待完成验收
 
 - [x] 82/82 源文件尺寸全部通过；LFS SHA-256 由生产任务 preflight 执行
 - [x] 包含 Xperience 的七子集总 smoke 通过
-- [ ] 提交并监控 100 CPU / 0 GPU TI-ONE 全量任务
-- [ ] 顶层 `READY.json` 出现，七子集和 assets 均有组件 `READY.json`
-- [ ] 全量成品 manifest 与抽样源值复验通过
-- [ ] 统计同范围源/成品逻辑字节、实际磁盘占用、文件和分片数
-- [ ] DROID 与五个通用数值子集完成相同请求的原始/mmap 读取基准
-- [ ] 汇总最终测试报告与金山云迁移验收命令
+- [x] 提交并监控 100 CPU / 0 GPU TI-ONE 全量任务
+- [x] 顶层 `READY.json` 出现，七子集和 assets 均有组件 `READY.json`
+- [x] 全量成品 manifest 与逐文件 SHA-256 复验通过
+- [x] 统计同范围源/成品逻辑字节、实际磁盘占用、文件和分片数
+- [x] DROID 与五个通用数值子集完成相同请求的原始/mmap 读取基准
+- [x] 汇总最终测试报告与金山云迁移验收命令

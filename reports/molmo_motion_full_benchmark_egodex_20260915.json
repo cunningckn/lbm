@@ -1,0 +1,40 @@
+{
+  "cache_output": "/home/tione/workspace/kainingchen/Datasets/molmo-motion-1m-mmap/v1/subsets/egodex",
+  "checksums_equal": true,
+  "dataset": "egodex",
+  "limitations": [
+    "This is a warm-cache single-process numeric-window benchmark.",
+    "RGB/video decode, PyTorch workers, and GPU transfer are not measured.",
+    "Setup/index construction is excluded from both timed paths."
+  ],
+  "measured_at": "2026-09-14T17:20:13.712033Z",
+  "mmap_npy_parquet_index": {
+    "checksum": 93769720.82875577,
+    "elapsed_seconds": 0.06526917312294245,
+    "latency_ms_mean": 0.5096083550597541,
+    "latency_ms_p50": 0.188181409612298,
+    "latency_ms_p95": 1.4979294966906296,
+    "samples": 128,
+    "samples_per_second": 1961.1095694271535
+  },
+  "parameters": {
+    "frames": 8,
+    "points": 32,
+    "samples": 128,
+    "seed": 20260915,
+    "source_records_per_track_kind": 64,
+    "warmup": 16,
+    "workers": 8
+  },
+  "raw_tar_npz": {
+    "checksum": 93769720.82875577,
+    "elapsed_seconds": 0.7566533349454403,
+    "latency_ms_mean": 5.910691132157808,
+    "latency_ms_p50": 4.847848322242498,
+    "latency_ms_p95": 11.874924506992102,
+    "samples": 128,
+    "samples_per_second": 169.16597613255698
+  },
+  "status": "completed",
+  "throughput_speedup": 11.59281324922244
+}

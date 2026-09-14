@@ -107,6 +107,7 @@ class CustomSingleDataset(Dataset):
         norm_stats: dict[str, Any] | None = None,
         action_mode: str,
         action_kind: str | None = None,
+        state_kind: str | None = None,
         action_format: str | None = None,
     ) -> None:
         if not episodes and not records:
@@ -118,6 +119,8 @@ class CustomSingleDataset(Dataset):
         self.action_mode = parse_rep(action_mode)
         kind = parse_kind(action_kind) if action_kind else None
         self.action_kind = None if kind in (None, JOINT) else kind
+        skind = parse_kind(state_kind) if state_kind else kind
+        self.state_kind = None if skind in (None, JOINT) else skind
         self.action_length = float(action_length)
         freq = float(action_freq or spec.fps)
         freq = _lock_file_delta_action_freq(spec, self.action_mode, freq, requested=action_freq)
@@ -253,25 +256,17 @@ class CustomSingleDataset(Dataset):
         return load_fk_episode(self.root, epi_i, source=source_key(rec), n_frames=rec.n_frames)
 
     def _policy_vectors(self, epi_i: int) -> tuple[np.ndarray, np.ndarray, tuple]:
-        from lbm.dataloader.custom.fk_cache import needs_joint_fk
-
-        if self.action_kind == EEF and needs_joint_fk(self.spec):
-            cached = self._fk_cached(epi_i)
-            if cached is not None:
-                canon = resolve_action_space(
-                    self.spec, self.action_mode, action_kind=self.action_kind, action_format=XYZ_ROTVEC
-                )
-                return pack_to_format(cached[0], cached[1], canon, self.action_format)
-            state, action = self._vectors(epi_i)
-            from lbm.kinematics import apply_joint_fk
-
-            state, action, canon = apply_joint_fk(
-                state, action, self.spec, self.action_mode, self.action_kind, action_format=XYZ_ROTVEC
-            )
-            return pack_to_format(state, action, canon, self.action_format)
+        Build policy vectors with independent state/action representations.
         state, action = self._vectors(epi_i)
-        native = resolve_action_space(self.spec, self.action_mode)
-        return pack_to_format(state, action, native, self.action_format)
+        native_action = resolve_action_space(self.spec, self.action_mode)
+        if self.state_kind == EEF:
+            from lbm.kinematics import apply_joint_fk
+            # FK is applied to state only; action remains native qpos.
+            fk_state, _unused_action, state_slices = apply_joint_fk(
+                state, action, self.spec, self.action_mode, EEF, action_format=XYZ_ROTVEC
+            )
+            return fk_state, pack_to_format(state, action, native_action, self.action_format)[1], state_slices
+        return pack_to_format(state, action, native_action, self.action_format)
 
     def __getitem__(self, index: int) -> dict[str, Any]:
         epi_i, t = self._locate(index)

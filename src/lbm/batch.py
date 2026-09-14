@@ -285,3 +285,16 @@ def policy_batch_from_loader(
             device=device, dtype=dtype, non_blocking=non_blocking
         )
     return out
+
+
+def cast_prepared_batch(batch, dtype):
+    """Cast prepared floating inputs while retaining physical history ages in FP32."""
+    result = {}
+    for key, value in batch.items():
+        if isinstance(value, dict):
+            result[key] = cast_prepared_batch(value, dtype)
+        elif torch.is_tensor(value) and value.is_floating_point():
+            result[key] = value.to(dtype=torch.float32 if key.endswith('_offsets') else dtype)
+        else:
+            result[key] = value
+    return result

@@ -1,0 +1,283 @@
+{
+  "mode": "both",
+  "steps": 100,
+  "batch": 64,
+  "train": [
+    {
+      "step": 5.0,
+      "loss": 1.140625,
+      "grad_norm": 21.75,
+      "steps_per_s": 0.050855523885028384
+    },
+    {
+      "step": 10.0,
+      "loss": 0.94140625,
+      "grad_norm": 15.625,
+      "steps_per_s": 3.466987615063793
+    },
+    {
+      "step": 15.0,
+      "loss": 0.48046875,
+      "grad_norm": 7.9375,
+      "steps_per_s": 3.4950147179798896
+    },
+    {
+      "step": 20.0,
+      "loss": 0.341796875,
+      "grad_norm": 4.65625,
+      "steps_per_s": 3.4598416186631975
+    },
+    {
+      "step": 25.0,
+      "loss": 0.279296875,
+      "grad_norm": 2.375,
+      "steps_per_s": 3.494504766858935
+    },
+    {
+      "step": 30.0,
+      "loss": 0.2294921875,
+      "grad_norm": 1.8515625,
+      "steps_per_s": 3.5201750862099606
+    },
+    {
+      "step": 35.0,
+      "loss": 0.205078125,
+      "grad_norm": 1.9765625,
+      "steps_per_s": 3.500398137393777
+    },
+    {
+      "step": 40.0,
+      "loss": 0.07373046875,
+      "grad_norm": 1.453125,
+      "steps_per_s": 2.6960247339615306
+    },
+    {
+      "step": 45.0,
+      "loss": 0.298828125,
+      "grad_norm": 7.6875,
+      "steps_per_s": 3.492369959169969
+    },
+    {
+      "step": 50.0,
+      "loss": 0.1611328125,
+      "grad_norm": 2.15625,
+      "steps_per_s": 3.533660729837071
+    },
+    {
+      "step": 55.0,
+      "loss": 0.1474609375,
+      "grad_norm": 2.625,
+      "steps_per_s": 3.484018317069371
+    },
+    {
+      "step": 60.0,
+      "loss": 0.11328125,
+      "grad_norm": 1.875,
+      "steps_per_s": 3.461093067856711
+    },
+    {
+      "step": 65.0,
+      "loss": 0.08447265625,
+      "grad_norm": 1.71875,
+      "steps_per_s": 3.5238583885856727
+    },
+    {
+      "step": 70.0,
+      "loss": 0.12890625,
+      "grad_norm": 3.03125,
+      "steps_per_s": 3.5270810023544086
+    },
+    {
+      "step": 75.0,
+      "loss": 0.09326171875,
+      "grad_norm": 1.8984375,
+      "steps_per_s": 3.5068635562094204
+    },
+    {
+      "step": 80.0,
+      "loss": 0.11767578125,
+      "grad_norm": 3.34375,
+      "steps_per_s": 2.6902710358619117
+    },
+    {
+      "step": 85.0,
+      "loss": 0.07080078125,
+      "grad_norm": 1.8515625,
+      "steps_per_s": 3.5097562280278565
+    },
+    {
+      "step": 90.0,
+      "loss": 0.09423828125,
+      "grad_norm": 2.84375,
+      "steps_per_s": 3.520494301301447
+    },
+    {
+      "step": 95.0,
+      "loss": 0.10693359375,
+      "grad_norm": 2.453125,
+      "steps_per_s": 3.5179924968061482
+    },
+    {
+      "step": 100.0,
+      "loss": 0.076171875,
+      "grad_norm": 1.8359375,
+      "steps_per_s": 3.5177523021812664
+    }
+  ],
+  "validation": [
+    {
+      "step": 100,
+      "squared_error": 0.0,
+      "count": 0.0
+    }
+  ],
+  "input_hashes": [
+    {
+      "state": "c32d80698127c39796ff0f6cfd12aafcacc762008d8854547286dfced7e1da66",
+      "actions": "fb36ce81c4600d4a47f15bebcd39a0c283d87b88faeece99a7e5b681f7ad2c6e",
+      "task_vec_clip": "6c1c55244c1f98ef75f1807dad8f0ab4aca3718d1d800ac5daaeb8997a72ff5b",
+      "cuda_rng": "aee757f068b82ca246aeb9e4d88b768273a4da45d23566991e5e2ae13228ce26"
+    },
+    {
+      "state": "72ad5a3a9ecf456aee73081aeb249f29f85feecc82e768dd44eae5b0a20ff923",
+      "actions": "8d57dc1dc03a2548d3a51b7daa236f1eef0311705420aae640b9471f8affb50c",
+      "task_vec_clip": "c79c91071bafaeb1b932be5d8e11ece4a75a2373db8e1e8716887f78e92c0124",
+      "cuda_rng": "97733256ec14a9adc742eca2fc215ad0064b95b56cbc7426c9c305869c436fc7"
+    },
+    {
+      "state": "f04f5f365676e4664449c6ee760f1521d7833c6750313663f89d3107e7932157",
+      "actions": "e3d14c1472c1668fd478cd753ce8714467154db6ecef2a165e5bc6ad5f0ecdce",
+      "task_vec_clip": "b490914ee6bd73c07555c3d0ddc5b5c9f38c9099a9d71e18b64255fe91afaa59",
+      "cuda_rng": "9ee5cef2086818723acbea4354672c721ac99f6fbeeb9bf3a5c6e89465387502"
+    }
+  ],
+  "scope": "matched real-data throughput and finite-loss stability; not convergence",
+  "feature_cache": true,
+  "workers": 2,
+  "open_shards": 32,
+  "resources": [
+    {
+      "step": 5,
+      "peak_rss_kib": 8855392,
+      "gpu_allocated": 15931828224,
+      "shm_used": 348876800
+    },
+    {
+      "step": 10,
+      "peak_rss_kib": 8855392,
+      "gpu_allocated": 15911217152,
+      "shm_used": 348876800
+    },
+    {
+      "step": 15,
+      "peak_rss_kib": 8855392,
+      "gpu_allocated": 15906990080,
+      "shm_used": 348876800
+    },
+    {
+      "step": 20,
+      "peak_rss_kib": 8855392,
+      "gpu_allocated": 15904270336,
+      "shm_used": 348876800
+    },
+    {
+      "step": 25,
+      "peak_rss_kib": 8855392,
+      "gpu_allocated": 15907907584,
+      "shm_used": 348876800
+    },
+    {
+      "step": 30,
+      "peak_rss_kib": 8855392,
+      "gpu_allocated": 15932024832,
+      "shm_used": 348876800
+    },
+    {
+      "step": 35,
+      "peak_rss_kib": 8855392,
+      "gpu_allocated": 15934154752,
+      "shm_used": 57344
+    },
+    {
+      "step": 40,
+      "peak_rss_kib": 8855392,
+      "gpu_allocated": 15909382144,
+      "shm_used": 348643328
+    },
+    {
+      "step": 45,
+      "peak_rss_kib": 8855392,
+      "gpu_allocated": 15908825088,
+      "shm_used": 232448000
+    },
+    {
+      "step": 50,
+      "peak_rss_kib": 8855392,
+      "gpu_allocated": 15924586496,
+      "shm_used": 348876800
+    },
+    {
+      "step": 55,
+      "peak_rss_kib": 8855392,
+      "gpu_allocated": 15926945792,
+      "shm_used": 348643328
+    },
+    {
+      "step": 60,
+      "peak_rss_kib": 8855392,
+      "gpu_allocated": 15912658944,
+      "shm_used": 348643328
+    },
+    {
+      "step": 65,
+      "peak_rss_kib": 8855392,
+      "gpu_allocated": 15913019392,
+      "shm_used": 348643328
+    },
+    {
+      "step": 70,
+      "peak_rss_kib": 8855392,
+      "gpu_allocated": 15932614656,
+      "shm_used": 348643328
+    },
+    {
+      "step": 75,
+      "peak_rss_kib": 8855392,
+      "gpu_allocated": 15911872512,
+      "shm_used": 57344
+    },
+    {
+      "step": 80,
+      "peak_rss_kib": 8855392,
+      "gpu_allocated": 15911249920,
+      "shm_used": 348643328
+    },
+    {
+      "step": 85,
+      "peak_rss_kib": 8855392,
+      "gpu_allocated": 15911872512,
+      "shm_used": 348643328
+    },
+    {
+      "step": 90,
+      "peak_rss_kib": 8855392,
+      "gpu_allocated": 15911249920,
+      "shm_used": 348643328
+    },
+    {
+      "step": 95,
+      "peak_rss_kib": 8855392,
+      "gpu_allocated": 15911872512,
+      "shm_used": 348876800
+    },
+    {
+      "step": 100,
+      "peak_rss_kib": 8855392,
+      "gpu_allocated": 15911249920,
+      "shm_used": 348876800
+    }
+  ],
+  "shared_initial_weights_sha256": "dae6dc37cf2cc8543f1d941acba3db52a34606f49332ce8b21967d5eb3138094",
+  "peak_gpu_bytes": 24055104000,
+  "gpu": "NVIDIA A800-SXM4-80GB"
+}

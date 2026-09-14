@@ -443,3 +443,55 @@ otherwise identical settings. Both use training-only normalization and record
 source/episode identities, allowing overlap checks and per-source validation.
 Legacy caches remain readable but lack episode provenance and content checksums
 unless their manifests contain them; rebuild these for the stronger guarantees.
+
+### Dataset-local visual prebuild
+
+Use the matching training environment and installed encoder assets:
+
+```bash
+bash scripts/prebuild_visual.sh --dataset agibot --vision-encoder dino \
+  --instruction-mode subtask --max-episodes 4 --rescan --no-mmap \
+  --batch-size 32 --num-workers 2 --action-length 1 \
+  --history-length 0.3 --history-freq 10 --history-time-encoding \
+  --state-history-length 0.3 --state-history-freq 10
+```
+
+Without `--output-dir`, a single-source build writes to
+`<dataset>/.cache/<vision-encoder>/prebuilt/<fingerprint>/<train-or-val>`.
+The fingerprint covers source identity, normalization, history/action/camera
+configuration, loaded vision/text weights, tokenizer, extraction precision and
+preprocessing code. `dino` and `siglip` are the supported encoder names; weight
+variants have separate fingerprints. The command prints the complete path.
+`LBM_PYTHON` selects the Python executable for the shell wrapper.
+
+Use `--reuse-cache` to verify and reuse a completed cache; every shard payload
+is checksummed. Rerun an interrupted command unchanged to resume `.building`
+shards. Different configurations produce separate paths. Keep batch/worker
+settings unchanged during partial-build recovery, whose contract is stricter.
+An explicit `--output-dir` still supports existing workflows and mixed-source
+caches. Dataset-local mode requires one source so a mixture is not stored under
+an arbitrary member. Run separately for each dataset when preparing local caches.
+
+Pass the printed path to training:
+
+```bash
+python scripts/train.py --feature-cache /data/agibot/.cache/dino/prebuilt/<fingerprint>/train \
+  --instruction-mode subtask --batch-size 64 --steps 100
+```
+
+For held-out evaluation, build both splits with the same `--val-fraction`, seed
+and source options, then pass the validation path with `--val-dataset`. Stored
+history/model IO is applied by the cache loader. Frozen feature training cannot
+update the visual encoder; rebuild when changing weights or cached inputs.
+
+Cloud filesystems remain the production storage location. Feature arrays are
+opened with `mmap_mode="r"`; no full-cache RAM preload or local-disk staging is
+required. Tune `--feature-cache-open-shards` (default 2, maximum 64) to retain more
+mmap mappings per process and reduce repeated opens under shuffled sampling.
+This bounds mapped shard handles rather than allocating each complete shard in
+RAM. OS page-cache behavior and file-descriptor limits still apply.
+
+The cache stores the complete output token grid consumed by the online policy,
+with camera/history axes intact, before trainable pooling or temporal encoding.
+For the tested DINO input this is CLS + 196 patch tokens, each 768 wide; it is not
+a mean-pooled image embedding. Pooling remains trainable in the policy.

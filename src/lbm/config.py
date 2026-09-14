@@ -14,6 +14,7 @@ from lbm.temporal import n_steps
 @dataclass(frozen=True)
 class TrainDefaults:
     """Shared defaults used by the train config and command-line parser."""
+    feature_cache_open_shards: int = 2
     batch_size: int = 4
     num_workers: int = 8
     train_steps_real: int = 75_000
@@ -480,6 +481,7 @@ class TrainConfig:
     train_steps: int = TRAIN_DEFAULTS.train_steps_real
     output_dir: str = field(default_factory=lambda: str(default_checkpoints_dir()))
     feature_cache: str = ""
+    feature_cache_open_shards: int = TRAIN_DEFAULTS.feature_cache_open_shards
     fake_data: bool = False
 
     load_pretrained: str = ""

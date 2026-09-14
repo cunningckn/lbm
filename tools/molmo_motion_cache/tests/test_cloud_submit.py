@@ -36,6 +36,7 @@ class CloudSubmitRequestTest(unittest.TestCase):
         resource = params["ResourceConfigInfos"][0]
         self.assertEqual(resource["Cpu"], 100_000)
         self.assertEqual(resource["Gpu"], 0)
+        self.assertEqual(resource["GpuType"], "")
         self.assertEqual(resource["InstanceNum"], 1)
         command = params["StartCmdInfo"]["StartCmd"]
         self.assertIn("WORKERS=100", command)

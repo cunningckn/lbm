@@ -8,7 +8,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from submit_molmo_motion_full import DEFAULT_KEY_INFO, DEFAULT_REGION, _load_key_info, make_client
+from submit_molmo_motion_full import (
+    DEFAULT_API_PROXY,
+    DEFAULT_KEY_INFO,
+    DEFAULT_REGION,
+    _load_key_info,
+    make_client,
+)
 
 
 def parser() -> argparse.ArgumentParser:
@@ -16,6 +22,7 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--task-id", required=True)
     result.add_argument("--key-info", type=Path, default=DEFAULT_KEY_INFO)
     result.add_argument("--region", default=DEFAULT_REGION)
+    result.add_argument("--api-proxy", default=DEFAULT_API_PROXY)
     result.add_argument("--audit-log", type=Path, default=None)
     return result
 
@@ -45,7 +52,7 @@ def main(argv: list[str] | None = None) -> int:
 
     request = models.DescribeTrainingTaskRequest()
     request.Id = args.task_id
-    response = make_client(key_info, args.region).DescribeTrainingTask(request)
+    response = make_client(key_info, args.region, args.api_proxy).DescribeTrainingTask(request)
     result = summarize(json.loads(response.to_json_string()))
     print(json.dumps(result, indent=2, ensure_ascii=False))
     if args.audit_log is not None:

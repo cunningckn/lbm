@@ -34,6 +34,7 @@ DEFAULT_IMAGE = (
 )
 DEFAULT_REGION = "ap-beijing"
 DEFAULT_RESOURCE_GROUP_ID = "rsg-d45m9fwc"
+DEFAULT_API_PROXY = os.environ.get("TC_API_PROXY", "http://10.0.0.222:8888")
 CPU_CORES = 100
 GPU_COUNT = 0
 
@@ -53,6 +54,7 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--resource-group-id", default=DEFAULT_RESOURCE_GROUP_ID)
     result.add_argument("--image-url", default=DEFAULT_IMAGE)
     result.add_argument("--region", default=DEFAULT_REGION)
+    result.add_argument("--api-proxy", default=DEFAULT_API_PROXY)
     return result
 
 
@@ -164,7 +166,7 @@ def build_params(
         "Role": "WORKER",
         "Cpu": CPU_CORES * 1000,
         "Memory": args.memory_gb * 1024,
-        "GpuType": "HCC-BW1000",
+        "GpuType": "",
         "Gpu": GPU_COUNT * 100,
         "InstanceNum": 1,
     }
@@ -227,7 +229,7 @@ def build_params(
     }
 
 
-def make_client(key_info: dict[str, str], region: str) -> Any:
+def make_client(key_info: dict[str, str], region: str, api_proxy: str = "") -> Any:
     from tencentcloud.common import credential
     from tencentcloud.common.profile.client_profile import ClientProfile
     from tencentcloud.common.profile.http_profile import HttpProfile
@@ -239,6 +241,7 @@ def make_client(key_info: dict[str, str], region: str) -> Any:
     )
     http_profile = HttpProfile()
     http_profile.endpoint = "tione.tencentcloudapi.com"
+    http_profile.proxy = api_proxy or None
     client_profile = ClientProfile()
     client_profile.httpProfile = http_profile
     return tione_client.TioneClient(cred, region, client_profile)
@@ -290,7 +293,7 @@ def main(argv: list[str] | None = None) -> int:
     from tencentcloud.tione.v20211111 import models
 
     try:
-        client = make_client(key_info, args.region)
+        client = make_client(key_info, args.region, args.api_proxy)
         request = models.CreateTrainingTaskRequest()
         request.from_json_string(json.dumps(params))
         response = client.CreateTrainingTask(request)

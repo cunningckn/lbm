@@ -1,0 +1,12 @@
+{
+  "completed_droid_bytes": 2340248092,
+  "completed_droid_files": 5,
+  "completed_track_camera_bytes": 2323148800,
+  "incomplete_transfer_bytes_observed": 0,
+  "incomplete_transfer_files_observed": 0,
+  "official_split_counts": {
+    "test": 1169,
+    "train": 22363
+  },
+  "source_root": "/home/tione/workspace/kainingchen/Datasets/molmo-motion-1m"
+}

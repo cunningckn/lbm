@@ -635,6 +635,12 @@ def build_droid_cache(
             prepared, skipped, candidates_seen = _prepare_records(source, limit)
             if not prepared:
                 raise RuntimeError("no complete and valid DROID samples were available to convert")
+            if limit is None and skipped:
+                raise RuntimeError(
+                    "refusing to label an incomplete DROID conversion as full: "
+                    f"{sum(skipped.values())} of {candidates_seen} canonical records failed "
+                    f"validation ({dict(sorted(skipped.items()))})"
+                )
             clips: list[dict[str, Any]] = []
             tracks: list[dict[str, Any]] = []
             cameras: list[dict[str, Any]] = []
@@ -730,7 +736,8 @@ def build_droid_cache(
             "sha256sums_sha256": manifest_hash,
             "created_at": utc_now(),
         }
-        write_json(staged_root / "PILOT_READY.json", ready)
+        marker_name = "PILOT_READY.json" if limit is not None else "READY.json"
+        write_json(staged_root / marker_name, ready)
         fsync_directory(staged_root)
         os.replace(staged_root, output_path)
         fsync_directory(output_path.parent)

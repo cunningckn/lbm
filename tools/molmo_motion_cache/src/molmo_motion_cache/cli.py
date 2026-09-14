@@ -13,7 +13,15 @@ import numpy as np
 
 from .common import byte_size, read_json, utc_now, verify_checksum_manifest, write_json
 from .droid import build_droid_cache
+from .generic import GENERIC_SUBSETS, build_generic_cache
+from .generic_benchmark import benchmark_generic_cache
 from .reader import MMapDroidReader, RawTarDroidReader
+from .release import (
+    build_full_release,
+    inspect_source_snapshot,
+    require_complete_source,
+    verify_release,
+)
 
 
 def _json_print(value: Any) -> None:
@@ -68,10 +76,13 @@ def verify_cache(
     verify_hashes: bool,
 ) -> dict[str, Any]:
     output_path = Path(output).resolve()
-    readiness = output_path / "PILOT_READY.json"
-    if not readiness.is_file():
+    readiness = next(
+        (path for path in (output_path / "READY.json", output_path / "PILOT_READY.json") if path.is_file()),
+        None,
+    )
+    if readiness is None:
         raise FileNotFoundError(
-            f"cache has no PILOT_READY.json and is not a completed pilot: {output_path}"
+            f"cache has no READY.json or PILOT_READY.json: {output_path}"
         )
     reader = MMapDroidReader(output_path)
     result: dict[str, Any] = {
@@ -251,6 +262,48 @@ def build_parser() -> argparse.ArgumentParser:
     build.add_argument("--shard-size", type=int, default=512)
     build.add_argument("--checks", type=int, default=16)
 
+    generic = subcommands.add_parser(
+        "build-generic", help="build one non-DROID materialized subset cache"
+    )
+    _add_common_source_output(generic)
+    generic.add_argument("--dataset", choices=GENERIC_SUBSETS, required=True)
+    generic.add_argument("--limit-per-track-kind", type=int, default=None)
+    generic.add_argument("--shard-size", type=int, default=256)
+    generic.add_argument("--workers", type=int, default=8)
+    generic.add_argument("--checks", type=int, default=16)
+    generic.add_argument("--no-checksums", action="store_true")
+
+    release = subcommands.add_parser(
+        "build-release", help="build or resume the complete seven-subset cache release"
+    )
+    _add_common_source_output(release)
+    release.add_argument("--workers", type=int, default=32)
+    release.add_argument("--shard-size", type=int, default=256)
+    release.add_argument("--checks", type=int, default=32)
+    release.add_argument("--limit-per-subset", type=int, default=None)
+    release.add_argument("--verify-source-hashes", action="store_true")
+    release.add_argument("--no-checksums", action="store_true")
+
+    source = subcommands.add_parser(
+        "inspect-source", help="validate the pinned Hugging Face local-dir snapshot"
+    )
+    source.add_argument("--source-root", required=True, type=Path)
+    source.add_argument("--workers", type=int, default=16)
+    source.add_argument("--verify-hashes", action="store_true")
+    source.add_argument("--require-complete", action="store_true")
+    source.add_argument("--report", type=Path, default=None)
+
+    verify_full = subcommands.add_parser(
+        "verify-release", help="validate a complete seven-subset release"
+    )
+    verify_full.add_argument("--output", required=True, type=Path)
+    verify_full.add_argument(
+        "--verify-files",
+        action="store_true",
+        help="rehash every file; use after copying the release to another host",
+    )
+    verify_full.add_argument("--report", type=Path, default=None)
+
     verify = subcommands.add_parser("verify", help="check a completed DROID pilot")
     _add_common_source_output(verify)
     verify.add_argument("--checks", type=int, default=32)
@@ -267,6 +320,20 @@ def build_parser() -> argparse.ArgumentParser:
     benchmark.add_argument("--points", type=int, default=32)
     benchmark.add_argument("--seed", type=int, default=20260914)
     benchmark.add_argument("--report", type=Path, default=None)
+
+    generic_benchmark = subcommands.add_parser(
+        "benchmark-generic", help="compare raw tar/NPZ reads to a generic mmap subset"
+    )
+    _add_common_source_output(generic_benchmark)
+    generic_benchmark.add_argument("--dataset", choices=GENERIC_SUBSETS, required=True)
+    generic_benchmark.add_argument("--source-records-per-track-kind", type=int, default=32)
+    generic_benchmark.add_argument("--samples", type=int, default=256)
+    generic_benchmark.add_argument("--warmup", type=int, default=16)
+    generic_benchmark.add_argument("--frames", type=int, default=8)
+    generic_benchmark.add_argument("--points", type=int, default=32)
+    generic_benchmark.add_argument("--workers", type=int, default=8)
+    generic_benchmark.add_argument("--seed", type=int, default=20260915)
+    generic_benchmark.add_argument("--report", type=Path, default=None)
 
     inspect = subcommands.add_parser(
         "inspect-droid", help="summarize only completed DROID source files"
@@ -291,6 +358,40 @@ def main(argv: list[str] | None = None) -> int:
             shard_size=arguments.shard_size,
             checks=arguments.checks,
         )
+    elif arguments.command == "build-generic":
+        result = build_generic_cache(
+            arguments.source_root,
+            arguments.output,
+            arguments.dataset,
+            limit_per_track_kind=arguments.limit_per_track_kind,
+            shard_size=arguments.shard_size,
+            workers=arguments.workers,
+            checks=arguments.checks,
+            checksums=not arguments.no_checksums,
+        )
+    elif arguments.command == "build-release":
+        result = build_full_release(
+            arguments.source_root,
+            arguments.output,
+            workers=arguments.workers,
+            shard_size=arguments.shard_size,
+            checks=arguments.checks,
+            limit_per_subset=arguments.limit_per_subset,
+            verify_source_hashes=arguments.verify_source_hashes,
+            checksums=not arguments.no_checksums,
+        )
+    elif arguments.command == "inspect-source":
+        result = inspect_source_snapshot(
+            arguments.source_root,
+            verify_hashes=arguments.verify_hashes,
+            workers=arguments.workers,
+        )
+        if arguments.require_complete:
+            require_complete_source(result)
+        _write_optional_report(result, arguments.report)
+    elif arguments.command == "verify-release":
+        result = verify_release(arguments.output, verify_files=arguments.verify_files)
+        _write_optional_report(result, arguments.report)
     elif arguments.command == "verify":
         result = verify_cache(
             arguments.source_root,
@@ -307,6 +408,20 @@ def main(argv: list[str] | None = None) -> int:
             warmup=arguments.warmup,
             frames=arguments.frames,
             points=arguments.points,
+            seed=arguments.seed,
+        )
+        _write_optional_report(result, arguments.report)
+    elif arguments.command == "benchmark-generic":
+        result = benchmark_generic_cache(
+            arguments.source_root,
+            arguments.output,
+            arguments.dataset,
+            source_records_per_track_kind=arguments.source_records_per_track_kind,
+            samples=arguments.samples,
+            warmup=arguments.warmup,
+            frames=arguments.frames,
+            points=arguments.points,
+            workers=arguments.workers,
             seed=arguments.seed,
         )
         _write_optional_report(result, arguments.report)

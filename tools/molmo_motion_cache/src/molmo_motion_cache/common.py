@@ -79,14 +79,23 @@ def safe_relative_path(value: str) -> Path:
     return path
 
 
-def write_checksum_manifest(root: Path) -> str:
-    """Hash every delivery file except the manifest and readiness marker."""
+def write_checksum_manifest(
+    root: Path, known_hashes: dict[str, str] | None = None
+) -> str:
+    """Hash every delivery file, optionally reusing trusted source hashes."""
 
     entries: list[tuple[str, str]] = []
     excluded = {"SHA256SUMS", "PILOT_READY.json", "READY.json"}
+    trusted = known_hashes or {}
     for path in sorted(root.rglob("*")):
         if path.is_file() and path.name not in excluded:
-            entries.append((sha256_file(path), path.relative_to(root).as_posix()))
+            relative = path.relative_to(root).as_posix()
+            digest = trusted[relative] if relative in trusted else sha256_file(path)
+            if len(digest) != 64 or any(
+                character not in "0123456789abcdef" for character in digest
+            ):
+                raise ValueError(f"invalid trusted SHA-256 for {relative}")
+            entries.append((digest, relative))
     manifest = root / "SHA256SUMS"
     with manifest.open("w", encoding="utf-8", newline="\n") as handle:
         for digest, relative in entries:

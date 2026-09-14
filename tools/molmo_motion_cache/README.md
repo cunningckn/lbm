@@ -1,75 +1,143 @@
 # MolmoMotion mmap cache
 
-This standalone package converts MolmoMotion-1M source shards into a portable,
-index-driven numeric cache. It deliberately does not import the LBM training
-package, Torch, or CUDA; conversion can run in a small CPU environment.
+This standalone CPU package converts the complete published MolmoMotion-1M
+snapshot into a portable, index-driven cache. It does not import LBM, Torch,
+or CUDA. Runtime paths are relative to the delivery root, so the finished
+directory can be rsynced from Tencent Cloud to Kingsoft Cloud without rebuilding.
 
-The first implemented and validated adapter is DROID. DROID source tracks are
-paired *_2d.npz and *_3d.npz members inside completed tar archives, while
-camera calibration is stored in *_cameras.json members. The builder:
+## Published subset coverage
 
-- uses the official droid_split.json entries as the source of truth;
-- ignores incomplete names such as .part and never reads them;
-- flattens each variable (T, N, D) trajectory into shard-level contiguous
-  .npy arrays, recording (row_offset, T, N) in Parquet;
-- stores visibility masks separately instead of padding every trajectory to a
-  global size;
-- materializes numeric camera intrinsics/extrinsics once per clip;
-- stores only relative runtime paths, so the cache can be copied to another
-  host without rebuilding its indices.
+| Subset | Converted payload |
+| --- | --- |
+| DROID | 2D/3D tracks, visibility, camera calibration, split/caption/ranges |
+| EgoDex | object and hand tracks, visibility, dynamic camera, metadata |
+| HD-EPIC | object tracks, visibility, dynamic camera, metadata |
+| MolmoSpaces | tracks, camera, videos and robot H5 assets, metadata |
+| Xperience | object and hand tracks plus metadata; camera/RGB need gated upstream reconstruction |
+| YTVIS | object tracks, visibility, dynamic camera, metadata |
+| Stereo4D | all metadata and published track indices; numeric tracks/camera/RGB need upstream reconstruction |
 
-It does not reconstruct DROID MP4s. The official release needs the upstream
-DROID video corpus for that step, and no video data is fabricated by this
-converter. Consequently, the current DROID pilot validates the trajectory
-and camera path only.
+The builder uses the official split JSON as its source of truth. It indexes
+uncompressed tar headers once and reads NPZ members by byte offset, without
+extracting a loose-file tree. Every numeric trajectory is normalized to
+`(time, point, dimension)` and flattened into shard-level `.npy` arrays;
+Parquet rows retain sample/object identity, shape, and offsets. JSON metadata
+is normalized into Parquet/JSON delivery tables instead of being parsed in the
+training hot path.
 
-## Run from the LBM checkout
+The source package does not include reconstructed RGB for DROID, EgoDex,
+HD-EPIC, Xperience, YTVIS, or Stereo4D. The converter records that limitation
+and never fabricates missing pixels or geometry.
 
-Use the already prepared lightweight Python environment on tc_dev:
+## Tencent Cloud paths
 
-    export PYTHONPATH=/home/tione/workspace/kainingchen/lbm/tools/molmo_motion_cache/src
-    PY=/home/tione/workspace/kainingchen/xprobot_flow/.venv/bin/python
-    RAW=/home/tione/workspace/kainingchen/Datasets/molmo-motion-1m
-    OUT=/home/tione/workspace/kainingchen/Datasets/molmo-motion-1m-mmap/v1/pilots/droid-pilot-512
+```bash
+cd /home/tione/workspace/kainingchen/lbm
+export PYTHONPATH="$PWD/tools/molmo_motion_cache/src"
+PY=/home/tione/workspace/kainingchen/xprobot_flow/.venv/bin/python
+RAW=/home/tione/workspace/kainingchen/Datasets/molmo-motion-1m
+OUT=/home/tione/workspace/kainingchen/Datasets/molmo-motion-1m-mmap/v1
+```
 
-    $PY -m molmo_motion_cache build-droid \
-      --source-root "$RAW" --output "$OUT" --limit 512 --shard-size 256 --checks 24
+Validate all 82 files against the pinned Hugging Face local-dir manifest:
 
-    $PY -m molmo_motion_cache verify \
-      --source-root "$RAW" --output "$OUT" --checks 32 --verify-hashes
+```bash
+"$PY" -m molmo_motion_cache inspect-source \
+  --source-root "$RAW" --verify-hashes --require-complete --workers 32
+```
 
-    $PY -m molmo_motion_cache benchmark \
-      --source-root "$RAW" --output "$OUT" \
-      --samples 512 --warmup 32 --frames 8 --points 32 --seed 20260914 \
-      --report /home/tione/workspace/kainingchen/lbm/reports/molmo_motion_droid_pilot_benchmark.json
+Run a seven-subset smoke build without touching the production output:
 
-build-droid writes into a same-filesystem temporary directory and atomically
-renames it into the requested output only after structural and source-value
-checks pass. It refuses to overwrite an existing output directory.
+```bash
+MODE=smoke SMOKE_OUTPUT=/tmp/molmo-motion-full-smoke \
+  PYTHON_BIN="$PY" WORKERS=8 SHARD_SIZE=2 CHECKS=2 \
+  bash scripts/tc_cloud/run_molmo_motion_full.sh
+```
 
-## Output contract
+Run or resume the production build locally:
 
-    <output>/
-      dataset.json
-      build_stats.json
-      verification.json
-      clips.parquet
-      objects.parquet
-      tracks_index.parquet
-      cameras_index.parquet
-      provenance/source_manifest.parquet
-      shards/droid/000000/
-        points3d.npy
-        points2d.npy
-        visibility3d.npy
-        visibility2d.npy
-        camera_intrinsics_measured.npy
-        camera_intrinsics_ds.npy
-        camera_extrinsics.npy
-        shard.json
-      SHA256SUMS
-      PILOT_READY.json
+```bash
+MODE=full PYTHON_BIN="$PY" WORKERS=100 SHARD_SIZE=256 CHECKS=32 \
+  bash scripts/tc_cloud/run_molmo_motion_full.sh
+```
 
-PILOT_READY.json is intentionally distinct from the eventual full-release
-READY.json: a pilot is valid and portable but is not a claim that all
-MolmoMotion subsets or reconstructed videos have been converted.
+Inspect the exact TI-ONE request, then submit a committed clean checkout:
+
+```bash
+"$PY" scripts/tc_cloud/submit_molmo_motion_full.py --dry-run
+"$PY" scripts/tc_cloud/submit_molmo_motion_full.py --submit
+```
+
+The request reserves exactly 100 CPU cores and zero GPUs. Submission snapshots
+the current Git commit under `<output>/_jobs/<job>/code`; credentials remain in
+the external key file and are never copied into the snapshot or request audit.
+Use `scripts/tc_cloud/monitor_molmo_motion_job.py --task-id <id>` for periodic
+status checks; `--audit-log` appends a credential-free JSONL history.
+
+After a cross-cloud copy, rehash every delivered component before publishing it:
+
+```bash
+"$PY" -m molmo_motion_cache verify-release \
+  --output /path/to/copied/v1 --verify-files
+```
+
+## Safety and completion contract
+
+- A source preflight checks path and byte-size completeness before conversion;
+  production mode also checks every available LFS SHA-256.
+- Each subset is written to a same-filesystem staging directory, verified
+  against source values, and atomically renamed only after success.
+- A completed subset has `READY.json`; a limited smoke result has
+  `PILOT_READY.json`. Only a complete seven-subset release gets the top-level
+  `READY.json`.
+- A rerun reuses completed subset directories and refuses ambiguous partial
+  targets. The output lock prevents concurrent writers.
+- MolmoSpaces source MP4/H5 tar shards are hard-linked when source and output
+  share a filesystem (copied otherwise), with portable tar-member offsets.
+  `rsync` still transfers their bytes normally to another host.
+
+## Output layout
+
+```text
+<output>/
+  READY.json
+  dataset.json
+  source_preflight.json
+  subsets/
+    droid/
+    egodex/
+    hdepic/
+    molmospaces/
+    stereo4d/
+    xperience/
+    ytvis/
+  assets/
+    archives/molmospaces/{videos,robot_trajectories}/*.tar
+    assets_index.parquet
+    archive_manifest.parquet
+    source_metadata/
+  _jobs/<job>/{code,request.json,response.json,submission.json,build.log}
+```
+
+Each materialized subset contains Parquet indices, shard-level NPY arrays,
+provenance, verification metadata, and checksums. Normal data loading needs
+only the converted output; raw tar/NPZ/JSON is required only for source parity
+checks and before/after benchmarks.
+
+## Before/after benchmark
+
+DROID uses the original `benchmark` command. Other materialized subsets use
+`benchmark-generic`, for example:
+
+```bash
+"$PY" -m molmo_motion_cache benchmark-generic \
+  --source-root "$RAW" --output "$OUT/subsets/egodex" --dataset egodex \
+  --source-records-per-track-kind 32 --samples 256 --warmup 16 \
+  --frames 8 --points 32 --workers 8 \
+  --report reports/molmo_motion_full_egodex_benchmark.json
+```
+
+Both paths use identical sample/window requests, materialize the same arrays,
+and require equal checksums. The reported result is a warm-cache,
+single-process numeric-window microbenchmark; it does not claim the same
+speedup for RGB decode, distributed training, or GPU transfer.

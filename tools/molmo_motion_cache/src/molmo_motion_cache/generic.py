@@ -402,8 +402,21 @@ def _dynamic_camera_data(
     )
 
 
+def _has_empty_track_member(candidate: Candidate, role: str) -> bool:
+    """Return whether a required track role is a zero-byte source tar member."""
+
+    return any(
+        member_role == role and reference.size == 0
+        for member_role, reference in candidate.track_members
+    )
+
+
 def _load_sample(source_root: str | Path, candidate: Candidate) -> NormalizedSample:
-    tracks = {role: read_npz(source_root, ref) for role, ref in candidate.track_members}
+    tracks = {
+        role: read_npz(source_root, ref)
+        for role, ref in candidate.track_members
+        if ref.size > 0
+    }
     cameras = {role: ref for role, ref in candidate.camera_members}
     objects: list[TrackObject] = []
     dim = np.asarray([512, 512], dtype=np.int64)
@@ -469,12 +482,27 @@ def _load_sample(source_root: str | Path, candidate: Candidate) -> NormalizedSam
         if offset != flat2.shape[1]:
             raise ValueError(f"HD-EPIC object blocks do not cover 2D points for {candidate.video_id}")
     elif candidate.dataset in {"molmospaces", "ytvis"}:
-        d2, d3 = tracks["track_2d"], tracks["track_3d"]
+        d2 = tracks["track_2d"]
         dim = np.asarray(d2["dim"])
         p2 = _mapping(d2["tracks"], f"{candidate.dataset} 2D")
         v2 = _mapping(d2["visibility"], f"{candidate.dataset} 2D visibility")
-        p3 = _mapping(d3["points_3d"], f"{candidate.dataset} 3D")
-        v3 = _mapping(d3["visibility"], f"{candidate.dataset} 3D visibility")
+        if candidate.dataset == "molmospaces" and _has_empty_track_member(candidate, "track_3d"):
+            # The upstream release contains one zero-byte 3D member.  Preserve
+            # its complete 2D/camera sample, but do not invent 3D coordinates.
+            # The all-false visibility makes the NaN placeholder safe for
+            # consumers that filter unavailable 3D trajectory points.
+            p3 = {
+                key: np.full((value.shape[1], value.shape[0], 3), np.nan, dtype=np.float32)
+                for key, value in p2.items()
+            }
+            v3 = {
+                key: np.zeros((value.shape[1], value.shape[0]), dtype=np.bool_)
+                for key, value in p2.items()
+            }
+        else:
+            d3 = tracks["track_3d"]
+            p3 = _mapping(d3["points_3d"], f"{candidate.dataset} 3D")
+            v3 = _mapping(d3["visibility"], f"{candidate.dataset} 3D visibility")
         if set(p2) != set(p3):
             raise ValueError(f"{candidate.dataset} object keys differ for {candidate.video_id}")
         for key in p2:
@@ -651,6 +679,11 @@ def _write_shard(
                     "width": sample.width,
                     "num_frames": int(candidate.metadata["num_frames"]),
                     "num_objects": len(sample.objects),
+                    "source_3d_availability": (
+                        "unavailable-empty-source-member"
+                        if _has_empty_track_member(candidate, "track_3d")
+                        else "materialized"
+                    ),
                     "shard": shard_relpath,
                 }
             )
@@ -977,6 +1010,18 @@ def build_generic_cache(
             _source_files(root, dataset, candidates),
             staged_root / "provenance" / "source_manifest.parquet",
         )
+        source_anomalies = [
+            {
+                "sample_id": candidate.sample_id,
+                "role": role,
+                "member": reference.member_name,
+                "size_bytes": reference.size,
+                "handling": "NaN points3d with all-false visibility3d",
+            }
+            for candidate in candidates
+            for role, reference in candidate.track_members
+            if reference.size == 0
+        ]
         scope = "pilot" if limit_per_track_kind is not None else "complete-materialized-subset"
         write_json(
             staged_root / "dataset.json",
@@ -1006,6 +1051,7 @@ def build_generic_cache(
                     if dataset == "xperience"
                     else []
                 ),
+                "source_anomalies": source_anomalies,
             },
         )
         write_json(

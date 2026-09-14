@@ -256,7 +256,7 @@ class CustomSingleDataset(Dataset):
         return load_fk_episode(self.root, epi_i, source=source_key(rec), n_frames=rec.n_frames)
 
     def _policy_vectors(self, epi_i: int) -> tuple[np.ndarray, np.ndarray, tuple]:
-        Build policy vectors with independent state/action representations.
+        """Build policy vectors with independent state/action representations."""
         state, action = self._vectors(epi_i)
         native_action = resolve_action_space(self.spec, self.action_mode)
         if self.state_kind == EEF:

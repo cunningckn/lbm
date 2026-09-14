@@ -46,6 +46,13 @@ def test_catalog_bash_emits_repo():
     text = emit_bash("galaxea")
     assert "OpenGalaxea/Galaxea-Open-World-Dataset" in text
     assert "lerobot" in text
+    text = emit_bash("interndata_a1")
+    assert "InternRobotics/InternData-A1" in text
+    text = emit_bash("molmoact")
+    assert "allenai/MolmoAct-Dataset" in text
+    text = emit_bash("robocoin")
+    assert "https://huggingface.co/collections/RoboCOIN/robocoin" in text
+    assert "HF_REPO=()" in text
 
 
 def _info(path: Path, task: str = "demo") -> None:

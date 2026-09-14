@@ -26,9 +26,12 @@ DATASETS=(
   galaxea
   hifi_umi
   hy_lance
+  interndata_a1
   kai0
   libero
+  molmoact
   rmbench
+  robocoin
   robotwin
 )
 
@@ -77,7 +80,8 @@ download_one() {
       printf 'raw dest: %s\n' "${dest}"
       return 0
     fi
-    printf 'no download URL for %s\n' "${name}" >&2
+    printf 'no single-repository download for %s; obtain it from %s\n' "${name}" "${DUMP_URL}" >&2
+    printf 'stage the result under %s/%s, then run process.sh\n' "${RAW_DIR}" "${name}" >&2
     return 1
   fi
 

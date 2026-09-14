@@ -15,6 +15,24 @@ DATASET=galaxea,kai0 ./scripts/data/process.sh
 LINK_LOCAL=1 DATASET=droid ./scripts/data/download.sh
 ```
 
+On `tc_dev`, the 50-CPU conversion wrapper defaults to
+`/home/tione/workspace/kainingchen/Datasets`. It uses up to 48 mmap workers,
+bounded by the CPUs available to the current job:
+
+```bash
+cd /home/tione/workspace/kainingchen/lbm
+DATASET=droid CHECK_ONLY=1 ./scripts/data/convert_50cpu.sh
+DATASET=droid SOURCE=/path/to/Droid/droid_1.0.1 ./scripts/data/convert_50cpu.sh
+DATASET=interndata_a1 SOURCE=/path/to/InternData-A1 ./scripts/data/convert_50cpu.sh
+```
+
+Set `BUILD_MMAP=0` to create only the processed-dataset link, `WORKERS=N` to
+change mmap parallelism, and `FORCE=1` only when an existing destination must
+be replaced. The wrapper uses `/root/.local/bin/uv` as the `tc_dev` fallback
+and requests Python 3.12 plus the `data` dependency extra. When package-network
+access is unavailable, set `PYTHON_BIN=/path/to/a/prepared/python3.12` to use an
+existing environment instead of `uv`.
+
 `LINK_LOCAL=1` skips Hugging Face and symlinks a processed dump under
 `/mnt/open_source_data` when that path exists.
 
@@ -34,9 +52,12 @@ LINK_LOCAL=1 DATASET=droid ./scripts/data/download.sh
 | `galaxea` | https://huggingface.co/datasets/OpenGalaxea/Galaxea-Open-World-Dataset (`lerobot/` only) | extract `<task>.tar.gz` |
 | `hifi_umi` | https://huggingface.co/datasets/simple-world-lab/HiFi-UMI-2K | none |
 | `hy_lance` | https://huggingface.co/datasets/tencent/Hy-Embodied-0.5-VLA-Data | none |
+| `interndata_a1` | https://huggingface.co/datasets/InternRobotics/InternData-A1 | none (nested LeRobot v3 repositories) |
 | `kai0` | https://huggingface.co/datasets/OpenDriveLab-org/Kai0 | none |
 | `libero` | https://huggingface.co/datasets/physical-intelligence/libero | none (HF dump is already the LeRobot corpus) |
+| `molmoact` | https://huggingface.co/datasets/allenai/MolmoAct-Dataset | none (nested household/tabletop LeRobot repositories) |
 | `rmbench` | https://huggingface.co/datasets/TianxingChen/RMBench (`data/*/demo_clean/**`) | HDF5 demos → one LeRobot v2.1 repo |
+| `robocoin` | https://huggingface.co/collections/RoboCOIN/robocoin | none (stage the gated per-task repositories under one directory) |
 | `robotwin` | https://huggingface.co/datasets/lerobot/robotwin_unified | none. Official HDF5: https://huggingface.co/datasets/TianxingChen/RoboTwin2.0 — convert with RoboTwin/XPolicyLab if you start from that. |
 
 Gated HF repos need a token (`HF_TOKEN` / `hfd.sh --hf_token`). Destinations:

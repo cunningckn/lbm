@@ -21,9 +21,12 @@ DATASETS=(
   galaxea
   hifi_umi
   hy_lance
+  interndata_a1
   kai0
   libero
+  molmoact
   rmbench
+  robocoin
   robotwin
 )
 

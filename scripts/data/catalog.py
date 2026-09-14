@@ -95,6 +95,14 @@ DUMPS: dict[str, dict[str, Any]] = {
         "process_note": "Already Lance table_*/ layout.",
         "local": "/mnt/open_source_data/Hy-Embodied-0.5-VLA-Data",
     },
+    "interndata_a1": {
+        "title": "InternData-A1 (nested LeRobot v3)",
+        "urls": ["https://huggingface.co/datasets/InternRobotics/InternData-A1"],
+        "hf": [{"repo": "InternRobotics/InternData-A1"}],
+        "process": "none",
+        "process_note": "Already contains nested LeRobot v3 repositories; the LBM scanner discovers them recursively.",
+        "local": "/mnt/open_source_data/InternData-A1",
+    },
     "kai0": {
         "title": "Kai0 (nested LeRobot v2.1)",
         "urls": ["https://huggingface.co/datasets/OpenDriveLab-org/Kai0"],
@@ -111,6 +119,14 @@ DUMPS: dict[str, dict[str, Any]] = {
         "process_note": "HF dump is already the merged LeRobot corpus LBM reads.",
         "local": "/mnt/open_source_data/libero",
     },
+    "molmoact": {
+        "title": "MolmoAct Dataset (nested LeRobot v2.1)",
+        "urls": ["https://huggingface.co/datasets/allenai/MolmoAct-Dataset"],
+        "hf": [{"repo": "allenai/MolmoAct-Dataset"}],
+        "process": "none",
+        "process_note": "Already contains household/tabletop LeRobot repositories nested under train/.",
+        "local": "/mnt/open_source_data/MolmoAct-Dataset",
+    },
     "rmbench": {
         "title": "RMBench demos (HDF5 demo_clean → LeRobot)",
         "urls": ["https://huggingface.co/datasets/TianxingChen/RMBench"],
@@ -118,6 +134,17 @@ DUMPS: dict[str, dict[str, Any]] = {
         "process": "rmbench_hdf5",
         "process_note": "Official files are data/<task>/demo_clean HDF5 (+ videos). Convert to one LeRobot repo.",
         "local": "/mnt/open_source_data/rmbench",
+    },
+    "robocoin": {
+        "title": "RoboCOIN (one LeRobot repository per task)",
+        "urls": ["https://huggingface.co/collections/RoboCOIN/robocoin"],
+        "hf": [],
+        "process": "none",
+        "process_note": (
+            "The official collection contains one gated Hugging Face repository per task. "
+            "Stage the task repositories under one robocoin directory before processing."
+        ),
+        "local": "/mnt/open_source_data/RoboCOIN",
     },
     "robotwin": {
         "title": "RoboTwin unified (LeRobot v3)",

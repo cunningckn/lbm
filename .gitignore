@@ -15,6 +15,7 @@ outputs/
 
 # local cloud credentials
 scripts/ks_cloud/key_info.json
+scripts/tc_cloud/key_info.json
 
 # vendored trees are too large for git (.venv/ already covers sim envs)
 third_party/

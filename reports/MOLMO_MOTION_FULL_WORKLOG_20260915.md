@@ -88,6 +88,8 @@ Xperience `tracks-0000.tar` 约 3.65 GB 处发生 `IncompleteRead`；随后缩�
 | 记录数分片过小会制造大量成品文件 | 32 records/shard 对约 70 万 clip 不合适 | 生产改为 256 records/shard，smoke 仍用 2 |
 | 300 CPU 规格容易遇到资源占满 | 专用资源组可调度余量有限 | 按最新要求降为 100 CPU/100 workers，并每 20 分钟监控 |
 | 资产重复 hash 会额外读取数百 GB | MP4/H5 是已校验源文件的 hardlink | 生成清单时复用已通过 preflight 的 LFS SHA-256；迁移端仍可全量重算 |
+| 首次 TI-ONE API 调用无响应 | tc_dev 直连 API endpoint 超时 | SDK `HttpProfile.proxy` 固定使用可达内网代理 |
+| CPU-only 请求返回 `InvalidParameter [gpu]` | 沿用了 GPU 任务的 `GpuType=HCC-BW1000` | 按官方 CPU 示例改为 `Gpu=0`、`GpuType=""` |
 
 ## 6. 待完成验收
 

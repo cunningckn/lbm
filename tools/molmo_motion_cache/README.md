@@ -71,6 +71,8 @@ Inspect the exact TI-ONE request, then submit a committed clean checkout:
 The request reserves exactly 100 CPU cores and zero GPUs. Submission snapshots
 the current Git commit under `<output>/_jobs/<job>/code`; credentials remain in
 the external key file and are never copied into the snapshot or request audit.
+The tc_dev default API proxy can be overridden with `TC_API_PROXY` or
+`--api-proxy`.
 Use `scripts/tc_cloud/monitor_molmo_motion_job.py --task-id <id>` for periodic
 status checks; `--audit-log` appends a credential-free JSONL history.
 

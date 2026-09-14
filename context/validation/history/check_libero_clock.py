@@ -1,11 +1,20 @@
-"""Run with the LIBERO environment and simulation/libero:simulation on PYTHONPATH."""
+"""Run in the LIBERO environment; set LIBERO_ROOT for a non-default source checkout."""
 
 import json
+import sys
+from pathlib import Path
 
-import numpy as np
-from client import decode_obs, encode_obs
-from libero.libero import benchmark
-from main import LIBERO_DUMMY_ACTION, _get_libero_env
+ROOT = Path(__file__).resolve().parents[3]
+sys.path[:0] = [str(ROOT / "simulation"), str(ROOT / "simulation/libero")]
+
+from paths import libero_root  # noqa: E402
+
+sys.path.insert(0, str(libero_root()))
+
+import numpy as np  # noqa: E402
+from client import decode_obs, encode_obs  # noqa: E402
+from libero.libero import benchmark  # noqa: E402
+from main import LIBERO_DUMMY_ACTION, _get_libero_env  # noqa: E402
 
 suite = benchmark.get_benchmark_dict()["libero_spatial"]()
 env, _ = _get_libero_env(suite.get_task(0), 64, 123)

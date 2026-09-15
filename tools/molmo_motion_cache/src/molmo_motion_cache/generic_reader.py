@@ -8,9 +8,8 @@ from typing import Any
 
 import numpy as np
 
-from .common import read_json, read_parquet_rows, safe_relative_path
+from .common import read_json, read_parquet_rows, require_ready_cache, safe_relative_path
 from .generic import GENERIC_SUBSETS
-
 
 TRACK_ARRAYS = ("points2d", "points3d", "visibility2d", "visibility3d")
 CAMERA_ARRAYS = (
@@ -33,6 +32,7 @@ class MMapMotionReader:
     """Read one generic subset without consulting raw tar, NPZ, or JSON files."""
 
     def __init__(self, cache_root: str | Path) -> None:
+        require_ready_cache(Path(cache_root))
         self.root = Path(cache_root).resolve()
         self.dataset = read_json(self.root / "dataset.json")
         if self.dataset.get("format") != "molmo-motion-cache":
@@ -100,9 +100,7 @@ class MMapMotionReader:
                 return row
         raise KeyError(f"unknown object {object_id!r} for {sample_id}")
 
-    def get_object_full(
-        self, sample_id: str, object_id: str | None = None
-    ) -> dict[str, np.ndarray]:
+    def get_object_full(self, sample_id: str, object_id: str | None = None) -> dict[str, np.ndarray]:
         row = self._track_row(sample_id, object_id)
         shard = str(row["shard"])
         start = int(row["row_offset"])
@@ -123,9 +121,7 @@ class MMapMotionReader:
         if bool(row.get("trust_weights_available")):
             if not trust_path.is_file():
                 raise FileNotFoundError(trust_path)
-            result["trust_weights"] = self._array(shard, "trust_weights")[start:stop].reshape(
-                frames, points
-            )
+            result["trust_weights"] = self._array(shard, "trust_weights")[start:stop].reshape(frames, points)
         keep_mask = row.get("keep_mask")
         if keep_mask is not None:
             result["keep_mask"] = np.asarray(keep_mask, dtype=np.bool_)
@@ -170,19 +166,40 @@ class MMapMotionReader:
         selected_frames = min(frames, total_frames)
         start = min(max(start, 0), total_frames - selected_frames)
         stop = start + selected_frames
-        point_indices = np.linspace(
-            0, total_points - 1, num=min(points, total_points), dtype=np.int64
-        )
-        result = {
-            name: np.ascontiguousarray(full[name][start:stop, point_indices])
-            for name in TRACK_ARRAYS
-        }
+        point_indices = np.linspace(0, total_points - 1, num=min(points, total_points), dtype=np.int64)
+        result = {name: np.ascontiguousarray(full[name][start:stop, point_indices]) for name in TRACK_ARRAYS}
         if "trust_weights" in full:
-            result["trust_weights"] = np.ascontiguousarray(
-                full["trust_weights"][start:stop, point_indices]
-            )
+            result["trust_weights"] = np.ascontiguousarray(full["trust_weights"][start:stop, point_indices])
         if "keep_mask" in full:
             result["keep_mask"] = np.ascontiguousarray(full["keep_mask"])
         for name in CAMERA_ARRAYS:
             result[name] = np.ascontiguousarray(full[name])
+        return result
+
+    def get_selection(self, sample_id, *, frame_ids, point_ids, object_id=None, rgb_root=None, require_rgb=False):
+        """Explicit selection; distinguish annotation time from encoded video PTS."""
+        full = self.get_object_full(sample_id, object_id)
+        frames, points = np.asarray(frame_ids), np.asarray(point_ids)
+        for ids, size in ((frames, full["points2d"].shape[0]), (points, full["points2d"].shape[1])):
+            if ids.ndim != 1 or not len(ids) or ids.dtype.kind not in "iu" or np.any(ids < 0) or np.any(ids >= size):
+                raise IndexError("explicit frame/point index is empty, noninteger or out of range")
+        result = {name: np.ascontiguousarray(full[name][frames[:, None], points]) for name in TRACK_ARRAYS}
+        result.update(
+            frame_ids=frames,
+            point_ids=points,
+            state="annotations-only",
+            annotation_time_seconds=frames / float(self.clips[sample_id]["fps"]),
+        )
+        if rgb_root is not None:
+            from .rgb_pilot import RGBReader
+
+            video_id = self.clips[sample_id]["video_id"]
+            rgb = RGBReader(Path(rgb_root) / safe_relative_path(video_id))
+            if rgb.metadata["frame_count"] != full["points2d"].shape[0]:
+                raise ValueError("RGB/track frame count mismatch")
+            result.update(rgb.get(frames))
+            result["state"] = "rgb-pilot"
+            result["time_semantics_verified"] = rgb.metadata["time_semantics_verified"]
+        elif require_rgb:
+            raise FileNotFoundError("RGB requested from an annotations-only cache")
         return result

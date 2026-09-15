@@ -15,5 +15,8 @@ dependencies = [
 [project.scripts]
 molmo-motion-cache = "molmo_motion_cache.cli:main"
 
+[project.optional-dependencies]
+rgb = ["av>=17", "pillow>=12"]
+
 [tool.setuptools.packages.find]
 where = ["src"]

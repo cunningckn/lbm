@@ -1,0 +1,324 @@
+{
+  "cache_state": "uncontrolled OS cache, 3 alternating trials, no cold-cache or training-performance claim",
+  "checks": [
+    {
+      "frames": 279,
+      "q85": {
+        "alignment": "frame-index",
+        "elapsed_seconds": 11.617960845585912,
+        "frames": 279,
+        "jpeg_bytes": 8443747,
+        "jpeg_psnr_db": 38.19213586211553,
+        "jpeg_quality": 85,
+        "max_time_error_seconds": 0.18349834983498425,
+        "png_bytes": 43548163,
+        "png_exact": true,
+        "process_peak_rss_kib": 532864,
+        "pts_aligned": false,
+        "source_bytes": 321313,
+        "video_id": "pick_place_2cam_randomized__house_0__00000000__exo_camera_1"
+      },
+      "q95": {
+        "alignment": "frame-index",
+        "elapsed_seconds": 11.58998768683523,
+        "frames": 279,
+        "jpeg_bytes": 14976541,
+        "jpeg_psnr_db": 41.460437837552355,
+        "max_time_error_seconds": 0.18349834983498425,
+        "png_bytes": 43548163,
+        "png_exact": true,
+        "process_peak_rss_kib": 532296,
+        "pts_aligned": false,
+        "source_bytes": 321313,
+        "video_id": "pick_place_2cam_randomized__house_0__00000000__exo_camera_1"
+      },
+      "same_frame_ids_and_pts": true,
+      "same_source_pixels": true,
+      "video": "pick_place_2cam_randomized__house_0__00000000__exo_camera_1"
+    },
+    {
+      "frames": 279,
+      "q85": {
+        "alignment": "frame-index",
+        "elapsed_seconds": 16.226192341186106,
+        "frames": 279,
+        "jpeg_bytes": 10234990,
+        "jpeg_psnr_db": 39.98951198064543,
+        "jpeg_quality": 85,
+        "max_time_error_seconds": 0.18349834983498425,
+        "png_bytes": 59500195,
+        "png_exact": true,
+        "process_peak_rss_kib": 532864,
+        "pts_aligned": false,
+        "source_bytes": 900100,
+        "video_id": "pick_place_2cam_randomized__house_0__00000000__wrist_camera"
+      },
+      "q95": {
+        "alignment": "frame-index",
+        "elapsed_seconds": 16.289853875059634,
+        "frames": 279,
+        "jpeg_bytes": 18307385,
+        "jpeg_psnr_db": 43.764187246534235,
+        "max_time_error_seconds": 0.18349834983498425,
+        "png_bytes": 59500195,
+        "png_exact": true,
+        "process_peak_rss_kib": 533556,
+        "pts_aligned": false,
+        "source_bytes": 900100,
+        "video_id": "pick_place_2cam_randomized__house_0__00000000__wrist_camera"
+      },
+      "same_frame_ids_and_pts": true,
+      "same_source_pixels": true,
+      "video": "pick_place_2cam_randomized__house_0__00000000__wrist_camera"
+    },
+    {
+      "frames": 253,
+      "q85": {
+        "alignment": "frame-index",
+        "elapsed_seconds": 11.312714944127947,
+        "frames": 253,
+        "jpeg_bytes": 7545947,
+        "jpeg_psnr_db": 39.49287587423373,
+        "jpeg_quality": 85,
+        "max_time_error_seconds": 0.16633663366336648,
+        "png_bytes": 40213115,
+        "png_exact": true,
+        "process_peak_rss_kib": 532928,
+        "pts_aligned": false,
+        "source_bytes": 449386,
+        "video_id": "pick_place_2cam_randomized__house_0__00000001__exo_camera_1"
+      },
+      "q95": {
+        "alignment": "frame-index",
+        "elapsed_seconds": 11.184460963122547,
+        "frames": 253,
+        "jpeg_bytes": 13389490,
+        "jpeg_psnr_db": 42.930784910618065,
+        "max_time_error_seconds": 0.16633663366336648,
+        "png_bytes": 40213115,
+        "png_exact": true,
+        "process_peak_rss_kib": 533556,
+        "pts_aligned": false,
+        "source_bytes": 449386,
+        "video_id": "pick_place_2cam_randomized__house_0__00000001__exo_camera_1"
+      },
+      "same_frame_ids_and_pts": true,
+      "same_source_pixels": true,
+      "video": "pick_place_2cam_randomized__house_0__00000001__exo_camera_1"
+    },
+    {
+      "frames": 253,
+      "q85": {
+        "alignment": "frame-index",
+        "elapsed_seconds": 10.810158568900079,
+        "frames": 253,
+        "jpeg_bytes": 5763862,
+        "jpeg_psnr_db": 41.56419841292083,
+        "jpeg_quality": 85,
+        "max_time_error_seconds": 0.16633663366336648,
+        "png_bytes": 34112272,
+        "png_exact": true,
+        "process_peak_rss_kib": 532928,
+        "pts_aligned": false,
+        "source_bytes": 578376,
+        "video_id": "pick_place_2cam_randomized__house_0__00000001__wrist_camera"
+      },
+      "q95": {
+        "alignment": "frame-index",
+        "elapsed_seconds": 10.725671996828169,
+        "frames": 253,
+        "jpeg_bytes": 10373242,
+        "jpeg_psnr_db": 44.215942220517086,
+        "max_time_error_seconds": 0.16633663366336648,
+        "png_bytes": 34112272,
+        "png_exact": true,
+        "process_peak_rss_kib": 533556,
+        "pts_aligned": false,
+        "source_bytes": 578376,
+        "video_id": "pick_place_2cam_randomized__house_0__00000001__wrist_camera"
+      },
+      "same_frame_ids_and_pts": true,
+      "same_source_pixels": true,
+      "video": "pick_place_2cam_randomized__house_0__00000001__wrist_camera"
+    }
+  ],
+  "scope": "same four videos, 1064 frames, original size, same Pillow subsampling defaults",
+  "summary": [
+    {
+      "median_requests_per_second": 87.50921584541572,
+      "quality": "q85",
+      "workers": 0
+    },
+    {
+      "median_requests_per_second": 74.07172092536273,
+      "quality": "q95",
+      "workers": 0
+    },
+    {
+      "median_requests_per_second": 64.8361702100479,
+      "quality": "q85",
+      "workers": 1
+    },
+    {
+      "median_requests_per_second": 56.422710773805434,
+      "quality": "q95",
+      "workers": 1
+    },
+    {
+      "median_requests_per_second": 147.66975785268818,
+      "quality": "q85",
+      "workers": 4
+    },
+    {
+      "median_requests_per_second": 137.2321596115149,
+      "quality": "q95",
+      "workers": 4
+    }
+  ],
+  "timings": [
+    {
+      "p95_request_seconds": 0.013359010498970748,
+      "quality": "q85",
+      "repeat": 0,
+      "requests": 48,
+      "requests_per_second_including_startup": 86.13404137190894,
+      "workers": 0
+    },
+    {
+      "p95_request_seconds": 0.01562877793330699,
+      "quality": "q95",
+      "repeat": 0,
+      "requests": 48,
+      "requests_per_second_including_startup": 73.57035070935623,
+      "workers": 0
+    },
+    {
+      "p95_request_seconds": 0.015378298982977868,
+      "quality": "q95",
+      "repeat": 1,
+      "requests": 48,
+      "requests_per_second_including_startup": 74.07172092536273,
+      "workers": 0
+    },
+    {
+      "p95_request_seconds": 0.013133692485280334,
+      "quality": "q85",
+      "repeat": 1,
+      "requests": 48,
+      "requests_per_second_including_startup": 87.66348248101444,
+      "workers": 0
+    },
+    {
+      "p95_request_seconds": 0.013219934329390526,
+      "quality": "q85",
+      "repeat": 2,
+      "requests": 48,
+      "requests_per_second_including_startup": 87.50921584541572,
+      "workers": 0
+    },
+    {
+      "p95_request_seconds": 0.015244579105637967,
+      "quality": "q95",
+      "repeat": 2,
+      "requests": 48,
+      "requests_per_second_including_startup": 74.53509512327607,
+      "workers": 0
+    },
+    {
+      "p95_request_seconds": 0.013644507178105414,
+      "quality": "q85",
+      "repeat": 0,
+      "requests": 48,
+      "requests_per_second_including_startup": 61.53164557947347,
+      "workers": 1
+    },
+    {
+      "p95_request_seconds": 0.016355448286049068,
+      "quality": "q95",
+      "repeat": 0,
+      "requests": 48,
+      "requests_per_second_including_startup": 56.321773669340594,
+      "workers": 1
+    },
+    {
+      "p95_request_seconds": 0.016134307906031608,
+      "quality": "q95",
+      "repeat": 1,
+      "requests": 48,
+      "requests_per_second_including_startup": 56.422710773805434,
+      "workers": 1
+    },
+    {
+      "p95_request_seconds": 0.013183216075412929,
+      "quality": "q85",
+      "repeat": 1,
+      "requests": 48,
+      "requests_per_second_including_startup": 66.79149144409448,
+      "workers": 1
+    },
+    {
+      "p95_request_seconds": 0.0139482561731711,
+      "quality": "q85",
+      "repeat": 2,
+      "requests": 48,
+      "requests_per_second_including_startup": 64.8361702100479,
+      "workers": 1
+    },
+    {
+      "p95_request_seconds": 0.016277527390047907,
+      "quality": "q95",
+      "repeat": 2,
+      "requests": 48,
+      "requests_per_second_including_startup": 56.892130812781026,
+      "workers": 1
+    },
+    {
+      "p95_request_seconds": 0.018724535405635834,
+      "quality": "q85",
+      "repeat": 0,
+      "requests": 48,
+      "requests_per_second_including_startup": 149.66447512096858,
+      "workers": 4
+    },
+    {
+      "p95_request_seconds": 0.021147983567789196,
+      "quality": "q95",
+      "repeat": 0,
+      "requests": 48,
+      "requests_per_second_including_startup": 138.04574292212473,
+      "workers": 4
+    },
+    {
+      "p95_request_seconds": 0.021231983741745352,
+      "quality": "q95",
+      "repeat": 1,
+      "requests": 48,
+      "requests_per_second_including_startup": 137.2321596115149,
+      "workers": 4
+    },
+    {
+      "p95_request_seconds": 0.019361537462100384,
+      "quality": "q85",
+      "repeat": 1,
+      "requests": 48,
+      "requests_per_second_including_startup": 147.66975785268818,
+      "workers": 4
+    },
+    {
+      "p95_request_seconds": 0.01927414620295167,
+      "quality": "q85",
+      "repeat": 2,
+      "requests": 48,
+      "requests_per_second_including_startup": 103.00911606140171,
+      "workers": 4
+    },
+    {
+      "p95_request_seconds": 0.021063864440657196,
+      "quality": "q95",
+      "repeat": 2,
+      "requests": 48,
+      "requests_per_second_including_startup": 135.09637937163967,
+      "workers": 4
+    }
+  ]
+}

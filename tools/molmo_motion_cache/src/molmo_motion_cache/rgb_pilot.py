@@ -83,13 +83,16 @@ class RGBReader:
         }
 
 
-def build_video(assets, row, clip, destination, alignment="strict-time"):
+def build_video(assets, row, clip, destination, alignment="strict-time", jpeg_quality=95):
+    if not isinstance(jpeg_quality, int) or not 1 <= jpeg_quality <= 100:
+        raise ValueError("jpeg_quality must be an integer in [1, 100]")
     contract = {
         "code": code_fingerprint(),
         "schema": 1,
         "clip": clip,
         "asset": row,
-        "codecs": ["png", "jpeg-q95"],
+        "codecs": ["png", f"jpeg-q{jpeg_quality}"],
+        "jpeg_quality": jpeg_quality,
         "size": "original",
         "alignment": alignment,
     }
@@ -130,7 +133,9 @@ def build_video(assets, row, clip, destination, alignment="strict-time"):
             offsets = []
             for codec, stream in [("PNG", png), ("JPEG", jpeg)]:
                 buffer = io.BytesIO()
-                Image.fromarray(rgb).save(buffer, format=codec, **({"quality": 95} if codec == "JPEG" else {}))
+                Image.fromarray(rgb).save(
+                    buffer, format=codec, **({"quality": jpeg_quality} if codec == "JPEG" else {})
+                )
                 encoded = buffer.getvalue()
                 decoded = np.asarray(Image.open(io.BytesIO(encoded)).convert("RGB"))
                 if codec == "PNG":
@@ -183,6 +188,7 @@ def build_video(assets, row, clip, destination, alignment="strict-time"):
         "png_bytes": (staging / "png.frames.bin").stat().st_size,
         "jpeg_bytes": (staging / "jpeg.frames.bin").stat().st_size,
         "jpeg_psnr_db": float(10 * np.log10(255**2 / (mse / count))),
+        "jpeg_quality": jpeg_quality,
         "png_exact": True,
         "pts_aligned": aligned,
         "alignment": alignment,
@@ -218,6 +224,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("release", type=Path)
     parser.add_argument("output", type=Path)
+    parser.add_argument("--jpeg-quality", type=int, default=95)
     parser.add_argument("--alignment", choices=["strict-time", "frame-index"], default="strict-time")
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
@@ -238,7 +245,9 @@ def main():
         name = "videos/" + clip["video_id"] + ".mp4"
         if name not in rows:
             raise KeyError(name)
-        result = build_video(assets, rows[name], clip, args.output / clip["video_id"], args.alignment)
+        result = build_video(
+            assets, rows[name], clip, args.output / clip["video_id"], args.alignment, args.jpeg_quality
+        )
         results.append(result)
         print(json.dumps(result), flush=True)
     write_json(args.output / "RGB_PILOT_RESULTS.json", results)

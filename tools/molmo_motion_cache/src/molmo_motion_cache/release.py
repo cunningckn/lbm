@@ -26,7 +26,8 @@ from .common import (
     write_parquet,
 )
 from .droid import build_droid_cache
-from .generic import GENERIC_SUBSETS, build_generic_cache
+from .common import GENERIC_SUBSETS
+from .generic import build_generic_cache
 from .identity import (
     component_identity,
     load_source_snapshot,

@@ -1,13 +1,11 @@
-"""Adapters for the materialized MolmoMotion trajectory subsets.
+"""Build and verify materialized MolmoMotion trajectory subset caches.
 
-The source schemas differ, but every adapter normalizes tracks to ``(T, K, D)``
-and writes a small number of shard-level NPY arrays plus Parquet indices.  No
-loose source NPZ files are created.
+Source-schema parsing is in :mod:`molmo_motion_cache.adapters`; this module
+only coordinates shard writing, output verification, and delivery metadata.
 """
 
 from __future__ import annotations
 
-import json
 import os
 import tempfile
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -17,12 +15,23 @@ from typing import Any, Iterable, Mapping
 
 import numpy as np
 
-from .archives import TarMemberRef, build_tar_index, read_npz
+from .adapters import (
+    CameraData,
+    Candidate,
+    CandidateSeed,
+    NormalizedSample,
+    TrackObject,
+    candidate_seeds,
+    has_empty_track_member,
+    load_sample,
+    resolve_candidates,
+    track_object,
+)
+from .archives import close_cached_archives
 from .common import (
     GENERIC_SUBSETS,
     file_stat_record,
     fsync_directory,
-    read_json,
     read_parquet_rows,
     utc_now,
     write_checksum_manifest,
@@ -32,60 +41,26 @@ from .common import (
 )
 
 
-@dataclass(frozen=True)
-class CandidateSeed:
-    sample_id: str
-    dataset: str
-    track_kind: str
-    video_id: str
-    split: str
-    metadata: dict[str, Any]
-    track_member_names: tuple[tuple[str, str], ...]
-    camera_member_names: tuple[tuple[str, str], ...]
+# Compatibility aliases keep existing helper imports working while source parsing
+# lives exclusively in adapters/.
+_load_sample = load_sample
+_track_object = track_object
+_has_empty_track_member = has_empty_track_member
 
-
-@dataclass(frozen=True)
-class Candidate:
-    sample_id: str
-    dataset: str
-    track_kind: str
-    video_id: str
-    split: str
-    metadata: dict[str, Any]
-    track_members: tuple[tuple[str, TarMemberRef], ...]
-    camera_members: tuple[tuple[str, TarMemberRef], ...]
-
-
-@dataclass
-class TrackObject:
-    object_id: str
-    points2d: np.ndarray
-    points3d: np.ndarray
-    visibility2d: np.ndarray
-    visibility3d: np.ndarray
-    trust_weights: np.ndarray | None
-    keep_mask: np.ndarray | None
-    source_point_indices: np.ndarray
-
-
-@dataclass
-class CameraData:
-    poses: np.ndarray
-    pose_indices: np.ndarray
-    dynamic_intrinsics: np.ndarray
-    intrinsic_indices: np.ndarray
-    static_intrinsics: np.ndarray
-    pose_convention: str
-    availability: str
-
-
-@dataclass
-class NormalizedSample:
-    candidate: Candidate
-    height: int
-    width: int
-    objects: list[TrackObject]
-    camera: CameraData
+__all__ = [
+    "CameraData",
+    "Candidate",
+    "CandidateSeed",
+    "GENERIC_SUBSETS",
+    "NormalizedSample",
+    "TrackObject",
+    "build_generic_cache",
+    "candidate_seeds",
+    "resolve_candidates",
+    "_has_empty_track_member",
+    "_load_sample",
+    "_track_object",
+]
 
 
 @dataclass
@@ -97,511 +72,6 @@ class ShardResult:
     motion_ranges: list[dict[str, Any]]
     records: int
     trajectory_rows: int
-
-
-def _compact_json(value: Any) -> str:
-    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-
-
-def _split_entries(path: Path, *, limit: int | None) -> list[tuple[str, dict[str, Any]]]:
-    document = read_json(path)
-    rows: list[tuple[str, dict[str, Any]]] = []
-    for split in ("train", "test"):
-        values = document.get(split)
-        if not isinstance(values, list):
-            raise ValueError(f"{path} has no list-valued {split!r} split")
-        selected = values if limit is None else values[:limit]
-        rows.extend((split, value) for value in selected)
-    return rows
-
-
-def _pair(prefix: str, video_id: str) -> tuple[tuple[str, str], ...]:
-    return (
-        ("track_2d", f"{prefix}/{video_id}_2d.npz"),
-        ("track_3d", f"{prefix}/{video_id}_3d.npz"),
-    )
-
-
-def _dynamic_camera(video_id: str) -> tuple[tuple[str, str], ...]:
-    return (
-        ("camera_pose", f"camera/pose/{video_id}.npz"),
-        ("camera_intrinsics", f"camera/intrinsics/{video_id}.npz"),
-    )
-
-
-def _seed_from_entry(
-    dataset: str,
-    track_kind: str,
-    split: str,
-    metadata: dict[str, Any],
-) -> CandidateSeed:
-    video_id = str(metadata["file"])
-    if dataset == "egodex":
-        track_names = _pair(f"tracks/{track_kind}", video_id)
-        camera_names = _dynamic_camera(video_id)
-    elif dataset in {"hdepic", "ytvis"}:
-        track_names = _pair("tracks", video_id)
-        camera_names = _dynamic_camera(video_id)
-    elif dataset == "molmospaces":
-        track_names = _pair("tracks", video_id)
-        camera_names = (("camera", f"camera/{video_id}.npz"),)
-    elif dataset == "xperience" and track_kind == "object":
-        track_names = (("object", f"tracks/{video_id}_object.npz"),)
-        camera_names = ()
-    elif dataset == "xperience" and track_kind == "hand":
-        ranges = metadata.get("clips_by_object", {})
-        if not isinstance(ranges, dict):
-            raise ValueError(f"invalid Xperience hand ranges for {video_id}")
-        roles = [role for role in ("left_hand", "right_hand") if role in ranges]
-        if not roles:
-            raise ValueError(f"Xperience hand sample has no hand role: {video_id}")
-        track_names = tuple((role, f"tracks/{video_id}_{role}.npz") for role in roles)
-        camera_names = ()
-    else:
-        raise ValueError(f"unsupported materialized subset: {dataset}/{track_kind}")
-    return CandidateSeed(
-        sample_id=f"{dataset}/{track_kind}/{video_id}",
-        dataset=dataset,
-        track_kind=track_kind,
-        video_id=video_id,
-        split=split,
-        metadata=metadata,
-        track_member_names=track_names,
-        camera_member_names=camera_names,
-    )
-
-
-def candidate_seeds(
-    source_root: str | Path,
-    dataset: str,
-    *,
-    limit_per_track_kind: int | None,
-) -> list[CandidateSeed]:
-    root = Path(source_root).resolve()
-    annotation_root = root / dataset / "annotations"
-    groups: list[tuple[str, Path]]
-    if dataset == "egodex":
-        groups = [
-            ("object", annotation_root / "egodex_split.json"),
-            ("hand", annotation_root / "egodex_hand_split.json"),
-        ]
-    elif dataset == "xperience":
-        groups = [
-            ("object", annotation_root / "xperience_split.json"),
-            ("hand", annotation_root / "xperience_hand_split.json"),
-        ]
-    elif dataset in {"hdepic", "molmospaces", "ytvis"}:
-        groups = [("object", annotation_root / f"{dataset}_split.json")]
-    else:
-        raise ValueError(f"unsupported generic subset: {dataset}")
-
-    seeds: list[CandidateSeed] = []
-    seen: set[str] = set()
-    for track_kind, path in groups:
-        for split, metadata in _split_entries(path, limit=limit_per_track_kind):
-            seed = _seed_from_entry(dataset, track_kind, split, metadata)
-            if seed.sample_id in seen:
-                raise ValueError(f"duplicate canonical sample ID: {seed.sample_id}")
-            seen.add(seed.sample_id)
-            seeds.append(seed)
-    return seeds
-
-
-def resolve_candidates(
-    source_root: str | Path,
-    dataset: str,
-    seeds: list[CandidateSeed],
-    *,
-    workers: int,
-) -> list[Candidate]:
-    root = Path(source_root).resolve()
-    subset_root = root / dataset
-    track_names = {name for seed in seeds for _, name in seed.track_member_names}
-    camera_names = {name for seed in seeds for _, name in seed.camera_member_names}
-    track_wanted = track_names if len(track_names) <= 20_000 else None
-    camera_wanted = camera_names if len(camera_names) <= 20_000 else None
-    track_index = build_tar_index(
-        root,
-        (subset_root / "tracks").glob("tracks-*.tar"),
-        workers=workers,
-        wanted_names=track_wanted,
-    )
-    camera_index: dict[str, TarMemberRef] = {}
-    if camera_names:
-        camera_index = build_tar_index(
-            root,
-            (subset_root / "camera").glob("camera-*.tar"),
-            workers=workers,
-            wanted_names=camera_wanted,
-        )
-
-    missing: list[str] = []
-    candidates: list[Candidate] = []
-    for seed in seeds:
-        track_members: list[tuple[str, TarMemberRef]] = []
-        camera_members: list[tuple[str, TarMemberRef]] = []
-        for role, name in seed.track_member_names:
-            reference = track_index.get(name)
-            if reference is None:
-                missing.append(name)
-            else:
-                track_members.append((role, reference))
-        for role, name in seed.camera_member_names:
-            reference = camera_index.get(name)
-            if reference is None:
-                missing.append(name)
-            else:
-                camera_members.append((role, reference))
-        if len(track_members) == len(seed.track_member_names) and len(camera_members) == len(
-            seed.camera_member_names
-        ):
-            candidates.append(
-                Candidate(
-                    sample_id=seed.sample_id,
-                    dataset=seed.dataset,
-                    track_kind=seed.track_kind,
-                    video_id=seed.video_id,
-                    split=seed.split,
-                    metadata=seed.metadata,
-                    track_members=tuple(track_members),
-                    camera_members=tuple(camera_members),
-                )
-            )
-    if missing:
-        preview = ", ".join(sorted(missing)[:8])
-        raise FileNotFoundError(
-            f"{dataset}: {len(missing)} canonical members are missing; first entries: {preview}"
-        )
-    return candidates
-
-
-def _mapping(value: np.ndarray, label: str) -> dict[str, np.ndarray]:
-    if value.shape != () or value.dtype != object:
-        raise ValueError(f"{label} is not a scalar object mapping")
-    result = value.item()
-    if not isinstance(result, dict):
-        raise ValueError(f"{label} does not contain a mapping")
-    return {str(key): np.asarray(array) for key, array in result.items()}
-
-
-def _visibility(value: np.ndarray, *, frames: int, points: int, source_order: str) -> np.ndarray:
-    array = np.asarray(value)
-    if array.ndim == 3 and array.shape[-1] == 1:
-        array = array[..., 0]
-    if source_order == "KT":
-        array = array.T
-    if array.shape != (frames, points):
-        raise ValueError(f"visibility shape {array.shape} != {(frames, points)}")
-    return np.ascontiguousarray(array, dtype=np.bool_)
-
-
-def _track_object(
-    object_id: str,
-    points2d: np.ndarray,
-    points3d: np.ndarray,
-    visibility2d: np.ndarray | None,
-    visibility3d: np.ndarray | None,
-    *,
-    points2d_order: str,
-    points3d_order: str,
-    trust_weights: np.ndarray | None = None,
-    trust_weights_order: str = "TK",
-    keep_mask: np.ndarray | None = None,
-    source_point_indices: np.ndarray | None = None,
-) -> TrackObject:
-    p2 = np.asarray(points2d)
-    p3 = np.asarray(points3d)
-    if points2d_order == "KT":
-        p2 = p2.transpose(1, 0, 2)
-    if points3d_order == "KT":
-        p3 = p3.transpose(1, 0, 2)
-    if p2.ndim != 3 or p2.shape[-1] != 2:
-        raise ValueError(f"invalid 2D track shape for {object_id}: {p2.shape}")
-    if p3.ndim != 3 or p3.shape[-1] != 3:
-        raise ValueError(f"invalid 3D track shape for {object_id}: {p3.shape}")
-    if p2.shape[:2] != p3.shape[:2]:
-        raise ValueError(f"2D/3D track mismatch for {object_id}: {p2.shape} vs {p3.shape}")
-    frames, points = p2.shape[:2]
-    v2 = (
-        np.isfinite(p2).all(axis=-1)
-        if visibility2d is None
-        else _visibility(visibility2d, frames=frames, points=points, source_order=points2d_order)
-    )
-    v3 = (
-        np.isfinite(p3).all(axis=-1)
-        if visibility3d is None
-        else _visibility(visibility3d, frames=frames, points=points, source_order=points3d_order)
-    )
-    weights: np.ndarray | None = None
-    if trust_weights is not None:
-        weights = np.asarray(trust_weights)
-        if trust_weights_order == "KT":
-            weights = weights.T
-        if weights.shape != (frames, points):
-            raise ValueError(
-                f"trust weight shape {weights.shape} != {(frames, points)} for {object_id}"
-            )
-        weights = np.ascontiguousarray(weights, dtype=np.float32)
-    mask: np.ndarray | None = None
-    if keep_mask is not None:
-        mask = np.ascontiguousarray(np.asarray(keep_mask), dtype=np.bool_)
-        if mask.ndim != 1 or int(mask.sum()) != points:
-            raise ValueError(
-                f"keep mask does not select {points} points for {object_id}: {mask.shape}"
-            )
-    if source_point_indices is None:
-        indices = np.flatnonzero(mask).astype(np.int64, copy=False) if mask is not None else np.arange(points)
-    else:
-        indices = np.ascontiguousarray(np.asarray(source_point_indices), dtype=np.int64)
-    if indices.shape != (points,) or np.any(indices < 0) or len(np.unique(indices)) != points:
-        raise ValueError(
-            f"invalid source point indices for {object_id}: expected {points} unique non-negative values"
-        )
-    return TrackObject(
-        object_id=object_id,
-        points2d=np.ascontiguousarray(p2, dtype=np.float32),
-        points3d=np.ascontiguousarray(p3, dtype=np.float32),
-        visibility2d=np.ascontiguousarray(v2, dtype=np.bool_),
-        visibility3d=np.ascontiguousarray(v3, dtype=np.bool_),
-        trust_weights=weights,
-        keep_mask=mask,
-        source_point_indices=np.ascontiguousarray(indices),
-    )
-
-
-def _empty_camera(availability: str) -> CameraData:
-    return CameraData(
-        poses=np.empty((0, 4, 4), dtype=np.float32),
-        pose_indices=np.empty((0,), dtype=np.int64),
-        dynamic_intrinsics=np.empty((0, 4), dtype=np.float32),
-        intrinsic_indices=np.empty((0,), dtype=np.int64),
-        static_intrinsics=np.empty((0, 3, 3), dtype=np.float32),
-        pose_convention="unavailable",
-        availability=availability,
-    )
-
-
-def _dynamic_camera_data(
-    source_root: str | Path,
-    references: dict[str, TarMemberRef],
-    *,
-    convention: str,
-) -> CameraData:
-    pose_doc = read_npz(source_root, references["camera_pose"])
-    intr_doc = read_npz(source_root, references["camera_intrinsics"])
-    poses = np.asarray(pose_doc["data"], dtype=np.float32)
-    intrinsics = np.asarray(intr_doc["data"], dtype=np.float32)
-    if poses.ndim != 3 or poses.shape[1:] != (4, 4):
-        raise ValueError(f"invalid dynamic camera pose shape: {poses.shape}")
-    if intrinsics.ndim != 2 or intrinsics.shape[1] != 4:
-        raise ValueError(f"invalid dynamic intrinsics shape: {intrinsics.shape}")
-    pose_indices = np.asarray(pose_doc.get("inds", np.arange(len(poses))), dtype=np.int64)
-    intr_indices = np.asarray(
-        intr_doc.get("inds", np.arange(len(intrinsics))), dtype=np.int64
-    )
-    if pose_indices.shape != (len(poses),) or intr_indices.shape != (len(intrinsics),):
-        raise ValueError("camera data/indices length mismatch")
-    return CameraData(
-        poses=np.ascontiguousarray(poses),
-        pose_indices=np.ascontiguousarray(pose_indices),
-        dynamic_intrinsics=np.ascontiguousarray(intrinsics),
-        intrinsic_indices=np.ascontiguousarray(intr_indices),
-        static_intrinsics=np.empty((0, 3, 3), dtype=np.float32),
-        pose_convention=convention,
-        availability="materialized",
-    )
-
-
-def _has_empty_track_member(candidate: Candidate, role: str) -> bool:
-    """Return whether a required track role is a zero-byte source tar member."""
-
-    return any(
-        member_role == role and reference.size == 0
-        for member_role, reference in candidate.track_members
-    )
-
-
-def _load_sample(source_root: str | Path, candidate: Candidate) -> NormalizedSample:
-    tracks = {
-        role: read_npz(source_root, ref)
-        for role, ref in candidate.track_members
-        if ref.size > 0
-    }
-    cameras = {role: ref for role, ref in candidate.camera_members}
-    objects: list[TrackObject] = []
-    dim = np.asarray([512, 512], dtype=np.int64)
-
-    if candidate.dataset == "egodex" and candidate.track_kind == "object":
-        d2, d3 = tracks["track_2d"], tracks["track_3d"]
-        dim = np.asarray(d2["dim"])
-        objects.append(
-            _track_object(
-                "object",
-                d2["tracks"],
-                d3["points_3d"],
-                d2["visibility"],
-                d3.get("visibility"),
-                points2d_order="TK",
-                points3d_order="KT",
-            )
-        )
-    elif candidate.dataset == "egodex" and candidate.track_kind == "hand":
-        d2, d3 = tracks["track_2d"], tracks["track_3d"]
-        dim = np.asarray(d2["dim"])
-        p2, v2 = _mapping(d2["tracks"], "EgoDex hand 2D"), _mapping(
-            d2["visibility"], "EgoDex hand visibility"
-        )
-        p3 = _mapping(d3["points_3d"], "EgoDex hand 3D")
-        v3 = _mapping(d3["visibility"], "EgoDex hand 3D visibility") if "visibility" in d3 else {}
-        if set(p2) != set(p3):
-            raise ValueError(f"EgoDex hand object keys differ for {candidate.video_id}")
-        for key in p2:
-            objects.append(
-                _track_object(
-                    key,
-                    p2[key],
-                    p3[key],
-                    v2.get(key),
-                    v3.get(key),
-                    points2d_order="TK",
-                    points3d_order="KT",
-                )
-            )
-    elif candidate.dataset == "hdepic":
-        d2, d3 = tracks["track_2d"], tracks["track_3d"]
-        dim = np.asarray(d2["dim"])
-        p3 = _mapping(d3["points_3d"], "HD-EPIC 3D")
-        v3 = _mapping(d3["visibility"], "HD-EPIC 3D visibility")
-        flat2 = np.asarray(d2["tracks"])
-        flat_v2 = np.asarray(d2["visibility"])
-        offset = 0
-        for key, value3 in p3.items():
-            points = int(value3.shape[0])
-            objects.append(
-                _track_object(
-                    key,
-                    flat2[:, offset : offset + points],
-                    value3,
-                    flat_v2[:, offset : offset + points],
-                    v3[key],
-                    points2d_order="TK",
-                    points3d_order="KT",
-                )
-            )
-            offset += points
-        if offset != flat2.shape[1]:
-            raise ValueError(f"HD-EPIC object blocks do not cover 2D points for {candidate.video_id}")
-    elif candidate.dataset in {"molmospaces", "ytvis"}:
-        d2 = tracks["track_2d"]
-        dim = np.asarray(d2["dim"])
-        p2 = _mapping(d2["tracks"], f"{candidate.dataset} 2D")
-        v2 = _mapping(d2["visibility"], f"{candidate.dataset} 2D visibility")
-        if candidate.dataset == "molmospaces" and _has_empty_track_member(candidate, "track_3d"):
-            # The upstream release contains one zero-byte 3D member.  Preserve
-            # its complete 2D/camera sample, but do not invent 3D coordinates.
-            # The all-false visibility makes the NaN placeholder safe for
-            # consumers that filter unavailable 3D trajectory points.
-            p3 = {
-                key: np.full((value.shape[1], value.shape[0], 3), np.nan, dtype=np.float32)
-                for key, value in p2.items()
-            }
-            v3 = {
-                key: np.zeros((value.shape[1], value.shape[0]), dtype=np.bool_)
-                for key, value in p2.items()
-            }
-        else:
-            d3 = tracks["track_3d"]
-            p3 = _mapping(d3["points_3d"], f"{candidate.dataset} 3D")
-            v3 = _mapping(d3["visibility"], f"{candidate.dataset} 3D visibility")
-        if set(p2) != set(p3):
-            raise ValueError(f"{candidate.dataset} object keys differ for {candidate.video_id}")
-        for key in p2:
-            objects.append(
-                _track_object(
-                    key,
-                    p2[key],
-                    p3[key],
-                    v2[key],
-                    v3[key],
-                    points2d_order="TK",
-                    points3d_order="KT",
-                )
-            )
-    elif candidate.dataset == "xperience" and candidate.track_kind == "object":
-        doc = tracks["object"]
-        objects.append(
-            _track_object(
-                "object",
-                doc["tracks_2d"],
-                doc["points_3d"],
-                doc.get("visibility_2d"),
-                doc.get("visibility"),
-                points2d_order="KT",
-                points3d_order="KT",
-                trust_weights=doc.get("trust_weights"),
-                trust_weights_order="KT",
-                keep_mask=doc.get("keep_mask"),
-            )
-        )
-    elif candidate.dataset == "xperience" and candidate.track_kind == "hand":
-        for role, doc in tracks.items():
-            if "object_name" in doc and str(doc["object_name"]) != role:
-                raise ValueError(
-                    f"Xperience hand role mismatch for {candidate.video_id}: "
-                    f"{role!r} != {str(doc['object_name'])!r}"
-                )
-            objects.append(
-                _track_object(
-                    role,
-                    doc["pixel_coords"],
-                    doc["points_3d"],
-                    doc.get("visibility_2d"),
-                    doc.get("visibility"),
-                    points2d_order="KT",
-                    points3d_order="KT",
-                )
-            )
-    else:
-        raise AssertionError(f"unhandled adapter: {candidate.dataset}/{candidate.track_kind}")
-
-    if dim.shape != (2,):
-        raise ValueError(f"invalid image dimensions for {candidate.sample_id}: {dim.shape}")
-    expected_frames = int(candidate.metadata["num_frames"])
-    if not objects or any(len(obj.points2d) != expected_frames for obj in objects):
-        actual = [len(obj.points2d) for obj in objects]
-        raise ValueError(
-            f"track frame count differs from metadata for {candidate.sample_id}: "
-            f"expected {expected_frames}, got {actual}"
-        )
-
-    if candidate.dataset in {"egodex", "hdepic", "ytvis"}:
-        convention = "camera-to-world" if candidate.dataset in {"egodex", "ytvis"} else "world-to-camera"
-        camera = _dynamic_camera_data(source_root, cameras, convention=convention)
-    elif candidate.dataset == "molmospaces":
-        doc = read_npz(source_root, cameras["camera"])
-        poses = np.asarray(doc["cam_poses"], dtype=np.float32)
-        intrinsics = np.asarray(doc["intrinsics"], dtype=np.float32)
-        if poses.ndim != 3 or poses.shape[1:] != (4, 4) or intrinsics.shape != (3, 3):
-            raise ValueError(f"invalid MolmoSpaces camera for {candidate.video_id}")
-        camera = CameraData(
-            poses=np.ascontiguousarray(poses),
-            pose_indices=np.arange(len(poses), dtype=np.int64),
-            dynamic_intrinsics=np.empty((0, 4), dtype=np.float32),
-            intrinsic_indices=np.empty((0,), dtype=np.int64),
-            static_intrinsics=np.ascontiguousarray(intrinsics[None]),
-            pose_convention="camera-to-world",
-            availability="materialized",
-        )
-    else:
-        camera = _empty_camera("requires-upstream-xperience-reconstruction")
-
-    return NormalizedSample(
-        candidate=candidate,
-        height=int(dim[0]),
-        width=int(dim[1]),
-        objects=objects,
-        camera=camera,
-    )
 
 
 def _chunks(values: list[Candidate], size: int) -> Iterable[list[Candidate]]:
@@ -1005,6 +475,9 @@ def build_generic_cache(
         chunks = list(_chunks(candidates, shard_size))
         results: list[ShardResult] = []
         pool_size = min(workers, len(chunks))
+        # Do not fork conversion workers while the parent retains raw tar descriptors
+        # from an earlier source check in the same process.
+        close_cached_archives()
         with ProcessPoolExecutor(max_workers=pool_size) as executor:
             futures = {
                 executor.submit(
@@ -1092,7 +565,10 @@ def build_generic_cache(
                 "created_at": utc_now(),
             },
         )
-        verification = _verify_output(root, staged_root, candidates, checks)
+        try:
+            verification = _verify_output(root, staged_root, candidates, checks)
+        finally:
+            close_cached_archives()
         write_json(staged_root / "verification.json", verification)
         manifest_hash = write_checksum_manifest(staged_root) if checksums else None
         ready = {
@@ -1111,6 +587,7 @@ def build_generic_cache(
         fsync_directory(output_path.parent)
         return {"output": str(output_path), **ready}
     except BaseException as error:
+        close_cached_archives()
         raise RuntimeError(
             f"{dataset} cache build failed; partial staging was preserved at {staged_root}"
         ) from error

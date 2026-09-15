@@ -9,15 +9,16 @@ from typing import Any, Callable
 
 import numpy as np
 
-from .common import utc_now
-from .generic import (
+from .adapters import (
     GENERIC_SUBSETS,
     Candidate,
     NormalizedSample,
-    _load_sample,
     candidate_seeds,
+    load_sample as _load_sample,
     resolve_candidates,
 )
+from .archives import close_cached_archives
+from .common import utc_now
 from .generic_reader import MMapMotionReader
 
 
@@ -172,7 +173,7 @@ def benchmark_generic_cache(
     mmap = _measure(mmap_get, timed)
     if not np.isclose(raw["checksum"], mmap["checksum"], rtol=1e-12, atol=1e-5):
         raise ValueError("benchmark source/cache checksums differ")
-    return {
+    result = {
         "status": "completed",
         "dataset": dataset,
         "measured_at": utc_now(),
@@ -196,3 +197,5 @@ def benchmark_generic_cache(
             "Setup/index construction is excluded from both timed paths.",
         ],
     }
+    close_cached_archives()
+    return result

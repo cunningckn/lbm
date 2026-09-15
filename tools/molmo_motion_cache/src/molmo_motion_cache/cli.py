@@ -12,6 +12,7 @@ from typing import Any, Callable
 import numpy as np
 
 from .common import (
+    GENERIC_SUBSETS,
     byte_size,
     read_completion_marker,
     read_json,
@@ -20,7 +21,7 @@ from .common import (
     write_json,
 )
 from .droid import build_droid_cache
-from .generic import GENERIC_SUBSETS, build_generic_cache
+from .generic import build_generic_cache
 from .generic_benchmark import benchmark_generic_cache
 from .reader import MMapDroidReader, RawTarDroidReader
 from .release import (

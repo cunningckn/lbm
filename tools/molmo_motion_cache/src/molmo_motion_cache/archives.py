@@ -12,6 +12,7 @@ import io
 import importlib
 import sys
 import tarfile
+from atexit import register as register_atexit
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
@@ -114,6 +115,18 @@ def build_tar_index(
 
 
 _OPEN_FILES: dict[str, object] = {}
+
+
+def close_cached_archives() -> None:
+    """Close process-local tar descriptors after a build or raw benchmark."""
+
+    for handle in _OPEN_FILES.values():
+        if not getattr(handle, "closed", True):
+            handle.close()
+    _OPEN_FILES.clear()
+
+
+register_atexit(close_cached_archives)
 
 
 def _install_numpy_pickle_compatibility() -> None:

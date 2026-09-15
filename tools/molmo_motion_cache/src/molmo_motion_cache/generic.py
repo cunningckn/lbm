@@ -478,22 +478,33 @@ def build_generic_cache(
         # Do not fork conversion workers while the parent retains raw tar descriptors
         # from an earlier source check in the same process.
         close_cached_archives()
-        with ProcessPoolExecutor(max_workers=pool_size) as executor:
-            futures = {
-                executor.submit(
-                    _write_shard,
-                    str(root),
-                    str(staged_root),
-                    dataset,
-                    shard_number,
-                    chunk,
-                ): shard_number
-                for shard_number, chunk in enumerate(chunks)
-            }
-            for completed, future in enumerate(as_completed(futures), start=1):
-                results.append(future.result())
-                if completed == 1 or completed % 25 == 0 or completed == len(futures):
-                    print(f"[{dataset}] completed shards {completed}/{len(futures)}", flush=True)
+
+        def record_result(result: ShardResult, completed: int) -> None:
+            results.append(result)
+            if completed == 1 or completed % 25 == 0 or completed == len(chunks):
+                print(f"[{dataset}] completed shards {completed}/{len(chunks)}", flush=True)
+
+        if pool_size == 1:
+            for completed, (shard_number, chunk) in enumerate(enumerate(chunks), start=1):
+                record_result(
+                    _write_shard(str(root), str(staged_root), dataset, shard_number, chunk),
+                    completed,
+                )
+        else:
+            with ProcessPoolExecutor(max_workers=pool_size) as executor:
+                futures = {
+                    executor.submit(
+                        _write_shard,
+                        str(root),
+                        str(staged_root),
+                        dataset,
+                        shard_number,
+                        chunk,
+                    ): shard_number
+                    for shard_number, chunk in enumerate(chunks)
+                }
+                for completed, future in enumerate(as_completed(futures), start=1):
+                    record_result(future.result(), completed)
         results.sort(key=lambda value: value.shard_number)
         clips = [row for result in results for row in result.clips]
         tracks = [row for result in results for row in result.tracks]

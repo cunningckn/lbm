@@ -13,6 +13,7 @@ from typing import Any, Mapping
 
 from .archives import build_tar_index
 from .common import (
+    GENERIC_SUBSETS,
     completion_marker_name,
     fsync_directory,
     read_completion_marker,
@@ -26,7 +27,6 @@ from .common import (
     write_parquet,
 )
 from .droid import build_droid_cache
-from .common import GENERIC_SUBSETS
 from .generic import build_generic_cache
 from .identity import (
     component_identity,
@@ -91,23 +91,34 @@ def inspect_source_snapshot(
         # Hashing is storage-bound. Hundreds of readers degrade shared-CFS
         # throughput even when the conversion job was allocated 100 CPUs.
         pool_size = max(1, min(workers, 32, len(hash_candidates)))
-        with ProcessPoolExecutor(max_workers=pool_size) as executor:
-            futures = {
-                executor.submit(_hash_path, str(path)): (relative, expected)
-                for relative, path, expected in hash_candidates
-            }
-            for completed, future in enumerate(as_completed(futures), start=1):
-                path_text, actual = future.result()
-                relative, expected = futures[future]
-                if actual != expected:
-                    hash_mismatches.append(
-                        {"path": relative, "expected_sha256": expected, "actual_sha256": actual}
-                    )
-                if completed == 1 or completed % 10 == 0 or completed == len(futures):
-                    print(
-                        f"[preflight] hashed LFS files {completed}/{len(futures)}",
-                        flush=True,
-                    )
+
+        def record_hash(
+            relative: str, expected: str, actual: str, completed: int
+        ) -> None:
+            if actual != expected:
+                hash_mismatches.append(
+                    {"path": relative, "expected_sha256": expected, "actual_sha256": actual}
+                )
+            if completed == 1 or completed % 10 == 0 or completed == len(hash_candidates):
+                print(
+                    f"[preflight] hashed LFS files {completed}/{len(hash_candidates)}",
+                    flush=True,
+                )
+
+        if pool_size == 1:
+            for completed, (relative, path, expected) in enumerate(hash_candidates, start=1):
+                _path_text, actual = _hash_path(str(path))
+                record_hash(relative, expected, actual, completed)
+        else:
+            with ProcessPoolExecutor(max_workers=pool_size) as executor:
+                futures = {
+                    executor.submit(_hash_path, str(path)): (relative, expected)
+                    for relative, path, expected in hash_candidates
+                }
+                for completed, future in enumerate(as_completed(futures), start=1):
+                    _path_text, actual = future.result()
+                    relative, expected = futures[future]
+                    record_hash(relative, expected, actual, completed)
             hashed_files = len(hash_candidates)
     expected_bytes = sum(_expected_size(metadata) for metadata in files.values())
     status = "passed" if not (missing or size_mismatches or hash_mismatches) else "failed"

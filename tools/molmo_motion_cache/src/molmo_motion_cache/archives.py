@@ -88,21 +88,30 @@ def build_tar_index(
     wanted = None if wanted_names is None else frozenset(_safe_member_name(v) for v in wanted_names)
     index: dict[str, TarMemberRef] = {}
     pool_size = max(1, min(int(workers), len(paths)))
-    with ProcessPoolExecutor(max_workers=pool_size) as executor:
-        futures = {
-            executor.submit(_index_one_tar, str(root), str(path), wanted): path
-            for path in paths
-        }
-        for future in as_completed(futures):
-            relative, rows = future.result()
-            for row in rows:
-                previous = index.get(row.member_name)
-                if previous is not None:
-                    raise ValueError(
-                        f"duplicate member {row.member_name!r} in "
-                        f"{previous.tar_relpath} and {relative}"
-                    )
-                index[row.member_name] = row
+
+    def merge_rows(relative: str, rows: list[TarMemberRef]) -> None:
+        for row in rows:
+            previous = index.get(row.member_name)
+            if previous is not None:
+                raise ValueError(
+                    f"duplicate member {row.member_name!r} in "
+                    f"{previous.tar_relpath} and {relative}"
+                )
+            index[row.member_name] = row
+
+    if pool_size == 1:
+        for path in paths:
+            relative, rows = _index_one_tar(str(root), str(path), wanted)
+            merge_rows(relative, rows)
+    else:
+        with ProcessPoolExecutor(max_workers=pool_size) as executor:
+            futures = {
+                executor.submit(_index_one_tar, str(root), str(path), wanted): path
+                for path in paths
+            }
+            for future in as_completed(futures):
+                relative, rows = future.result()
+                merge_rows(relative, rows)
 
     if wanted is not None:
         missing = sorted(wanted.difference(index))

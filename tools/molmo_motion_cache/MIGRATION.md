@@ -68,3 +68,24 @@ are unavailable. Upstream licenses are per-subdataset, not inherited from one
 global license. The current review has not obtained the missing source corpora
 or validated their reconstruction. Follow the pinned source README and scripts;
 do not create placeholder images/camera/trajectories and label them complete.
+
+## JPEG224 joint pilot migration
+
+`export_rgb224_pilot.py RAW RELEASE FOUR_VIDEO_RGB NEW_PACKAGE` builds a compact
+numeric component for exactly those video IDs and independently copies the RGB
+component. It refuses more than four videos and any existing destination.
+This is a bounded acceptance fixture, not the full-release exporter. The package
+contains relative `numeric/` and `rgb/` paths, geometry and both timing domains.
+
+Copy the completed package to a new cloud directory, then run:
+
+```bash
+python -I verify_rgb224_migration.py "$PACKAGE" "$EXTERNAL_REPORT" \
+  --deny "$ORIGINAL_RAW" --deny "$ORIGINAL_V1" --deny "$ORIGINAL_RGB"
+```
+
+Run on both clouds and compare each returned array SHA-256, including JPEG RGB,
+transformed tracks/K and original poses. The checker audits every payload,
+denies opening original roots, and checks that no package file was modified.
+Tested Kingsoft reader environment differs in Python/NumPy from the builder;
+build fingerprint is provenance, not a requirement to rebuild on migration.

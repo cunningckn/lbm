@@ -150,3 +150,27 @@ Both paths use identical sample/window requests, materialize the same arrays,
 and require equal checksums. The reported result is a warm-cache,
 single-process numeric-window microbenchmark; it does not claim the same
 speedup for RGB decode, distributed training, or GPU transfer.
+
+## JPEG224 next-plan implementation
+
+Use an isolated environment with `pip install -r requirements-rgb224.txt`,
+then set `PYTHONPATH=src` from this standalone tool directory. Existing v1 and
+raw MP4 remain unchanged. Output must be a new directory or an exact,
+fully verified completed build; code changes intentionally invalidate resume.
+
+```bash
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python -m molmo_motion_cache.rgb224 \
+  "$RELEASE" "$NEW_OUTPUT" --count 100 --quality 85 --workers 4 \
+  --coordinate-convention integer-center --frame-index-experiment
+python evaluate_rgb224.py "$RELEASE" "$NEW_OUTPUT" "$NEW_REPORT_DIRECTORY" "$PI0_REFERENCE_FILE"
+python benchmark_rgb224.py "$RELEASE" "$NEW_OUTPUT" "$NEW_BENCHMARK_JSON"
+python -m unittest discover -s tests -v
+```
+
+The convention argument explicitly selects an unverified hypothesis; it does
+not certify the source convention. The image decoder does not depend on PI0;
+only reference comparison reads its SHA-pinned file and extracts one function.
+q95 is encoded in memory for matched capacity/quality comparison, not retained
+alongside q85. Only twelve reference PNGs and one contact sheet are retained
+outside the cache. Benchmark is an independent joint-reader benchmark, not a
+training DataLoader/GPU result. See the JPEG224 implementation report in `reports`.

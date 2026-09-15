@@ -57,6 +57,7 @@ class MMapMotionReader:
         if set(self.clips) != set(self.tracks) or set(self.clips) != set(self.cameras):
             raise ValueError("clip, track, and camera sample IDs do not agree")
         self._arrays: dict[tuple[str, str], np.ndarray] = {}
+        self._rgb_readers = {}
         for rows in self.tracks.values():
             seen: set[str] = set()
             for row in rows:
@@ -176,7 +177,9 @@ class MMapMotionReader:
             result[name] = np.ascontiguousarray(full[name])
         return result
 
-    def get_selection(self, sample_id, *, frame_ids, point_ids, object_id=None, rgb_root=None, require_rgb=False):
+    def get_selection(
+        self, sample_id, *, frame_ids, point_ids, object_id=None, rgb_root=None, jpeg224_root=None, require_rgb=False
+    ):
         """Explicit selection; distinguish annotation time from encoded video PTS."""
         full = self.get_object_full(sample_id, object_id)
         frames, points = np.asarray(frame_ids), np.asarray(point_ids)
@@ -190,16 +193,75 @@ class MMapMotionReader:
             state="annotations-only",
             annotation_time_seconds=frames / float(self.clips[sample_id]["fps"]),
         )
-        if rgb_root is not None:
+        if rgb_root is not None and jpeg224_root is not None:
+            raise ValueError("choose one RGB cache")
+        if jpeg224_root is not None:
+            from .geometry224 import content_mask, select_camera, transform_points
+            from .rgb224 import JPEG224Reader
+
+            if self.subset != "molmospaces":
+                raise ValueError("JPEG224 source geometry is only supported for MolmoSpaces")
+            key = ("jpeg224", str(Path(jpeg224_root).resolve()))
+            if key not in self._rgb_readers:
+                self._rgb_readers[key] = JPEG224Reader(jpeg224_root)
+            reader = self._rgb_readers[key]
+            clip = self.clips[sample_id]
+            _, video = reader.videos[clip["video_id"]]
+            geometry = video["geometry"]
+            if video["count"] != full["points2d"].shape[0] or geometry["source_size"] != [
+                clip["width"],
+                clip["height"],
+            ]:
+                raise ValueError("JPEG224 source geometry/frame count mismatch")
+            poses, k = select_camera(full, frames)
+            p224 = transform_points(result["points2d"], geometry)
+            w, h = geometry["source_size"]
+            p = result["points2d"]
+            bound = -0.5 if geometry["coordinate_convention"] == "integer-center" else 0
+            valid = (
+                np.isfinite(p).all(axis=-1)
+                & (p[..., 0] >= bound)
+                & (p[..., 0] < w + bound)
+                & (p[..., 1] >= bound)
+                & (p[..., 1] < h + bound)
+                & result["visibility2d"]
+            )
+            result.update(reader.get(clip["video_id"], frames))
+            result.update(
+                points2d_source=result["points2d"],
+                points2d_224=p224,
+                intrinsics_source_pixels=k,
+                intrinsics_224=np.asarray(geometry["A"]) @ k,
+                camera_poses_source=poses,
+                camera_frame_ids=frames.copy(),
+                pose_convention=self.cameras[sample_id]["pose_convention"],
+                content_mask=content_mask(geometry),
+                supervision_valid_224=valid,
+                state="jpeg224-frame-index-pilot",
+            )
+        elif rgb_root is not None:
             from .rgb_pilot import RGBReader
 
             video_id = self.clips[sample_id]["video_id"]
-            rgb = RGBReader(Path(rgb_root) / safe_relative_path(video_id))
+            key = ("legacy", str(Path(rgb_root).resolve()), video_id)
+            if key not in self._rgb_readers:
+                self._rgb_readers[key] = RGBReader(Path(rgb_root) / safe_relative_path(video_id))
+            rgb = self._rgb_readers[key]
             if rgb.metadata["frame_count"] != full["points2d"].shape[0]:
                 raise ValueError("RGB/track frame count mismatch")
-            result.update(rgb.get(frames))
+            result.update(rgb.get(frames, codec="jpeg"))
             result["state"] = "rgb-pilot"
             result["time_semantics_verified"] = rgb.metadata["time_semantics_verified"]
         elif require_rgb:
             raise FileNotFoundError("RGB requested from an annotations-only cache")
         return result
+
+    def close(self):
+        for reader in self._rgb_readers.values():
+            if hasattr(reader, "close"):
+                reader.close()
+        self._rgb_readers.clear()
+        for array in self._arrays.values():
+            if hasattr(array, "_mmap"):
+                array._mmap.close()
+        self._arrays.clear()

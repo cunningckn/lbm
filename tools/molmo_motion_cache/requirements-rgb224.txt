@@ -1,0 +1,8 @@
+# Tested runtime for the isolated JPEG224 pipeline; libjpeg/FFmpeg versions also
+# enter every artifact's build contract. Do not install into the PI0 environment.
+numpy==1.26.4
+Pillow==12.2.0
+av==17.0.1
+pyarrow==23.0.1
+# SSIM evaluation only (not required by the reader).
+scikit-image==0.22.0

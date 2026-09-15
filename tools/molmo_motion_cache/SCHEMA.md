@@ -71,3 +71,47 @@ Component staging is verified before publication; failure staging is retained.
 
 SHA-256 establishes internal consistency, not independent semantic correctness
 or authenticity against an attacker who can replace all manifests and markers.
+
+## JPEG224 frame-index experiment (2026-09-15)
+
+This is a separate schema discriminator, `state=jpeg224-frame-index-pilot`,
+with `format_version=1`. It cannot resume an original-size RGB cache.
+The root lists `group-NNN` writer components; each contains `frames-NNNNN.bin`
+and a mmap `frames.npy` with little-endian uint64 shard/offset/length/frame_id
+and int64 PTS. Each unique video has a contiguous global index range in one
+group; its bytes may cross shards. The default shard cap is 2 GiB, never split
+a JPEG payload. At most four writers are allowed in this experimental CLI.
+
+Only JPEG q85 or q95, subsampling=2 (4:2:0), optimize=false, progressive=false
+is written. Pillow contain/BILINEAR fits RGB uint8 into 224x224, with centered
+zero padding. `requirements-rgb224.txt` pins the tested environment; actual
+NumPy/Pillow/PyAV/libjpeg/FFmpeg versions, reference provenance, source-member
+hashes, code and all spatial/encoding parameters enter the resume contract.
+Completed roots/groups are fully hash-checked before reuse. Unpublished
+staging is retained, not automatically trusted or published on restart.
+
+`JPEG224Reader` mmap-loads and hashes frame indices once at initialization;
+JPEG bytes use an LRU of at most 16 persistent seek/read handles, NOT payload
+mmap. Use one reader per process/worker, not concurrently across threads.
+Call `close()` after consuming returned arrays; do not use borrowed numeric
+mmap views after their owning numerical reader has been closed.
+
+`MMapMotionReader.get_selection(..., jpeg224_root=...)` defaults to JPEG and
+returns original `points2d`/`points3d`/visibility plus explicit `points2d_source`,
+`points2d_224`, `intrinsics_source_pixels`, `intrinsics_224`, selected
+`camera_poses_source`, `camera_frame_ids`, `pose_convention`, `content_mask`,
+`supervision_valid_224`, geometry, frame/point IDs, PTS/time_base and annotation
+time. Sparse camera indices are looked up by actual source frame ID; missing
+poses or unsupported/non-static K fail explicitly. Only MolmoSpaces is supported.
+
+For the explicit integer-center hypothesis, sx and sy are computed from the
+actual fitted integer width/height divided by source width/height:
+`x224=(x+.5)*sx-.5+left`, similarly y, and `K224=A@Ksource` in pixel units.
+The helper also supports explicit pixel-boundary geometry. No heuristic chooses
+between the conventions. Unknown/NaN/out-of-image/invisible points are excluded
+from the supervision mask. 3D and poses are not spatially transformed.
+
+Both `time_semantics_verified` and `source_coordinate_convention_verified` are
+false. These flags must be honored by downstream training. Source 3D projection
+agreement validates units/camera interpretation, NOT pixel-center provenance.
+There is intentionally no formal synchronized READY release from this pipeline.

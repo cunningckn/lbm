@@ -8,8 +8,8 @@ independent output shards be produced safely in parallel.
 
 from __future__ import annotations
 
-import io
 import importlib
+import io
 import sys
 import tarfile
 from concurrent.futures import ProcessPoolExecutor, as_completed

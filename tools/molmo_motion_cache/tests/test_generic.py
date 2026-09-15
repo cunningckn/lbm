@@ -7,7 +7,6 @@ import unittest
 from pathlib import Path
 
 import numpy as np
-
 from molmo_motion_cache.archives import build_tar_index
 from molmo_motion_cache.generic import Candidate, _load_sample
 

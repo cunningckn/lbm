@@ -9,7 +9,7 @@ import shutil
 import tempfile
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from .archives import build_tar_index
 from .common import (
@@ -22,9 +22,9 @@ from .common import (
     write_json,
     write_parquet,
 )
+from .delivery import audit_component, code_fingerprint, fingerprint, release_manifest
 from .droid import build_droid_cache
 from .generic import GENERIC_SUBSETS, build_generic_cache
-
 
 SOURCE_DATASETS = ("droid", "egodex", "hdepic", "molmospaces", "stereo4d", "xperience", "ytvis")
 
@@ -69,7 +69,12 @@ def inspect_source_snapshot(
     size_mismatches: list[dict[str, Any]] = []
     present_bytes = 0
     for relative, metadata in sorted(files.items()):
+        from .common import safe_relative_path
+
+        safe_relative_path(relative)
         path = root / relative
+        if path.is_symlink() or not path.resolve().is_relative_to(root):
+            raise ValueError(f"unsafe source path: {relative}")
         expected = _expected_size(metadata)
         if not path.is_file():
             missing.append(relative)
@@ -77,11 +82,10 @@ def inspect_source_snapshot(
         actual = path.stat().st_size
         present_bytes += actual
         if actual != expected:
-            size_mismatches.append(
-                {"path": relative, "expected_bytes": expected, "actual_bytes": actual}
-            )
+            size_mismatches.append({"path": relative, "expected_bytes": expected, "actual_bytes": actual})
     hash_mismatches: list[dict[str, str]] = []
     hashed_files = 0
+    actual_hashes: dict[str, str] = {}
     hash_candidates = [
         (relative, root / relative, str(metadata["lfs_sha256"]))
         for relative, metadata in sorted(files.items())
@@ -99,10 +103,9 @@ def inspect_source_snapshot(
             for completed, future in enumerate(as_completed(futures), start=1):
                 path_text, actual = future.result()
                 relative, expected = futures[future]
+                actual_hashes[relative] = actual
                 if actual != expected:
-                    hash_mismatches.append(
-                        {"path": relative, "expected_sha256": expected, "actual_sha256": actual}
-                    )
+                    hash_mismatches.append({"path": relative, "expected_sha256": expected, "actual_sha256": actual})
                 if completed == 1 or completed % 10 == 0 or completed == len(futures):
                     print(
                         f"[preflight] hashed LFS files {completed}/{len(futures)}",
@@ -125,6 +128,12 @@ def inspect_source_snapshot(
         "hashed_lfs_files": hashed_files,
         "hash_mismatches": hash_mismatches,
         "checked_at": utc_now(),
+        "source_content_fingerprint": fingerprint(
+            {relative: actual_hashes[relative] if relative in actual_hashes else sha256_file(root / relative)
+             for relative in sorted(files)}
+        )
+        if status == "passed"
+        else None,
     }
 
 
@@ -145,6 +154,33 @@ def verify_release(output_root: str | Path, *, verify_files: bool) -> dict[str, 
     output = Path(output_root).resolve()
     if not (output / "READY.json").is_file():
         raise FileNotFoundError(f"release has no top-level READY.json: {output}")
+    top = read_json(output / "READY.json")
+    if top.get("format_version") != 1 or top.get("status") != "ready":
+        raise ValueError("unsupported release version/status")
+    if top.get("publication_contract") == 2:
+        from .common import checksum_entries
+
+        if top.get("sha256sums_sha256") != sha256_file(output / "SHA256SUMS"):
+            raise ValueError("root manifest mismatch")
+        entries = checksum_entries(output)
+        actual = set()
+        for path in output.rglob("*"):
+            relative = path.relative_to(output)
+            if relative.parts[0] in {"_jobs", "pilots"} or relative.as_posix() in {
+                ".build.lock",
+                "READY.json",
+                "SHA256SUMS",
+            }:
+                continue
+            if path.is_symlink():
+                raise ValueError(f"symlink in release: {relative}")
+            if path.is_file():
+                actual.add(relative.as_posix())
+        if actual != set(entries):
+            raise ValueError("root manifest coverage mismatch")
+        for name, digest in entries.items():
+            if name.endswith((".json", "SHA256SUMS")) and sha256_file(output / name) != digest:
+                raise ValueError(f"root metadata mismatch: {name}")
     components = {
         **{dataset: output / "subsets" / dataset for dataset in SOURCE_DATASETS},
         "assets": output / "assets",
@@ -159,13 +195,12 @@ def verify_release(output_root: str | Path, *, verify_files: bool) -> dict[str, 
         expected = readiness.get("sha256sums_sha256")
         actual = sha256_file(manifest)
         if expected != actual:
-            raise ValueError(
-                f"SHA256SUMS digest mismatch for {name}: expected {expected}, got {actual}"
-            )
+            raise ValueError(f"SHA256SUMS digest mismatch for {name}: expected {expected}, got {actual}")
         result: dict[str, Any] = {
             "status": "manifest-verified",
             "sha256sums_sha256": actual,
         }
+        audit_component(component, verify_files=False)
         if verify_files:
             result.update(verify_checksum_manifest(component))
             result["status"] = "files-verified"
@@ -176,6 +211,7 @@ def verify_release(output_root: str | Path, *, verify_files: bool) -> dict[str, 
         "verify_files": verify_files,
         "components": results,
         "verified_at": utc_now(),
+        "root_integrity": "verified" if top.get("publication_contract") == 2 else "legacy-unbound",
     }
 
 
@@ -241,9 +277,7 @@ def build_stereo4d_metadata(
                         "sample_id": f"stereo4d/metadata/{video_id}",
                         "object_id": str(object_id),
                         "source_row_indices_json": json.dumps(row_indices, separators=(",", ":")),
-                        "motion_ranges_json": json.dumps(
-                            ranges.get(object_id, []), separators=(",", ":")
-                        ),
+                        "motion_ranges_json": json.dumps(ranges.get(object_id, []), separators=(",", ":")),
                     }
                 )
         write_parquet(clips, staged / "clips.parquet")
@@ -281,9 +315,7 @@ def build_stereo4d_metadata(
         fsync_directory(output_path.parent)
         return {"output": str(output_path), **ready}
     except BaseException as error:
-        raise RuntimeError(
-            f"Stereo4D metadata build failed; partial staging was preserved at {staged}"
-        ) from error
+        raise RuntimeError(f"Stereo4D metadata build failed; partial staging was preserved at {staged}") from error
 
 
 def _link_or_copy(source: Path, target: Path) -> str:
@@ -323,9 +355,7 @@ def build_portable_assets(
         archive_paths = sorted(
             [
                 *(root / "molmospaces" / "videos").glob("videos-*.tar"),
-                *(root / "molmospaces" / "robot_trajectories").glob(
-                    "robot_trajectories-*.tar"
-                ),
+                *(root / "molmospaces" / "robot_trajectories").glob("robot_trajectories-*.tar"),
             ]
         )
         index = build_tar_index(root, archive_paths, workers=workers)
@@ -347,9 +377,7 @@ def build_portable_assets(
         write_parquet(asset_rows, staged / "assets_index.parquet")
 
         metadata_files = [
-            relative
-            for relative in sorted(files)
-            if not relative.endswith(".tar") and (root / relative).is_file()
+            relative for relative in sorted(files) if not relative.endswith(".tar") and (root / relative).is_file()
         ]
         for relative in metadata_files:
             _link_or_copy(root / relative, staged / "source_metadata" / relative)
@@ -398,9 +426,7 @@ def build_portable_assets(
         fsync_directory(output_path.parent)
         return {"output": str(output_path), **ready}
     except BaseException as error:
-        raise RuntimeError(
-            f"portable asset build failed; partial staging was preserved at {staged}"
-        ) from error
+        raise RuntimeError(f"portable asset build failed; partial staging was preserved at {staged}") from error
 
 
 def _ready(path: Path, *, pilot: bool) -> bool:
@@ -413,14 +439,30 @@ def _build_or_resume(
     *,
     pilot: bool,
     build: Any,
+    contract: dict[str, Any],
 ) -> dict[str, Any]:
     if _ready(target, pilot=pilot):
+        audit_component(target, verify_files=True)
+        if not (target / "build_contract.json").is_file() or read_json(target / "build_contract.json") != contract:
+            raise ValueError(f"resume contract differs or legacy cache needs explicit migration: {target}")
         return {"output": str(target), "status": "resumed-existing-ready"}
     if target.exists():
-        raise FileExistsError(
-            f"existing output has no readiness marker and will not be overwritten: {target}"
-        )
-    return build()
+        raise FileExistsError(f"existing output has no readiness marker and will not be overwritten: {target}")
+    parent = Path(tempfile.mkdtemp(prefix=".contract-", dir=target.parent))
+    staged = parent / "component"
+    result = build(staged)
+    marker = staged / ("PILOT_READY.json" if pilot else "READY.json")
+    readiness = read_json(marker)
+    marker.unlink()
+    write_json(staged / "build_contract.json", contract)
+    readiness["sha256sums_sha256"] = write_checksum_manifest(staged)
+    write_json(marker, readiness)
+    audit_component(staged, verify_files=True)
+    os.rename(staged, target)
+    parent.rmdir()
+    result.update(readiness)
+    result["output"] = str(target)
+    return result
 
 
 def build_full_release(
@@ -443,16 +485,38 @@ def build_full_release(
     output.mkdir(parents=True, exist_ok=True)
     pilot = limit_per_subset is not None
     top_marker = output / ("PILOT_READY.json" if pilot else "READY.json")
-    if top_marker.exists():
-        return {"output": str(output), "status": "resumed-existing-ready"}
+    # Even an existing READY release must pass the current source/config contract.
+    for target in [*(output / "subsets" / name for name in SOURCE_DATASETS), output / "assets"]:
+        if _ready(target, pilot=pilot) and not (target / "build_contract.json").is_file():
+            raise ValueError(f"legacy component is read-only; export/validate explicitly: {target}")
 
     preflight = inspect_source_snapshot(
         source,
         verify_hashes=verify_source_hashes,
         workers=workers,
     )
-    write_json(output / "source_preflight.json", preflight)
     require_complete_source(preflight)
+    contract = {
+        "schema": 1,
+        "code": code_fingerprint(),
+        "source": preflight["source_content_fingerprint"],
+        "workers": workers,
+        "shard_size": shard_size,
+        "checks": checks,
+        "limit": limit_per_subset,
+        "checksums": checksums,
+        "verify_source_hashes": verify_source_hashes,
+    }
+    if top_marker.exists():
+        if not (output / "build_contract.json").exists() or read_json(output / "build_contract.json") != contract:
+            raise ValueError("release resume contract mismatch")
+        if pilot:
+            audit_component(output, verify_files=True)
+        else:
+            verify_release(output, verify_files=True)
+        return {"output": str(output), "status": "resumed-verified-ready"}
+    write_json(output / "source_preflight.json", preflight)
+    write_json(output / "build_contract.json", contract)
     subset_root = output / "subsets"
     subset_root.mkdir(parents=True, exist_ok=True)
     results: dict[str, dict[str, Any]] = {}
@@ -460,9 +524,10 @@ def build_full_release(
     results["droid"] = _build_or_resume(
         droid_target,
         pilot=pilot,
-        build=lambda: build_droid_cache(
+        contract=contract,
+        build=lambda destination: build_droid_cache(
             source,
-            droid_target,
+            destination,
             limit=limit_per_subset,
             shard_size=shard_size,
             checks=checks,
@@ -473,9 +538,10 @@ def build_full_release(
         results[dataset] = _build_or_resume(
             target,
             pilot=pilot,
-            build=lambda dataset=dataset, target=target: build_generic_cache(
+            contract=contract,
+            build=lambda destination, dataset=dataset: build_generic_cache(
                 source,
-                target,
+                destination,
                 dataset,
                 limit_per_track_kind=limit_per_subset,
                 shard_size=shard_size,
@@ -488,14 +554,16 @@ def build_full_release(
     results["stereo4d"] = _build_or_resume(
         stereo_target,
         pilot=pilot,
-        build=lambda: build_stereo4d_metadata(source, stereo_target, limit=limit_per_subset),
+        contract=contract,
+        build=lambda destination: build_stereo4d_metadata(source, destination, limit=limit_per_subset),
     )
     if not pilot:
         asset_target = output / "assets"
         results["assets"] = _build_or_resume(
             asset_target,
             pilot=False,
-            build=lambda: build_portable_assets(source, asset_target, workers=workers),
+            contract=contract,
+            build=lambda destination: build_portable_assets(source, destination, workers=workers),
         )
 
     summary = {
@@ -516,6 +584,10 @@ def build_full_release(
         "created_at": utc_now(),
     }
     write_json(output / "dataset.json", summary)
+    summary["publication_contract"] = 2
+    summary["sha256sums_sha256"] = release_manifest(
+        output, [*(f"subsets/{name}" for name in SOURCE_DATASETS), *([] if pilot else ["assets"])]
+    )
     write_json(top_marker, summary)
     fsync_directory(output)
     return {"output": str(output), **summary}

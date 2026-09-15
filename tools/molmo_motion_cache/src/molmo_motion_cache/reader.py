@@ -10,16 +10,14 @@ from typing import Any
 
 import numpy as np
 
-from .common import read_json, read_parquet_rows, safe_relative_path
+from .common import read_json, read_parquet_rows, require_ready_cache, safe_relative_path
 
 
 def _scaled_intrinsics(measured: np.ndarray, height: int, width: int) -> np.ndarray:
     cx, cy = float(measured[0, 2]), float(measured[1, 2])
     if cx <= 0 or cy <= 0:
         raise ValueError(f"invalid camera principal point: {(cx, cy)}")
-    affine = np.diag(
-        np.array([width / (2.0 * cx), height / (2.0 * cy), 1.0], dtype=np.float32)
-    )
+    affine = np.diag(np.array([width / (2.0 * cx), height / (2.0 * cy), 1.0], dtype=np.float32))
     return (affine @ measured).astype(np.float32, copy=False)
 
 
@@ -39,18 +37,12 @@ def _selected_window(
     start = min(max(start, 0), total_frames - selected_frames)
     stop = start + selected_frames
     selected_points = min(points, total_points)
-    point_indices = np.linspace(
-        0, total_points - 1, num=selected_points, dtype=np.int64
-    )
+    point_indices = np.linspace(0, total_points - 1, num=selected_points, dtype=np.int64)
     result = {
         "points2d": np.ascontiguousarray(arrays["points2d"][start:stop, point_indices]),
         "points3d": np.ascontiguousarray(arrays["points3d"][start:stop, point_indices]),
-        "visibility2d": np.ascontiguousarray(
-            arrays["visibility2d"][start:stop, point_indices]
-        ),
-        "visibility3d": np.ascontiguousarray(
-            arrays["visibility3d"][start:stop, point_indices]
-        ),
+        "visibility2d": np.ascontiguousarray(arrays["visibility2d"][start:stop, point_indices]),
+        "visibility3d": np.ascontiguousarray(arrays["visibility3d"][start:stop, point_indices]),
         "intrinsics_measured": np.ascontiguousarray(arrays["intrinsics_measured"]),
         "intrinsics_ds": np.ascontiguousarray(arrays["intrinsics_ds"]),
         "extrinsics": np.ascontiguousarray(arrays["extrinsics"]),
@@ -62,6 +54,16 @@ class MMapDroidReader:
     """Read portable DROID cache shards without consulting their raw source."""
 
     def __init__(self, cache_root: str | Path) -> None:
+        require_ready_cache(Path(cache_root))
+        self._initialize(cache_root)
+
+    @classmethod
+    def _from_staging(cls, cache_root: str | Path):
+        reader = cls.__new__(cls)
+        reader._initialize(cache_root)
+        return reader
+
+    def _initialize(self, cache_root: str | Path) -> None:
         self.root = Path(cache_root).resolve()
         self.dataset = read_json(self.root / "dataset.json")
         if self.dataset.get("format") != "molmo-motion-cache":
@@ -109,12 +111,8 @@ class MMapDroidReader:
             "points2d": np.load(shard_root / "points2d.npy", mmap_mode="r"),
             "visibility3d": np.load(shard_root / "visibility3d.npy", mmap_mode="r"),
             "visibility2d": np.load(shard_root / "visibility2d.npy", mmap_mode="r"),
-            "camera_intrinsics_measured": np.load(
-                shard_root / "camera_intrinsics_measured.npy", mmap_mode="r"
-            ),
-            "camera_intrinsics_ds": np.load(
-                shard_root / "camera_intrinsics_ds.npy", mmap_mode="r"
-            ),
+            "camera_intrinsics_measured": np.load(shard_root / "camera_intrinsics_measured.npy", mmap_mode="r"),
+            "camera_intrinsics_ds": np.load(shard_root / "camera_intrinsics_ds.npy", mmap_mode="r"),
             "camera_extrinsics": np.load(shard_root / "camera_extrinsics.npy", mmap_mode="r"),
         }
         self._arrays[shard_relpath] = arrays
@@ -122,9 +120,7 @@ class MMapDroidReader:
 
     def _validate_structure(self) -> None:
         expected_offsets: dict[str, int] = defaultdict(int)
-        ordered_tracks = sorted(
-            self._tracks.values(), key=lambda row: (row["shard"], int(row["row_offset"]))
-        )
+        ordered_tracks = sorted(self._tracks.values(), key=lambda row: (row["shard"], int(row["row_offset"])))
         for track in ordered_tracks:
             shard = str(track["shard"])
             safe_relative_path(shard)
@@ -183,12 +179,8 @@ class MMapDroidReader:
             "extrinsics": arrays["camera_extrinsics"][camera_row],
         }
 
-    def get_window(
-        self, sample_id: str, *, start: int = 0, frames: int = 8, points: int = 32
-    ) -> dict[str, np.ndarray]:
-        return _selected_window(
-            self.get_full(sample_id), start=start, frames=frames, points=points
-        )
+    def get_window(self, sample_id: str, *, start: int = 0, frames: int = 8, points: int = 32) -> dict[str, np.ndarray]:
+        return _selected_window(self.get_full(sample_id), start=start, frames=frames, points=points)
 
 
 class RawTarDroidReader:
@@ -252,12 +244,8 @@ class RawTarDroidReader:
     def get_full(self, sample_id: str) -> dict[str, np.ndarray]:
         track = self._tracks[sample_id]
         clip = self._clips[sample_id]
-        data_2d = self._load_npz(
-            clip["source_track_2d_tar"], clip["source_track_2d_member"]
-        )
-        data_3d = self._load_npz(
-            clip["source_track_3d_tar"], clip["source_track_3d_member"]
-        )
+        data_2d = self._load_npz(clip["source_track_2d_tar"], clip["source_track_2d_member"])
+        data_3d = self._load_npz(clip["source_track_3d_tar"], clip["source_track_3d_member"])
         points2d = np.asarray(data_2d["tracks_2d"])
         points3d = np.asarray(data_3d["points_3d"])
         visibility2d = np.asarray(data_2d["visibility"], dtype=np.bool_)
@@ -280,15 +268,9 @@ class RawTarDroidReader:
             "visibility3d": visibility3d,
             "visibility2d": visibility2d,
             "intrinsics_measured": measured,
-            "intrinsics_ds": _scaled_intrinsics(
-                measured, int(clip["height"]), int(clip["width"])
-            ),
+            "intrinsics_ds": _scaled_intrinsics(measured, int(clip["height"]), int(clip["width"])),
             "extrinsics": extrinsics,
         }
 
-    def get_window(
-        self, sample_id: str, *, start: int = 0, frames: int = 8, points: int = 32
-    ) -> dict[str, np.ndarray]:
-        return _selected_window(
-            self.get_full(sample_id), start=start, frames=frames, points=points
-        )
+    def get_window(self, sample_id: str, *, start: int = 0, frames: int = 8, points: int = 32) -> dict[str, np.ndarray]:
+        return _selected_window(self.get_full(sample_id), start=start, frames=frames, points=points)

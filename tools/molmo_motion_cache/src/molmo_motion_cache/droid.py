@@ -9,8 +9,8 @@ from __future__ import annotations
 
 import json
 import os
-import tempfile
 import tarfile
+import tempfile
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
@@ -136,14 +136,10 @@ class DroidSource:
                     continue
                 if member.name.startswith("tracks/") and member.name.endswith("_2d.npz"):
                     key = member.name[len("tracks/") : -len("_2d.npz")]
-                    self._record_member(
-                        self._track_2d, key, MemberRef(relative, member.name), "2D track"
-                    )
+                    self._record_member(self._track_2d, key, MemberRef(relative, member.name), "2D track")
                 elif member.name.startswith("tracks/") and member.name.endswith("_3d.npz"):
                     key = member.name[len("tracks/") : -len("_3d.npz")]
-                    self._record_member(
-                        self._track_3d, key, MemberRef(relative, member.name), "3D track"
-                    )
+                    self._record_member(self._track_3d, key, MemberRef(relative, member.name), "3D track")
 
         for path in camera_tars:
             relative, archive = self._open_and_index(path)
@@ -212,9 +208,7 @@ class DroidSource:
         cx, cy = float(measured[0, 2]), float(measured[1, 2])
         if cx <= 0 or cy <= 0:
             raise ValueError(f"cannot scale intrinsics with principal point {(cx, cy)}")
-        affine = np.diag(
-            np.array([width / (2.0 * cx), height / (2.0 * cy), 1.0], dtype=np.float32)
-        )
+        affine = np.diag(np.array([width / (2.0 * cx), height / (2.0 * cy), 1.0], dtype=np.float32))
         return (affine @ measured).astype(np.float32, copy=False)
 
     def candidates(self) -> list[DroidCandidate]:
@@ -280,8 +274,7 @@ class DroidSource:
             raise ValueError(f"ds_dim has invalid shape for {candidate.video_id}: {ds_dim.shape}")
         if points2d.dtype != np.float32 or points3d.dtype != np.float32:
             raise ValueError(
-                f"unexpected DROID point dtype for {candidate.video_id}: "
-                f"{points2d.dtype}, {points3d.dtype}"
+                f"unexpected DROID point dtype for {candidate.video_id}: {points2d.dtype}, {points3d.dtype}"
             )
 
         camera_document = self._load_camera_document(candidate.camera)
@@ -289,9 +282,7 @@ class DroidSource:
         calibration = camera_document.get(camera_id)
         if not isinstance(calibration, dict):
             raise ValueError(f"camera {camera_id} is absent from {candidate.camera.member_name}")
-        measured = self._as_matrix(
-            calibration.get("measured_intrinsics"), (3, 3), "measured_intrinsics"
-        )
+        measured = self._as_matrix(calibration.get("measured_intrinsics"), (3, 3), "measured_intrinsics")
         if "vggt_extrinsics" in calibration:
             extrinsics_kind = "vggt_extrinsics"
             extrinsics_value = calibration["vggt_extrinsics"]
@@ -306,8 +297,7 @@ class DroidSource:
         expected_frames = candidate.metadata.get("num_frames")
         if expected_frames is not None and int(expected_frames) != points2d.shape[0]:
             raise ValueError(
-                f"annotation/track frame mismatch for {candidate.video_id}: "
-                f"{expected_frames} != {points2d.shape[0]}"
+                f"annotation/track frame mismatch for {candidate.video_id}: {expected_frames} != {points2d.shape[0]}"
             )
         return DroidSample(
             candidate=candidate,
@@ -345,9 +335,7 @@ def _chunked(values: list[PreparedDroidRecord], size: int) -> Iterable[list[Prep
         yield values[start : start + size]
 
 
-def _prepare_records(
-    source: DroidSource, limit: int | None
-) -> tuple[list[PreparedDroidRecord], Counter[str], int]:
+def _prepare_records(source: DroidSource, limit: int | None) -> tuple[list[PreparedDroidRecord], Counter[str], int]:
     selected: list[PreparedDroidRecord] = []
     skipped: Counter[str] = Counter()
     seen = 0
@@ -565,13 +553,11 @@ def _verify_staged_output(
 
     from .reader import MMapDroidReader
 
-    reader = MMapDroidReader(staged_root)
+    reader = MMapDroidReader._from_staging(staged_root)
     expected_ids = {record.candidate.sample_id for record in prepared}
     actual_ids = set(reader.sample_ids)
     if actual_ids != expected_ids:
-        raise ValueError(
-            f"index sample IDs differ: expected {len(expected_ids)}, got {len(actual_ids)}"
-        )
+        raise ValueError(f"index sample IDs differ: expected {len(expected_ids)}, got {len(actual_ids)}")
     check_count = min(max(checks, 0), len(prepared))
     checked_ids: list[str] = []
     if check_count:
@@ -627,9 +613,7 @@ def build_droid_cache(
             "choose a new output directory or inspect the existing build"
         )
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    staged_root = Path(
-        tempfile.mkdtemp(prefix=f".{output_path.name}.partial-", dir=output_path.parent)
-    )
+    staged_root = Path(tempfile.mkdtemp(prefix=f".{output_path.name}.partial-", dir=output_path.parent))
     try:
         with DroidSource(source_root) as source:
             prepared, skipped, candidates_seen = _prepare_records(source, limit)

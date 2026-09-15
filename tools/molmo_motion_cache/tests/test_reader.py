@@ -5,8 +5,7 @@ import unittest
 from pathlib import Path
 
 import numpy as np
-
-from molmo_motion_cache.common import write_json, write_parquet
+from molmo_motion_cache.common import write_checksum_manifest, write_json, write_parquet
 from molmo_motion_cache.droid import DroidSource
 from molmo_motion_cache.reader import MMapDroidReader
 
@@ -17,9 +16,7 @@ class ReaderLayoutTest(unittest.TestCase):
             [[100.0, 0.0, 50.0], [0.0, 120.0, 40.0], [0.0, 0.0, 1.0]],
             dtype=np.float32,
         )
-        actual = DroidSource.scaled_intrinsics(
-            measured, np.array([480, 854], dtype=np.int64)
-        )
+        actual = DroidSource.scaled_intrinsics(measured, np.array([480, 854], dtype=np.int64))
         expected = np.array(
             [[854.0, 0.0, 427.0], [0.0, 720.0, 240.0], [0.0, 0.0, 1.0]],
             dtype=np.float32,
@@ -45,6 +42,7 @@ class ReaderLayoutTest(unittest.TestCase):
                 root / "dataset.json",
                 {
                     "format": "molmo-motion-cache",
+                    "format_version": 1,
                     "subset": "droid",
                     "runtime_contract": {"all_runtime_paths_relative": True},
                 },
@@ -63,6 +61,12 @@ class ReaderLayoutTest(unittest.TestCase):
                 root / "cameras_index.parquet",
             )
             write_parquet([{"sample_id": "droid/test"}], root / "clips.parquet")
+            with self.assertRaises((ValueError, FileNotFoundError)):
+                MMapDroidReader(root)
+            write_json(
+                root / "READY.json",
+                {"format_version": 1, "status": "ready", "sha256sums_sha256": write_checksum_manifest(root)},
+            )
             reader = MMapDroidReader(root)
             full = reader.get_full("droid/test")
             self.assertEqual(full["points3d"].shape, (2, 3, 3))
@@ -72,6 +76,9 @@ class ReaderLayoutTest(unittest.TestCase):
                 window["points2d"],
                 np.array([[[0.0, 1.0], [4.0, 5.0]], [[6.0, 7.0], [10.0, 11.0]]]),
             )
+            write_json(root / "dataset.json", {"format_version": 99})
+            with self.assertRaises(ValueError):
+                MMapDroidReader(root)
 
 
 if __name__ == "__main__":

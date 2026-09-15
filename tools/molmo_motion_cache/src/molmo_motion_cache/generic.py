@@ -29,7 +29,6 @@ from .common import (
     write_parquet,
 )
 
-
 GENERIC_SUBSETS = ("egodex", "hdepic", "molmospaces", "xperience", "ytvis")
 
 

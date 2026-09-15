@@ -7,7 +7,6 @@ import unittest
 from pathlib import Path
 
 import numpy as np
-
 from molmo_motion_cache.archives import build_tar_index, read_npz
 from molmo_motion_cache.generic import _track_object
 
@@ -37,9 +36,7 @@ class ArchiveReaderTest(unittest.TestCase):
                 wanted_names={"tracks/example.npz"},
             )
             document = read_npz(root, index["tracks/example.npz"])
-            np.testing.assert_array_equal(
-                document["points"], np.arange(18, dtype=np.float32).reshape(2, 3, 3)
-            )
+            np.testing.assert_array_equal(document["points"], np.arange(18, dtype=np.float32).reshape(2, 3, 3))
             self.assertEqual(document["labels"].item(), {"left": [1, 2]})
 
     def test_track_axes_are_normalized_to_time_point_dimension(self) -> None:

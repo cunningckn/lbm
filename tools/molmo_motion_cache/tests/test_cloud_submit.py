@@ -5,7 +5,6 @@ import importlib.util
 import unittest
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[3]
 SCRIPT_PATH = REPO_ROOT / "scripts" / "tc_cloud" / "submit_molmo_motion_full.py"
 SPEC = importlib.util.spec_from_file_location("submit_molmo_motion_full", SCRIPT_PATH)

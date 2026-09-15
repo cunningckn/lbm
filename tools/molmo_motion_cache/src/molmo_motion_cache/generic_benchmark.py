@@ -20,7 +20,6 @@ from .generic import (
 )
 from .generic_reader import MMapMotionReader
 
-
 Operation = tuple[Candidate, str, int]
 
 

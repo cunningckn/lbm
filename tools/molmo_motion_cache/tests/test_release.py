@@ -17,18 +17,15 @@ class ReleaseVerificationTest(unittest.TestCase):
                 component.mkdir(parents=True)
                 (component / "payload.bin").write_bytes(b"verified payload")
                 digest = write_checksum_manifest(component)
-                write_json(component / "READY.json", {"sha256sums_sha256": digest})
-            write_json(root / "READY.json", {"status": "ready"})
+                write_json(
+                    component / "READY.json", {"format_version": 1, "status": "ready", "sha256sums_sha256": digest}
+                )
+            write_json(root / "READY.json", {"format_version": 1, "status": "ready"})
 
             result = verify_release(root, verify_files=True)
             self.assertEqual(result["status"], "passed")
             self.assertEqual(set(result["components"]), {*SOURCE_DATASETS, "assets"})
-            self.assertTrue(
-                all(
-                    value["status"] == "files-verified"
-                    for value in result["components"].values()
-                )
-            )
+            self.assertTrue(all(value["status"] == "files-verified" for value in result["components"].values()))
 
 
 if __name__ == "__main__":

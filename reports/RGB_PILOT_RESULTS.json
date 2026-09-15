@@ -1,0 +1,58 @@
+[
+  {
+    "alignment": "frame-index",
+    "elapsed_seconds": 11.58998768683523,
+    "frames": 279,
+    "jpeg_bytes": 14976541,
+    "jpeg_psnr_db": 41.460437837552355,
+    "max_time_error_seconds": 0.18349834983498425,
+    "png_bytes": 43548163,
+    "png_exact": true,
+    "process_peak_rss_kib": 532296,
+    "pts_aligned": false,
+    "source_bytes": 321313,
+    "video_id": "pick_place_2cam_randomized__house_0__00000000__exo_camera_1"
+  },
+  {
+    "alignment": "frame-index",
+    "elapsed_seconds": 16.289853875059634,
+    "frames": 279,
+    "jpeg_bytes": 18307385,
+    "jpeg_psnr_db": 43.764187246534235,
+    "max_time_error_seconds": 0.18349834983498425,
+    "png_bytes": 59500195,
+    "png_exact": true,
+    "process_peak_rss_kib": 533556,
+    "pts_aligned": false,
+    "source_bytes": 900100,
+    "video_id": "pick_place_2cam_randomized__house_0__00000000__wrist_camera"
+  },
+  {
+    "alignment": "frame-index",
+    "elapsed_seconds": 11.184460963122547,
+    "frames": 253,
+    "jpeg_bytes": 13389490,
+    "jpeg_psnr_db": 42.930784910618065,
+    "max_time_error_seconds": 0.16633663366336648,
+    "png_bytes": 40213115,
+    "png_exact": true,
+    "process_peak_rss_kib": 533556,
+    "pts_aligned": false,
+    "source_bytes": 449386,
+    "video_id": "pick_place_2cam_randomized__house_0__00000001__exo_camera_1"
+  },
+  {
+    "alignment": "frame-index",
+    "elapsed_seconds": 10.725671996828169,
+    "frames": 253,
+    "jpeg_bytes": 10373242,
+    "jpeg_psnr_db": 44.215942220517086,
+    "max_time_error_seconds": 0.16633663366336648,
+    "png_bytes": 34112272,
+    "png_exact": true,
+    "process_peak_rss_kib": 533556,
+    "pts_aligned": false,
+    "source_bytes": 578376,
+    "video_id": "pick_place_2cam_randomized__house_0__00000001__wrist_camera"
+  }
+]

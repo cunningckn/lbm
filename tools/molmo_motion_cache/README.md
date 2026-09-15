@@ -1,5 +1,12 @@
 # MolmoMotion mmap cache
 
+Completion review (2026-09-15): the numerical release is **annotations-only**.
+See [SCHEMA.md](SCHEMA.md) for publication/reader contracts and the experimental
+RGB frame-index policy, and [MIGRATION.md](MIGRATION.md) for independent export
+and the actual Kingsoft pilot acceptance. Existing releases without build
+contracts remain readable/auditable but are rejected for automatic resume.
+Optional image experiments require installation with `.[rgb]` on Linux.
+
 This standalone CPU package converts the complete published MolmoMotion-1M
 snapshot into a portable, index-driven cache. It does not import LBM, Torch,
 or CUDA. Runtime paths are relative to the delivery root, so the finished

@@ -1,0 +1,22 @@
+{
+  "recorded_from": "actual isolated relocation_check.py command outputs on both hosts, 2026-09-15",
+  "tc_dev": {
+    "status": "passed",
+    "destination": "/home/tione/workspace/kainingchen/Datasets/molmo-motion-1m-mmap/completion-tests/droid-export-20260915",
+    "original_path_access": "denied-by-audit-hook",
+    "isolated_python": 1,
+    "samples": 512,
+    "window_shape": [8, 32, 2],
+    "copy_unchanged": true
+  },
+  "mindon_server2": {
+    "status": "passed",
+    "destination": "/mnt/kpfs/workspace/jinaoqun/Projects/lbm-completion-tests-20260915/droid-export-20260915",
+    "original_path_access": "denied-by-audit-hook",
+    "isolated_python": 1,
+    "samples": 512,
+    "window_shape": [8, 32, 2],
+    "copy_unchanged": true
+  },
+  "full_release_transferred": false
+}

@@ -1,0 +1,25 @@
+{
+  "results": [
+    {
+      "sample": "molmospaces/object/pick_place_2cam_randomized__house_0__00000000__exo_camera_1",
+      "state": "rgb-pilot",
+      "time_semantics_verified": false
+    },
+    {
+      "sample": "molmospaces/object/pick_place_2cam_randomized__house_0__00000000__wrist_camera",
+      "state": "rgb-pilot",
+      "time_semantics_verified": false
+    },
+    {
+      "sample": "molmospaces/object/pick_place_2cam_randomized__house_0__00000001__exo_camera_1",
+      "state": "rgb-pilot",
+      "time_semantics_verified": false
+    },
+    {
+      "sample": "molmospaces/object/pick_place_2cam_randomized__house_0__00000001__wrist_camera",
+      "state": "rgb-pilot",
+      "time_semantics_verified": false
+    }
+  ],
+  "status": "passed"
+}

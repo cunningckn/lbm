@@ -1,0 +1,23 @@
+{
+  "incremental_allocated_bytes": 259849117696,
+  "published_components": {
+    "allocated_bytes": 338642755584,
+    "files": 21006,
+    "inode_deduplicated_allocated_bytes": 338642755584,
+    "logical_bytes": 338592848267
+  },
+  "raw_plus_delivery": {
+    "allocated_bytes": 624244932608,
+    "files": 21088,
+    "inode_deduplicated_allocated_bytes": 545451294720,
+    "logical_bytes": 624193955644
+  },
+  "scope": "only pinned source manifest and component manifests; excludes incomplete downloads, jobs and pilots",
+  "source_fixed_snapshot": {
+    "allocated_bytes": 285602177024,
+    "files": 82,
+    "inode_deduplicated_allocated_bytes": 285602177024,
+    "logical_bytes": 285601107377
+  },
+  "source_revision": "c3dec07d796ddeccdc8f5a35bf4920b3ee044feb"
+}

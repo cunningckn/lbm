@@ -1,0 +1,34 @@
+{
+  "results": [
+    {
+      "dtype2d": "float32",
+      "dtype3d": "float32",
+      "sample_id": "droid/GuptaLab+553d1bd5+2023-07-10-10h-02m-27s__22246076",
+      "split": "train",
+      "status": "passed"
+    },
+    {
+      "dtype2d": "float32",
+      "dtype3d": "float32",
+      "sample_id": "droid/AUTOLab+5d05c5aa+2023-11-18-00h-55m-39s__22008760",
+      "split": "train",
+      "status": "passed"
+    },
+    {
+      "dtype2d": "float32",
+      "dtype3d": "float32",
+      "sample_id": "droid/AUTOLab+9aed6d7a+2023-11-16-14h-30m-50s__22008760",
+      "split": "test",
+      "status": "passed"
+    },
+    {
+      "dtype2d": "float32",
+      "dtype3d": "float32",
+      "sample_id": "droid/AUTOLab+5d05c5aa+2023-11-17-22h-37m-43s__24400334",
+      "split": "test",
+      "status": "passed"
+    }
+  ],
+  "scope": "first/last train/test entries, full arrays and source camera fields",
+  "status": "passed"
+}

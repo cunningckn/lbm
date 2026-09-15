@@ -1,0 +1,644 @@
+{
+  "not_covered": [
+    "DROID independent normalization",
+    "projection geometry",
+    "entire corpus semantic equivalence"
+  ],
+  "results": [
+    {
+      "kind": "object",
+      "objects": 1,
+      "raw_dtypes": [
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        }
+      ],
+      "sample_id": "egodex/object/part1_add_remove_lid_1067",
+      "split": "train",
+      "status": "passed",
+      "subset": "egodex"
+    },
+    {
+      "kind": "object",
+      "objects": 1,
+      "raw_dtypes": [
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        }
+      ],
+      "sample_id": "egodex/object/part1_add_remove_lid_1866",
+      "split": "train",
+      "status": "passed",
+      "subset": "egodex"
+    },
+    {
+      "kind": "object",
+      "objects": 1,
+      "raw_dtypes": [
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        }
+      ],
+      "sample_id": "egodex/object/part1_add_remove_lid_854",
+      "split": "test",
+      "status": "passed",
+      "subset": "egodex"
+    },
+    {
+      "kind": "object",
+      "objects": 1,
+      "raw_dtypes": [
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        }
+      ],
+      "sample_id": "egodex/object/part1_add_remove_lid_2540",
+      "split": "test",
+      "status": "passed",
+      "subset": "egodex"
+    },
+    {
+      "kind": "hand",
+      "objects": 2,
+      "raw_dtypes": [
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        }
+      ],
+      "sample_id": "egodex/hand/extra_assemble_disassemble_jigsaw_puzzle_0",
+      "split": "train",
+      "status": "passed",
+      "subset": "egodex"
+    },
+    {
+      "kind": "hand",
+      "objects": 2,
+      "raw_dtypes": [
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        }
+      ],
+      "sample_id": "egodex/hand/extra_assemble_disassemble_jigsaw_puzzle_100",
+      "split": "train",
+      "status": "passed",
+      "subset": "egodex"
+    },
+    {
+      "kind": "hand",
+      "objects": 2,
+      "raw_dtypes": [
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        }
+      ],
+      "sample_id": "egodex/hand/extra_blowdry_hair_282",
+      "split": "test",
+      "status": "passed",
+      "subset": "egodex"
+    },
+    {
+      "kind": "hand",
+      "objects": 2,
+      "raw_dtypes": [
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        }
+      ],
+      "sample_id": "egodex/hand/extra_blowdry_hair_301",
+      "split": "test",
+      "status": "passed",
+      "subset": "egodex"
+    },
+    {
+      "kind": "object",
+      "objects": 3,
+      "raw_dtypes": [
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        }
+      ],
+      "sample_id": "hdepic/object/046e7c2da0c21ec7-P05-20240425-171455-354",
+      "split": "train",
+      "status": "passed",
+      "subset": "hdepic"
+    },
+    {
+      "kind": "object",
+      "objects": 1,
+      "raw_dtypes": [
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        }
+      ],
+      "sample_id": "hdepic/object/046f1076604856eb-P07-20240529-194518-109",
+      "split": "train",
+      "status": "passed",
+      "subset": "hdepic"
+    },
+    {
+      "kind": "object",
+      "objects": 1,
+      "raw_dtypes": [
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        }
+      ],
+      "sample_id": "hdepic/object/f44cc10f350930ec-P04-20240414-072251-271",
+      "split": "test",
+      "status": "passed",
+      "subset": "hdepic"
+    },
+    {
+      "kind": "object",
+      "objects": 2,
+      "raw_dtypes": [
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        }
+      ],
+      "sample_id": "hdepic/object/f44cc10f350930ec-P04-20240414-072251-276",
+      "split": "test",
+      "status": "passed",
+      "subset": "hdepic"
+    },
+    {
+      "kind": "object",
+      "objects": 1,
+      "raw_dtypes": [
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        }
+      ],
+      "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_0__00000000__exo_camera_1",
+      "split": "train",
+      "status": "passed",
+      "subset": "molmospaces"
+    },
+    {
+      "kind": "object",
+      "objects": 1,
+      "raw_dtypes": [
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        }
+      ],
+      "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_0__00000000__wrist_camera",
+      "split": "train",
+      "status": "passed",
+      "subset": "molmospaces"
+    },
+    {
+      "kind": "object",
+      "objects": 1,
+      "raw_dtypes": [
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        }
+      ],
+      "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_102__00000000__exo_camera_1",
+      "split": "test",
+      "status": "passed",
+      "subset": "molmospaces"
+    },
+    {
+      "kind": "object",
+      "objects": 1,
+      "raw_dtypes": [
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        }
+      ],
+      "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_102__00000000__wrist_camera",
+      "split": "test",
+      "status": "passed",
+      "subset": "molmospaces"
+    },
+    {
+      "kind": "object",
+      "objects": 1,
+      "raw_dtypes": [
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        }
+      ],
+      "sample_id": "xperience/object/003dcaf0-edba-4787-ada0-187d2748f684__ep7__clip_010_sort_purple_components",
+      "split": "train",
+      "status": "passed",
+      "subset": "xperience"
+    },
+    {
+      "kind": "object",
+      "objects": 1,
+      "raw_dtypes": [
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        }
+      ],
+      "sample_id": "xperience/object/003dcaf0-edba-4787-ada0-187d2748f684__ep8__clip_002_sort_purple_paper_stars",
+      "split": "train",
+      "status": "passed",
+      "subset": "xperience"
+    },
+    {
+      "kind": "object",
+      "objects": 1,
+      "raw_dtypes": [
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        }
+      ],
+      "sample_id": "xperience/object/b016c2ac-1626-4af0-badf-207071c6bd5c__ep11__clip_026_hold_snack_package",
+      "split": "test",
+      "status": "passed",
+      "subset": "xperience"
+    },
+    {
+      "kind": "object",
+      "objects": 1,
+      "raw_dtypes": [
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        }
+      ],
+      "sample_id": "xperience/object/b016c2ac-1626-4af0-badf-207071c6bd5c__ep12__clip_006_place_cans_on_shelf",
+      "split": "test",
+      "status": "passed",
+      "subset": "xperience"
+    },
+    {
+      "kind": "hand",
+      "objects": 2,
+      "raw_dtypes": [
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        }
+      ],
+      "sample_id": "xperience/hand/003dcaf0-edba-4787-ada0-187d2748f684__ep7__clip_010_sort_purple_components",
+      "split": "train",
+      "status": "passed",
+      "subset": "xperience"
+    },
+    {
+      "kind": "hand",
+      "objects": 1,
+      "raw_dtypes": [
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        }
+      ],
+      "sample_id": "xperience/hand/003dcaf0-edba-4787-ada0-187d2748f684__ep8__clip_002_sort_purple_paper_stars",
+      "split": "train",
+      "status": "passed",
+      "subset": "xperience"
+    },
+    {
+      "kind": "hand",
+      "objects": 2,
+      "raw_dtypes": [
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        }
+      ],
+      "sample_id": "xperience/hand/b016c2ac-1626-4af0-badf-207071c6bd5c__ep11__clip_026_hold_snack_package",
+      "split": "test",
+      "status": "passed",
+      "subset": "xperience"
+    },
+    {
+      "kind": "hand",
+      "objects": 2,
+      "raw_dtypes": [
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        }
+      ],
+      "sample_id": "xperience/hand/b016c2ac-1626-4af0-badf-207071c6bd5c__ep12__clip_006_place_cans_on_shelf",
+      "split": "test",
+      "status": "passed",
+      "subset": "xperience"
+    },
+    {
+      "kind": "object",
+      "objects": 2,
+      "raw_dtypes": [
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        }
+      ],
+      "sample_id": "ytvis/object/57c7fc2183",
+      "split": "train",
+      "status": "passed",
+      "subset": "ytvis"
+    },
+    {
+      "kind": "object",
+      "objects": 2,
+      "raw_dtypes": [
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        }
+      ],
+      "sample_id": "ytvis/object/4b97cc7b8d",
+      "split": "train",
+      "status": "passed",
+      "subset": "ytvis"
+    },
+    {
+      "kind": "object",
+      "objects": 2,
+      "raw_dtypes": [
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        }
+      ],
+      "sample_id": "ytvis/object/dae182528f",
+      "split": "test",
+      "status": "passed",
+      "subset": "ytvis"
+    },
+    {
+      "kind": "object",
+      "objects": 4,
+      "raw_dtypes": [
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points2d"
+        },
+        {
+          "dtype": "float32",
+          "field": "points3d"
+        }
+      ],
+      "sample_id": "ytvis/object/dc06e73afe",
+      "split": "test",
+      "status": "passed",
+      "subset": "ytvis"
+    }
+  ],
+  "scope": "two source entries per split/kind; full arrays including first/last frame; independent field normalization",
+  "shared_with_builder": "candidate discovery and tar byte reader only",
+  "status": "passed"
+}

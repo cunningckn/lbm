@@ -1,0 +1,28 @@
+{
+  "recorded_from": "executed commands and tool outputs, 2026-09-15",
+  "unit_tests": {
+    "host": "tc_dev",
+    "command": "PYTHONPATH=src python3 -m unittest discover -s tests -v",
+    "status": "passed",
+    "tests": 12,
+    "failures": 0,
+    "errors": 0,
+    "duration_seconds": 0.332
+  },
+  "tool_lint": {"ruff_version": "0.16.5", "status": "passed"},
+  "tool_compileall": {"status": "passed"},
+  "git_diff_check": {"status": "passed"},
+  "repository_lint": {
+    "status": "failed-existing-out-of-scope",
+    "errors": 8,
+    "files": [
+      "scripts/ks_submit.py",
+      "scripts/tc_cloud/submit_molmo_motion_full.py",
+      "src/lbm/dataloader/custom/datasets/interndata_a1.py",
+      "src/lbm/dataloader/custom/datasets/molmoact.py",
+      "src/lbm/dataloader/custom/datasets/robocoin.py"
+    ]
+  },
+  "full_new_release_rebuilt": false,
+  "full_multimodal_acceptance": false
+}

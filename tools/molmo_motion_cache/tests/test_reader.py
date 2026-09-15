@@ -49,6 +49,7 @@ class ReaderLayoutTest(unittest.TestCase):
                     "runtime_contract": {"all_runtime_paths_relative": True},
                 },
             )
+            write_json(root / "PILOT_READY.json", {"status": "pilot-ready"})
             track = {
                 "sample_id": "droid/test",
                 "shard": "shards/droid/000000",

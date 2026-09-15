@@ -8,8 +8,15 @@ from typing import Any
 
 import numpy as np
 
-from .common import read_json, read_parquet_rows, safe_relative_path
-from .generic import GENERIC_SUBSETS
+from .common import (
+    GENERIC_SUBSETS,
+    read_completion_marker,
+    read_json,
+    read_parquet_rows,
+    safe_relative_path,
+    verify_completion_manifest,
+)
+from .identity import validate_component_pair
 
 
 TRACK_ARRAYS = ("points2d", "points3d", "visibility2d", "visibility3d")
@@ -34,6 +41,7 @@ class MMapMotionReader:
 
     def __init__(self, cache_root: str | Path) -> None:
         self.root = Path(cache_root).resolve()
+        read_completion_marker(self.root)
         self.dataset = read_json(self.root / "dataset.json")
         if self.dataset.get("format") != "molmo-motion-cache":
             raise ValueError(f"not a MolmoMotion cache: {self.root}")
@@ -75,6 +83,25 @@ class MMapMotionReader:
     def object_ids(self, sample_id: str) -> tuple[str, ...]:
         return tuple(str(row["object_id"]) for row in self.tracks[sample_id])
 
+    def validate_paired_assets(self, assets_root: str | Path) -> dict[str, str]:
+        """Reject MolmoSpaces assets from a different source snapshot or component set."""
+
+        if self.subset != "molmospaces":
+            raise ValueError("only the MolmoSpaces numeric reader can pair shipped assets")
+        root = Path(assets_root).resolve()
+        _, numeric_ready = read_completion_marker(self.root, pilot=False)
+        verify_completion_manifest(self.root, numeric_ready)
+        _, assets_ready = read_completion_marker(root, pilot=False)
+        verify_completion_manifest(root, assets_ready)
+        assets = read_json(root / "dataset.json")
+        if assets.get("format") != "molmo-motion-portable-assets":
+            raise ValueError(f"not a MolmoSpaces portable asset component: {root}")
+        return validate_component_pair(
+            self.dataset.get("source_identity"),
+            assets.get("source_identity"),
+            secondary_component="assets",
+        )
+
     def _array(self, shard: str, name: str, *, required: bool = True) -> np.ndarray:
         relative = safe_relative_path(shard)
         key = (shard, name)
@@ -100,6 +127,31 @@ class MMapMotionReader:
                 return row
         raise KeyError(f"unknown object {object_id!r} for {sample_id}")
 
+    @staticmethod
+    def _source_point_indices(row: dict[str, Any], points: int) -> np.ndarray:
+        """Recover source point identity for new and legacy cache rows."""
+
+        encoded = row.get("source_point_indices")
+        if encoded is None:
+            keep_mask = row.get("keep_mask")
+            if keep_mask is None:
+                indices = np.arange(points, dtype=np.int64)
+            else:
+                indices = np.flatnonzero(np.asarray(keep_mask, dtype=np.bool_)).astype(
+                    np.int64, copy=False
+                )
+        else:
+            indices = np.asarray(encoded, dtype=np.int64)
+        if (
+            indices.shape != (points,)
+            or np.any(indices < 0)
+            or len(np.unique(indices)) != points
+        ):
+            raise ValueError(
+                f"invalid source point indices for {row['sample_id']}/{row['object_id']}"
+            )
+        return np.ascontiguousarray(indices)
+
     def get_object_full(
         self, sample_id: str, object_id: str | None = None
     ) -> dict[str, np.ndarray]:
@@ -118,6 +170,7 @@ class MMapMotionReader:
             "points3d": self._array(shard, "points3d")[start:stop].reshape(frames, points, 3),
             "visibility2d": self._array(shard, "visibility2d")[start:stop].reshape(frames, points),
             "visibility3d": self._array(shard, "visibility3d")[start:stop].reshape(frames, points),
+            "source_point_indices": self._source_point_indices(row, points),
         }
         trust_path = self.root / safe_relative_path(shard) / "trust_weights.npy"
         if bool(row.get("trust_weights_available")):
@@ -177,6 +230,10 @@ class MMapMotionReader:
             name: np.ascontiguousarray(full[name][start:stop, point_indices])
             for name in TRACK_ARRAYS
         }
+        result["clip_frame_indices"] = np.arange(start, stop, dtype=np.int64)
+        result["source_point_indices"] = np.ascontiguousarray(
+            full["source_point_indices"][point_indices]
+        )
         if "trust_weights" in full:
             result["trust_weights"] = np.ascontiguousarray(
                 full["trust_weights"][start:stop, point_indices]

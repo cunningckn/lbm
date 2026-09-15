@@ -7,7 +7,14 @@ import json
 import os
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, Mapping
+
+
+# These values describe the on-disk cache format, not a builder implementation.
+# Readers import them directly so they never need to import conversion code.
+GENERIC_SUBSETS = ("egodex", "hdepic", "molmospaces", "xperience", "ytvis")
+READY_MARKER = "READY.json"
+PILOT_READY_MARKER = "PILOT_READY.json"
 
 
 def utc_now() -> str:
@@ -24,6 +31,61 @@ def write_json(path: Path, value: Any) -> None:
 def read_json(path: Path) -> Any:
     with path.open("r", encoding="utf-8") as handle:
         return json.load(handle)
+
+
+def completion_marker_name(*, pilot: bool) -> str:
+    """Return the one marker name valid for a full result or a pilot."""
+
+    return PILOT_READY_MARKER if pilot else READY_MARKER
+
+
+def write_completion_marker(
+    root: Path, payload: Mapping[str, Any], *, pilot: bool
+) -> Path:
+    """Write exactly one completed-result marker after all output checks pass."""
+
+    marker = root / completion_marker_name(pilot=pilot)
+    other = root / completion_marker_name(pilot=not pilot)
+    if other.exists():
+        raise ValueError(f"ambiguous completion markers in {root}: {marker.name}, {other.name}")
+    status = payload.get("status")
+    if not isinstance(status, str) or not status:
+        raise ValueError("completion marker requires a non-empty string status")
+    write_json(marker, dict(payload))
+    return marker
+
+
+def read_completion_marker(
+    root: Path, *, pilot: bool | None = None
+) -> tuple[Path, dict[str, Any]]:
+    """Read a completed-result marker, rejecting partial and ambiguous outputs."""
+
+    full_marker = root / READY_MARKER
+    pilot_marker = root / PILOT_READY_MARKER
+    if full_marker.is_file() and pilot_marker.is_file():
+        raise ValueError(f"ambiguous completion markers in {root}: {READY_MARKER}, {PILOT_READY_MARKER}")
+    if pilot is None:
+        candidates = [full_marker, pilot_marker]
+    else:
+        candidates = [root / completion_marker_name(pilot=pilot)]
+    found = [path for path in candidates if path.is_file()]
+    if not found:
+        expectation = (
+            f"{READY_MARKER} or {PILOT_READY_MARKER}"
+            if pilot is None
+            else completion_marker_name(pilot=pilot)
+        )
+        raise FileNotFoundError(f"completed output has no {expectation}: {root}")
+    if len(found) != 1:
+        names = ", ".join(path.name for path in found)
+        raise ValueError(f"ambiguous completion markers in {root}: {names}")
+    payload = read_json(found[0])
+    if not isinstance(payload, dict):
+        raise ValueError(f"completion marker is not a JSON object: {found[0]}")
+    status = payload.get("status")
+    if not isinstance(status, str) or not status:
+        raise ValueError(f"completion marker has no non-empty status: {found[0]}")
+    return found[0], payload
 
 
 def require_pyarrow() -> tuple[Any, Any]:
@@ -124,6 +186,23 @@ def verify_checksum_manifest(root: Path) -> dict[str, Any]:
                 )
             checked += 1
     return {"checked_files": checked, "sha256sums_sha256": sha256_file(manifest)}
+
+
+def verify_completion_manifest(root: Path, readiness: Mapping[str, Any]) -> str:
+    """Verify that a completion marker names the checksum manifest it finalizes."""
+
+    expected = readiness.get("sha256sums_sha256")
+    manifest = root / "SHA256SUMS"
+    if not isinstance(expected, str) or len(expected) != 64:
+        raise ValueError(f"completion marker has no SHA-256 manifest digest: {root}")
+    if not manifest.is_file():
+        raise FileNotFoundError(f"completed output has no SHA256SUMS: {root}")
+    actual = sha256_file(manifest)
+    if actual != expected:
+        raise ValueError(
+            f"SHA256SUMS digest mismatch for {root}: expected {expected}, got {actual}"
+        )
+    return actual
 
 
 def byte_size(paths: Iterable[Path]) -> int:

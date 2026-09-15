@@ -13,24 +13,23 @@ import tempfile
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, Mapping
 
 import numpy as np
 
 from .archives import TarMemberRef, build_tar_index, read_npz
 from .common import (
+    GENERIC_SUBSETS,
     file_stat_record,
     fsync_directory,
     read_json,
     read_parquet_rows,
     utc_now,
     write_checksum_manifest,
+    write_completion_marker,
     write_json,
     write_parquet,
 )
-
-
-GENERIC_SUBSETS = ("egodex", "hdepic", "molmospaces", "xperience", "ytvis")
 
 
 @dataclass(frozen=True)
@@ -66,6 +65,7 @@ class TrackObject:
     visibility3d: np.ndarray
     trust_weights: np.ndarray | None
     keep_mask: np.ndarray | None
+    source_point_indices: np.ndarray
 
 
 @dataclass
@@ -307,6 +307,7 @@ def _track_object(
     trust_weights: np.ndarray | None = None,
     trust_weights_order: str = "TK",
     keep_mask: np.ndarray | None = None,
+    source_point_indices: np.ndarray | None = None,
 ) -> TrackObject:
     p2 = np.asarray(points2d)
     p3 = np.asarray(points3d)
@@ -348,6 +349,14 @@ def _track_object(
             raise ValueError(
                 f"keep mask does not select {points} points for {object_id}: {mask.shape}"
             )
+    if source_point_indices is None:
+        indices = np.flatnonzero(mask).astype(np.int64, copy=False) if mask is not None else np.arange(points)
+    else:
+        indices = np.ascontiguousarray(np.asarray(source_point_indices), dtype=np.int64)
+    if indices.shape != (points,) or np.any(indices < 0) or len(np.unique(indices)) != points:
+        raise ValueError(
+            f"invalid source point indices for {object_id}: expected {points} unique non-negative values"
+        )
     return TrackObject(
         object_id=object_id,
         points2d=np.ascontiguousarray(p2, dtype=np.float32),
@@ -356,6 +365,7 @@ def _track_object(
         visibility3d=np.ascontiguousarray(v3, dtype=np.bool_),
         trust_weights=weights,
         keep_mask=mask,
+        source_point_indices=np.ascontiguousarray(indices),
     )
 
 
@@ -713,6 +723,11 @@ def _write_shard(
                         "num_points": points,
                         "trust_weights_available": obj.trust_weights is not None,
                         "keep_mask": obj.keep_mask.tolist() if obj.keep_mask is not None else None,
+                        "source_point_indices": (
+                            obj.source_point_indices.tolist()
+                            if not np.array_equal(obj.source_point_indices, np.arange(points))
+                            else None
+                        ),
                     }
                 )
                 for range_index, interval in enumerate(ranges.get(obj.object_id, [])):
@@ -900,6 +915,14 @@ def _verify_output(
                     raise ValueError(f"unexpected keep mask for {candidate.sample_id}")
             elif not _equal(obj.keep_mask, np.asarray(cached_mask, dtype=np.bool_)):
                 raise ValueError(f"source/cache mismatch for {candidate.sample_id}: keep_mask")
+            cached_indices = row.get("source_point_indices")
+            actual_indices = (
+                np.arange(points, dtype=np.int64)
+                if cached_indices is None
+                else np.asarray(cached_indices, dtype=np.int64)
+            )
+            if not _equal(obj.source_point_indices, actual_indices):
+                raise ValueError(f"source/cache mismatch for {candidate.sample_id}: source_point_indices")
         camera_row = cameras_by_sample[candidate.sample_id]
         camera = raw.camera
         for name, expected, offset_key, count_key in (
@@ -958,6 +981,7 @@ def build_generic_cache(
     workers: int,
     checks: int,
     checksums: bool,
+    source_identity: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     if dataset not in GENERIC_SUBSETS:
         raise ValueError(f"unsupported generic subset: {dataset}")
@@ -1023,37 +1047,39 @@ def build_generic_cache(
             if reference.size == 0
         ]
         scope = "pilot" if limit_per_track_kind is not None else "complete-materialized-subset"
-        write_json(
-            staged_root / "dataset.json",
-            {
-                "format": "molmo-motion-cache",
-                "format_version": 1,
-                "dataset": dataset,
-                "build_scope": scope,
-                "records": len(candidates),
-                "trajectory_rows": sum(result.trajectory_rows for result in results),
-                "created_at": utc_now(),
-                "runtime_contract": {
-                    "all_runtime_paths_relative": True,
-                    "requires_raw_npz_or_tar": False,
-                    "requires_raw_json": False,
-                    "contains_absolute_source_paths": False,
-                },
-                "normalization": {
-                    "track_axis_order": "T,K,D",
-                    "points_dtype": "float32",
-                    "visibility_dtype": "bool",
-                    "variable_object_point_counts": "flattened with Parquet offsets",
-                    "xperience_confidence": "trust_weights.npy plus keep_mask list metadata",
-                },
-                "limitations": (
-                    ["Xperience camera and RGB require gated upstream reconstruction."]
-                    if dataset == "xperience"
-                    else []
-                ),
-                "source_anomalies": source_anomalies,
+        dataset_metadata: dict[str, Any] = {
+            "format": "molmo-motion-cache",
+            "format_version": 1,
+            "dataset": dataset,
+            "build_scope": scope,
+            "records": len(candidates),
+            "trajectory_rows": sum(result.trajectory_rows for result in results),
+            "created_at": utc_now(),
+            "runtime_contract": {
+                "all_runtime_paths_relative": True,
+                "requires_raw_npz_or_tar": False,
+                "requires_raw_json": False,
+                "contains_absolute_source_paths": False,
             },
-        )
+            "normalization": {
+                "track_axis_order": "T,K,D",
+                "points_dtype": "float32",
+                "visibility_dtype": "bool",
+                "variable_object_point_counts": "flattened with Parquet offsets",
+                "xperience_confidence": (
+                    "trust_weights.npy plus keep_mask and explicit source_point_indices metadata"
+                ),
+            },
+            "limitations": (
+                ["Xperience camera and RGB require gated upstream reconstruction."]
+                if dataset == "xperience"
+                else []
+            ),
+            "source_anomalies": source_anomalies,
+        }
+        if source_identity is not None:
+            dataset_metadata["source_identity"] = dict(source_identity)
+        write_json(staged_root / "dataset.json", dataset_metadata)
         write_json(
             staged_root / "build_stats.json",
             {
@@ -1069,7 +1095,6 @@ def build_generic_cache(
         verification = _verify_output(root, staged_root, candidates, checks)
         write_json(staged_root / "verification.json", verification)
         manifest_hash = write_checksum_manifest(staged_root) if checksums else None
-        marker_name = "PILOT_READY.json" if limit_per_track_kind is not None else "READY.json"
         ready = {
             "format": "molmo-motion-cache",
             "format_version": 1,
@@ -1080,7 +1105,7 @@ def build_generic_cache(
             "sha256sums_sha256": manifest_hash,
             "created_at": utc_now(),
         }
-        write_json(staged_root / marker_name, ready)
+        write_completion_marker(staged_root, ready, pilot=limit_per_track_kind is not None)
         fsync_directory(staged_root)
         os.replace(staged_root, output_path)
         fsync_directory(output_path.parent)

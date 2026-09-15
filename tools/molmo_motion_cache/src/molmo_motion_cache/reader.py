@@ -10,7 +10,7 @@ from typing import Any
 
 import numpy as np
 
-from .common import read_json, read_parquet_rows, safe_relative_path
+from .common import read_completion_marker, read_json, read_parquet_rows, safe_relative_path
 
 
 def _scaled_intrinsics(measured: np.ndarray, height: int, width: int) -> np.ndarray:
@@ -63,6 +63,7 @@ class MMapDroidReader:
 
     def __init__(self, cache_root: str | Path) -> None:
         self.root = Path(cache_root).resolve()
+        read_completion_marker(self.root)
         self.dataset = read_json(self.root / "dataset.json")
         if self.dataset.get("format") != "molmo-motion-cache":
             raise ValueError(f"not a MolmoMotion cache: {self.root}")

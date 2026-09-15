@@ -11,7 +11,14 @@ from typing import Any, Callable
 
 import numpy as np
 
-from .common import byte_size, read_json, utc_now, verify_checksum_manifest, write_json
+from .common import (
+    byte_size,
+    read_completion_marker,
+    read_json,
+    utc_now,
+    verify_checksum_manifest,
+    write_json,
+)
 from .droid import build_droid_cache
 from .generic import GENERIC_SUBSETS, build_generic_cache
 from .generic_benchmark import benchmark_generic_cache
@@ -76,14 +83,7 @@ def verify_cache(
     verify_hashes: bool,
 ) -> dict[str, Any]:
     output_path = Path(output).resolve()
-    readiness = next(
-        (path for path in (output_path / "READY.json", output_path / "PILOT_READY.json") if path.is_file()),
-        None,
-    )
-    if readiness is None:
-        raise FileNotFoundError(
-            f"cache has no READY.json or PILOT_READY.json: {output_path}"
-        )
+    read_completion_marker(output_path)
     reader = MMapDroidReader(output_path)
     result: dict[str, Any] = {
         "status": "passed",
@@ -302,6 +302,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="rehash every file; use after copying the release to another host",
     )
+    verify_full.add_argument(
+        "--require-source-identity",
+        action="store_true",
+        help="reject legacy releases that cannot prove component source pairing",
+    )
     verify_full.add_argument("--report", type=Path, default=None)
 
     verify = subcommands.add_parser("verify", help="check a completed DROID pilot")
@@ -390,7 +395,11 @@ def main(argv: list[str] | None = None) -> int:
             require_complete_source(result)
         _write_optional_report(result, arguments.report)
     elif arguments.command == "verify-release":
-        result = verify_release(arguments.output, verify_files=arguments.verify_files)
+        result = verify_release(
+            arguments.output,
+            verify_files=arguments.verify_files,
+            require_source_identity=arguments.require_source_identity,
+        )
         _write_optional_report(result, arguments.report)
     elif arguments.command == "verify":
         result = verify_cache(

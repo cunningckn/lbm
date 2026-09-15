@@ -61,8 +61,8 @@ torch = { index = "pytorch-cu126" }
 torchvision = { index = "pytorch-cu126" }
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
-pythonpath = ["src", "."]
+testpaths = ["tests", "tools/molmo_motion_cache/tests"]
+pythonpath = ["src", ".", "tools/molmo_motion_cache/src"]
 markers = [
     "integration: tests that need real datasets on disk",
     "gpu: tests that need a CUDA device",

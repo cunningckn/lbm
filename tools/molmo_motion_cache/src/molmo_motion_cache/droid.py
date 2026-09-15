@@ -14,7 +14,7 @@ import tarfile
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, Mapping
 
 import numpy as np
 
@@ -24,6 +24,7 @@ from .common import (
     read_json,
     utc_now,
     write_checksum_manifest,
+    write_completion_marker,
     write_json,
     write_parquet,
 )
@@ -609,6 +610,7 @@ def build_droid_cache(
     limit: int | None,
     shard_size: int,
     checks: int,
+    source_identity: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build a DROID cache safely and return the readiness metadata.
 
@@ -666,48 +668,48 @@ def build_droid_cache(
             )
             total_rows = sum(record.row_count for record in prepared)
             status = "pilot" if limit is not None else "droid-complete-input"
-            write_json(
-                staged_root / "dataset.json",
-                {
-                    "format": "molmo-motion-cache",
-                    "format_version": 1,
-                    "subset": "droid",
-                    "build_scope": status,
-                    "created_at": utc_now(),
-                    "records": len(prepared),
-                    "trajectory_rows": total_rows,
-                    "frames_present": False,
-                    "frame_note": (
-                        "DROID videos are reconstructed from an upstream corpus and "
-                        "were not present in this conversion input."
-                    ),
-                    "coordinate_conventions": {
-                        "points3d": "DROID exterior-camera frame; source float32, NaNs preserved",
-                        "points2d": "DROID ds_dim pixel coordinates; source float32",
-                        "intrinsics_measured": "source measured calibration geometry",
-                        "intrinsics_ds": "measured intrinsics affine-scaled to ds_dim",
-                        "extrinsics": "source vggt_extrinsics when supplied, otherwise optimized_extrinsics",
-                    },
-                    "time_conventions": {
-                        "fps": "per-clip column in clips.parquet",
-                        "frame_axis": "axis 0 of every trajectory",
-                    },
-                    "runtime_contract": {
-                        "all_runtime_paths_relative": True,
-                        "requires_raw_npz_or_tar": False,
-                        "requires_raw_json": False,
-                        "contains_absolute_source_paths": False,
-                    },
-                    "layout": {
-                        "clips": "clips.parquet",
-                        "tracks_index": "tracks_index.parquet",
-                        "cameras_index": "cameras_index.parquet",
-                        "objects": "objects.parquet",
-                        "source_manifest": "provenance/source_manifest.parquet",
-                        "shards": "shards/droid",
-                    },
+            dataset_metadata: dict[str, Any] = {
+                "format": "molmo-motion-cache",
+                "format_version": 1,
+                "subset": "droid",
+                "build_scope": status,
+                "created_at": utc_now(),
+                "records": len(prepared),
+                "trajectory_rows": total_rows,
+                "frames_present": False,
+                "frame_note": (
+                    "DROID videos are reconstructed from an upstream corpus and "
+                    "were not present in this conversion input."
+                ),
+                "coordinate_conventions": {
+                    "points3d": "DROID exterior-camera frame; source float32, NaNs preserved",
+                    "points2d": "DROID ds_dim pixel coordinates; source float32",
+                    "intrinsics_measured": "source measured calibration geometry",
+                    "intrinsics_ds": "measured intrinsics affine-scaled to ds_dim",
+                    "extrinsics": "source vggt_extrinsics when supplied, otherwise optimized_extrinsics",
                 },
-            )
+                "time_conventions": {
+                    "fps": "per-clip column in clips.parquet",
+                    "frame_axis": "axis 0 of every trajectory",
+                },
+                "runtime_contract": {
+                    "all_runtime_paths_relative": True,
+                    "requires_raw_npz_or_tar": False,
+                    "requires_raw_json": False,
+                    "contains_absolute_source_paths": False,
+                },
+                "layout": {
+                    "clips": "clips.parquet",
+                    "tracks_index": "tracks_index.parquet",
+                    "cameras_index": "cameras_index.parquet",
+                    "objects": "objects.parquet",
+                    "source_manifest": "provenance/source_manifest.parquet",
+                    "shards": "shards/droid",
+                },
+            }
+            if source_identity is not None:
+                dataset_metadata["source_identity"] = dict(source_identity)
+            write_json(staged_root / "dataset.json", dataset_metadata)
             write_json(
                 staged_root / "build_stats.json",
                 {
@@ -736,8 +738,7 @@ def build_droid_cache(
             "sha256sums_sha256": manifest_hash,
             "created_at": utc_now(),
         }
-        marker_name = "PILOT_READY.json" if limit is not None else "READY.json"
-        write_json(staged_root / marker_name, ready)
+        write_completion_marker(staged_root, ready, pilot=limit is not None)
         fsync_directory(staged_root)
         os.replace(staged_root, output_path)
         fsync_directory(output_path.parent)

@@ -51,6 +51,8 @@ def _window(
         "camera_intrinsics_dynamic": np.ascontiguousarray(camera.dynamic_intrinsics),
         "camera_intrinsic_indices": np.ascontiguousarray(camera.intrinsic_indices),
         "camera_intrinsics_static": np.ascontiguousarray(camera.static_intrinsics),
+        "clip_frame_indices": np.arange(start, stop, dtype=np.int64),
+        "source_point_indices": np.ascontiguousarray(obj.source_point_indices[point_indices]),
     }
     if obj.trust_weights is not None:
         result["trust_weights"] = np.ascontiguousarray(

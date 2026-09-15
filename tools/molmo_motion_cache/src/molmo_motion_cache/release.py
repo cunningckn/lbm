@@ -9,40 +9,38 @@ import shutil
 import tempfile
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Mapping
 
 from .archives import build_tar_index
 from .common import (
+    completion_marker_name,
     fsync_directory,
+    read_completion_marker,
     read_json,
-    sha256_file,
     utc_now,
+    verify_completion_manifest,
     verify_checksum_manifest,
     write_checksum_manifest,
+    write_completion_marker,
     write_json,
     write_parquet,
 )
 from .droid import build_droid_cache
 from .generic import GENERIC_SUBSETS, build_generic_cache
+from .identity import (
+    component_identity,
+    load_source_snapshot,
+    require_snapshot_identity,
+    validate_component_identity,
+    validate_snapshot_identity,
+    with_paired_component_fingerprints,
+)
 
 
 SOURCE_DATASETS = ("droid", "egodex", "hdepic", "molmospaces", "stereo4d", "xperience", "ytvis")
 
 
-def _tree_manifest(source_root: Path) -> tuple[Path, dict[str, dict[str, Any]]]:
-    manifests = sorted((source_root / ".cache" / "huggingface" / "trees").glob("*.json"))
-    if len(manifests) != 1:
-        raise FileNotFoundError(
-            f"expected exactly one Hugging Face tree manifest under {source_root}, got {len(manifests)}"
-        )
-    document = read_json(manifests[0])
-    files = document.get("files")
-    if not isinstance(files, dict) or not files:
-        raise ValueError(f"invalid Hugging Face tree manifest: {manifests[0]}")
-    return manifests[0], files
-
-
-def _expected_size(metadata: dict[str, Any]) -> int:
+def _expected_size(metadata: Mapping[str, Any]) -> int:
     return int(metadata.get("lfs_size", metadata["size"]))
 
 
@@ -64,7 +62,8 @@ def inspect_source_snapshot(
     """Validate every path and byte count in the pinned HF local-dir manifest."""
 
     root = Path(source_root).resolve()
-    manifest_path, files = _tree_manifest(root)
+    snapshot = load_source_snapshot(root)
+    files = snapshot.files
     missing: list[str] = []
     size_mismatches: list[dict[str, Any]] = []
     present_bytes = 0
@@ -114,8 +113,9 @@ def inspect_source_snapshot(
     return {
         "status": status,
         "source_root": str(root),
-        "source_revision": manifest_path.stem,
-        "manifest_path": str(manifest_path),
+        "source_revision": snapshot.revision,
+        "manifest_path": str(snapshot.manifest_path),
+        "source_identity": snapshot.public_identity(),
         "expected_files": len(files),
         "expected_bytes": expected_bytes,
         "present_bytes": present_bytes,
@@ -139,29 +139,66 @@ def require_complete_source(result: dict[str, Any]) -> None:
     )
 
 
-def verify_release(output_root: str | Path, *, verify_files: bool) -> dict[str, Any]:
+def _verify_release_source_identity(
+    output: Path, components: Mapping[str, Path], *, require_source_identity: bool
+) -> dict[str, Any]:
+    release = read_json(output / "dataset.json")
+    release_identity = release.get("source_identity")
+    if release_identity is None:
+        if require_source_identity:
+            raise ValueError(
+                "release predates source identity metadata; it cannot prove component pairing. "
+                "Rebuild into a new output directory before cross-component use."
+            )
+        return {
+            "status": "legacy-unverified",
+            "warning": (
+                "this legacy release has no source/component fingerprints; component pairing "
+                "cannot be verified"
+            ),
+        }
+    require_snapshot_identity(release_identity, label="release")
+    expected_fingerprints = release.get("component_fingerprints")
+    if not isinstance(expected_fingerprints, Mapping):
+        raise ValueError("release source identity has no component fingerprint map")
+    verified: dict[str, str] = {}
+    for name, component in components.items():
+        metadata = read_json(component / "dataset.json")
+        identity = metadata.get("source_identity")
+        validate_snapshot_identity(identity, release_identity, label=f"release component {name}")
+        expected_fingerprint = expected_fingerprints.get(name)
+        if not isinstance(expected_fingerprint, str):
+            raise ValueError(f"release has no expected component fingerprint for {name!r}")
+        actual = identity.get("component_fingerprint") if isinstance(identity, Mapping) else None
+        if actual != expected_fingerprint:
+            raise ValueError(
+                f"release component fingerprint mismatch for {name!r}; "
+                "do not pair components by video ID alone"
+            )
+        verified[name] = expected_fingerprint
+    return {
+        "status": "verified",
+        "snapshot_revision": release_identity["snapshot_revision"],
+        "snapshot_fingerprint": release_identity["snapshot_fingerprint"],
+        "component_fingerprints": verified,
+    }
+
+
+def verify_release(
+    output_root: str | Path, *, verify_files: bool, require_source_identity: bool = False
+) -> dict[str, Any]:
     """Validate release markers and, optionally, every delivery file hash."""
 
     output = Path(output_root).resolve()
-    if not (output / "READY.json").is_file():
-        raise FileNotFoundError(f"release has no top-level READY.json: {output}")
+    read_completion_marker(output, pilot=False)
     components = {
         **{dataset: output / "subsets" / dataset for dataset in SOURCE_DATASETS},
         "assets": output / "assets",
     }
     results: dict[str, dict[str, Any]] = {}
     for name, component in components.items():
-        marker = component / "READY.json"
-        manifest = component / "SHA256SUMS"
-        if not marker.is_file() or not manifest.is_file():
-            raise FileNotFoundError(f"incomplete release component: {component}")
-        readiness = read_json(marker)
-        expected = readiness.get("sha256sums_sha256")
-        actual = sha256_file(manifest)
-        if expected != actual:
-            raise ValueError(
-                f"SHA256SUMS digest mismatch for {name}: expected {expected}, got {actual}"
-            )
+        _marker, readiness = read_completion_marker(component, pilot=False)
+        actual = verify_completion_manifest(component, readiness)
         result: dict[str, Any] = {
             "status": "manifest-verified",
             "sha256sums_sha256": actual,
@@ -170,11 +207,15 @@ def verify_release(output_root: str | Path, *, verify_files: bool) -> dict[str, 
             result.update(verify_checksum_manifest(component))
             result["status"] = "files-verified"
         results[name] = result
+    identity_result = _verify_release_source_identity(
+        output, components, require_source_identity=require_source_identity
+    )
     return {
         "status": "passed",
         "output": str(output),
         "verify_files": verify_files,
         "components": results,
+        "source_identity": identity_result,
         "verified_at": utc_now(),
     }
 
@@ -196,6 +237,7 @@ def build_stereo4d_metadata(
     output: str | Path,
     *,
     limit: int | None,
+    source_identity: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Convert the only shipped Stereo4D payload: annotations and track indices."""
 
@@ -249,25 +291,24 @@ def build_stereo4d_metadata(
         write_parquet(clips, staged / "clips.parquet")
         write_parquet(objects, staged / "track_index.parquet")
         scope = "pilot" if limit is not None else "complete-published-metadata"
-        write_json(
-            staged / "dataset.json",
-            {
-                "format": "molmo-motion-cache",
-                "format_version": 1,
-                "dataset": "stereo4d",
-                "build_scope": scope,
-                "records": len(clips),
-                "trajectory_arrays_present": False,
-                "requires_upstream_reconstruction": True,
-                "reconstruction_note": (
-                    "The MolmoMotion release ships only a Stereo4D track index; tracks, "
-                    "camera, and RGB must be reconstructed from the public upstream data."
-                ),
-                "created_at": utc_now(),
-            },
-        )
+        dataset_metadata: dict[str, Any] = {
+            "format": "molmo-motion-cache",
+            "format_version": 1,
+            "dataset": "stereo4d",
+            "build_scope": scope,
+            "records": len(clips),
+            "trajectory_arrays_present": False,
+            "requires_upstream_reconstruction": True,
+            "reconstruction_note": (
+                "The MolmoMotion release ships only a Stereo4D track index; tracks, "
+                "camera, and RGB must be reconstructed from the public upstream data."
+            ),
+            "created_at": utc_now(),
+        }
+        if source_identity is not None:
+            dataset_metadata["source_identity"] = dict(source_identity)
+        write_json(staged / "dataset.json", dataset_metadata)
         manifest_hash = write_checksum_manifest(staged)
-        marker = "PILOT_READY.json" if limit is not None else "READY.json"
         ready = {
             "status": "metadata-only-ready",
             "dataset": "stereo4d",
@@ -275,7 +316,7 @@ def build_stereo4d_metadata(
             "sha256sums_sha256": manifest_hash,
             "created_at": utc_now(),
         }
-        write_json(staged / marker, ready)
+        write_completion_marker(staged, ready, pilot=limit is not None)
         fsync_directory(staged)
         os.replace(staged, output_path)
         fsync_directory(output_path.parent)
@@ -309,6 +350,7 @@ def build_portable_assets(
     output: str | Path,
     *,
     workers: int,
+    source_identity: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Retain shipped MP4/H5 tar shards and add byte-offset member indices."""
 
@@ -319,7 +361,13 @@ def build_portable_assets(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     staged = Path(tempfile.mkdtemp(prefix=f".{output_path.name}.partial-", dir=output_path.parent))
     try:
-        manifest_path, files = _tree_manifest(root)
+        snapshot = load_source_snapshot(root)
+        files = snapshot.files
+        identity = (
+            dict(source_identity)
+            if source_identity is not None
+            else component_identity(snapshot, "assets")
+        )
         archive_paths = sorted(
             [
                 *(root / "molmospaces" / "videos").glob("videos-*.tar"),
@@ -371,7 +419,8 @@ def build_portable_assets(
             {
                 "format": "molmo-motion-portable-assets",
                 "format_version": 1,
-                "source_revision": manifest_path.stem,
+                "source_revision": snapshot.revision,
+                "source_identity": identity,
                 "archives": len(archive_paths),
                 "indexed_assets": len(asset_rows),
                 "metadata_files": len(metadata_files),
@@ -392,7 +441,7 @@ def build_portable_assets(
             "sha256sums_sha256": manifest_hash,
             "created_at": utc_now(),
         }
-        write_json(staged / "READY.json", ready)
+        write_completion_marker(staged, ready, pilot=False)
         fsync_directory(staged)
         os.replace(staged, output_path)
         fsync_directory(output_path.parent)
@@ -403,18 +452,24 @@ def build_portable_assets(
         ) from error
 
 
-def _ready(path: Path, *, pilot: bool) -> bool:
-    marker = path / ("PILOT_READY.json" if pilot else "READY.json")
-    return marker.is_file()
-
-
 def _build_or_resume(
     target: Path,
     *,
     pilot: bool,
     build: Any,
+    expected_source_identity: Mapping[str, Any],
 ) -> dict[str, Any]:
-    if _ready(target, pilot=pilot):
+    try:
+        read_completion_marker(target, pilot=pilot)
+    except FileNotFoundError:
+        pass
+    else:
+        metadata = read_json(target / "dataset.json")
+        validate_component_identity(
+            metadata.get("source_identity"),
+            expected_source_identity,
+            label=f"existing component {target}",
+        )
         return {"output": str(target), "status": "resumed-existing-ready"}
     if target.exists():
         raise FileExistsError(
@@ -438,12 +493,27 @@ def build_full_release(
 
     if workers <= 0 or shard_size <= 0:
         raise ValueError("workers and shard_size must be positive")
+    if not checksums:
+        raise ValueError(
+            "build-release requires SHA-256 manifests; use a single-subset command for unchecked experiments"
+        )
     source = Path(source_root).resolve()
     output = Path(output_root).resolve()
     output.mkdir(parents=True, exist_ok=True)
     pilot = limit_per_subset is not None
-    top_marker = output / ("PILOT_READY.json" if pilot else "READY.json")
-    if top_marker.exists():
+    snapshot = load_source_snapshot(source)
+    release_identity = snapshot.public_identity()
+    top_marker = output / completion_marker_name(pilot=pilot)
+    if top_marker.is_file():
+        read_completion_marker(output, pilot=pilot)
+        existing_summary = read_json(output / "dataset.json")
+        validate_snapshot_identity(
+            existing_summary.get("source_identity"),
+            release_identity,
+            label=f"existing release {output}",
+        )
+        if not pilot:
+            verify_release(output, verify_files=False, require_source_identity=True)
         return {"output": str(output), "status": "resumed-existing-ready"}
 
     preflight = inspect_source_snapshot(
@@ -453,6 +523,14 @@ def build_full_release(
     )
     write_json(output / "source_preflight.json", preflight)
     require_complete_source(preflight)
+    component_identities = {
+        name: component_identity(snapshot, name)
+        for name in (*SOURCE_DATASETS, "assets")
+    }
+    component_identities["molmospaces"] = with_paired_component_fingerprints(
+        component_identities["molmospaces"],
+        {"assets": component_identities["assets"]["component_fingerprint"]},
+    )
     subset_root = output / "subsets"
     subset_root.mkdir(parents=True, exist_ok=True)
     results: dict[str, dict[str, Any]] = {}
@@ -466,7 +544,9 @@ def build_full_release(
             limit=limit_per_subset,
             shard_size=shard_size,
             checks=checks,
+            source_identity=component_identities["droid"],
         ),
+        expected_source_identity=component_identities["droid"],
     )
     for dataset in GENERIC_SUBSETS:
         target = subset_root / dataset
@@ -482,20 +562,34 @@ def build_full_release(
                 workers=workers,
                 checks=checks,
                 checksums=checksums,
+                source_identity=component_identities[dataset],
             ),
+            expected_source_identity=component_identities[dataset],
         )
     stereo_target = subset_root / "stereo4d"
     results["stereo4d"] = _build_or_resume(
         stereo_target,
         pilot=pilot,
-        build=lambda: build_stereo4d_metadata(source, stereo_target, limit=limit_per_subset),
+        build=lambda: build_stereo4d_metadata(
+            source,
+            stereo_target,
+            limit=limit_per_subset,
+            source_identity=component_identities["stereo4d"],
+        ),
+        expected_source_identity=component_identities["stereo4d"],
     )
     if not pilot:
         asset_target = output / "assets"
         results["assets"] = _build_or_resume(
             asset_target,
             pilot=False,
-            build=lambda: build_portable_assets(source, asset_target, workers=workers),
+            build=lambda: build_portable_assets(
+                source,
+                asset_target,
+                workers=workers,
+                source_identity=component_identities["assets"],
+            ),
+            expected_source_identity=component_identities["assets"],
         )
 
     summary = {
@@ -503,6 +597,10 @@ def build_full_release(
         "format_version": 1,
         "status": "pilot-ready" if pilot else "ready",
         "source_revision": preflight["source_revision"],
+        "source_identity": release_identity,
+        "component_fingerprints": {
+            name: component_identities[name]["component_fingerprint"] for name in results
+        },
         "source_files": preflight["expected_files"],
         "source_bytes": preflight["expected_bytes"],
         "subsets": list(SOURCE_DATASETS),
@@ -516,6 +614,6 @@ def build_full_release(
         "created_at": utc_now(),
     }
     write_json(output / "dataset.json", summary)
-    write_json(top_marker, summary)
+    write_completion_marker(output, summary, pilot=pilot)
     fsync_directory(output)
     return {"output": str(output), **summary}

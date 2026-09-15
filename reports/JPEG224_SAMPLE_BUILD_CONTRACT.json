@@ -1,0 +1,2586 @@
+{
+  "contract": {
+    "config": {
+      "alignment": "explicit-frame-index-unverified",
+      "code": "5bc20aab6fbd4e812ef2b3e6e30f289900a49ba1a5f353fc9be9817f89758c03",
+      "coordinate_convention": "integer-center",
+      "dependencies": {
+        "ffmpeg": {
+          "libavcodec": [
+            62,
+            11,
+            100
+          ],
+          "libavdevice": [
+            62,
+            1,
+            100
+          ],
+          "libavfilter": [
+            11,
+            4,
+            100
+          ],
+          "libavformat": [
+            62,
+            3,
+            100
+          ],
+          "libavutil": [
+            60,
+            8,
+            100
+          ],
+          "libswresample": [
+            6,
+            1,
+            100
+          ],
+          "libswscale": [
+            9,
+            1,
+            100
+          ]
+        },
+        "libjpeg": "6.2",
+        "numpy": "1.26.4",
+        "pillow": "12.2.0",
+        "pyav": "17.0.1"
+      },
+      "optimize": false,
+      "progressive": false,
+      "quality": 85,
+      "reference": {
+        "file": "data/utils/image_preprocess.py",
+        "function": "resize_with_pad",
+        "repository_head": "9d75617c630efc71aa7dddebc81987e3ae8689b0",
+        "sha256": "85c66cd60814b8169c85a2fae52026cfd80f89942fd8bb1ed3b0b08f594a5396"
+      },
+      "resize": "Pillow.ImageOps.contain/BILINEAR/center/black",
+      "schema": "jpeg224-v1",
+      "seed": 20260915,
+      "shard_bytes": 2147483648,
+      "subsampling": 2,
+      "target_size": [
+        224,
+        224
+      ],
+      "workers": 4
+    },
+    "inputs": [
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0003.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_2cam_randomized__house_0__00000000__exo_camera_1.mp4",
+          "offset": 1014135808,
+          "size": 321313
+        },
+        "clip": {
+          "caption": "Pick up the salt shaker and place it in or on the rustic stone bowl with bird spout",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 279,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_0__00000000__exo_camera_1",
+          "shard": "shards/molmospaces/000000",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_2cam_randomized__house_0__00000000__exo_camera_1",
+          "width": 624
+        },
+        "input_sha256": "b97f63c806cb2f5549215262e23c60d317ed30d4db3b88849bcfe5f6294f6d4c"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0000.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_2cam_randomized__house_0__00000000__wrist_camera.mp4",
+          "offset": 3151749120,
+          "size": 900100
+        },
+        "clip": {
+          "caption": "Pick up the salt shaker and place it in or on the rustic stone bowl with bird spout",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 279,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_0__00000000__wrist_camera",
+          "shard": "shards/molmospaces/000000",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_2cam_randomized__house_0__00000000__wrist_camera",
+          "width": 624
+        },
+        "input_sha256": "f021e8ec3050f1e00079c20c9f9326b9c7383131b5c81415c808e6a3a21a0e18"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0002.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_2cam_randomized__house_0__00000001__exo_camera_1.mp4",
+          "offset": 87960064,
+          "size": 449386
+        },
+        "clip": {
+          "caption": "Pick up the polished stainless steel fork with curve and place it in or on the rustic stone bowl with bird spout",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 253,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_0__00000001__exo_camera_1",
+          "shard": "shards/molmospaces/000000",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_2cam_randomized__house_0__00000001__exo_camera_1",
+          "width": 624
+        },
+        "input_sha256": "edf2d9775ccfbf313f63c9d515b3bd59a5546dbc326c5c8a6989b8a42097a546"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0000.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_2cam_randomized__house_0__00000001__wrist_camera.mp4",
+          "offset": 10608600576,
+          "size": 578376
+        },
+        "clip": {
+          "caption": "Pick up the polished stainless steel fork with curve and place it in or on the rustic stone bowl with bird spout",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 253,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_0__00000001__wrist_camera",
+          "shard": "shards/molmospaces/000000",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_2cam_randomized__house_0__00000001__wrist_camera",
+          "width": 624
+        },
+        "input_sha256": "8b94be2eb8ae0b4818c6bcd8e11dfda6e3745b039073469f56731469e9f5e48f"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0003.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_9343__00000000__randomized_gopro_analogue_1.mp4",
+          "offset": 8946402816,
+          "size": 192313
+        },
+        "clip": {
+          "caption": "Pick up the knife and place it in or on the black pot",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 378,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_9343__00000000__randomized_gopro_analogue_1",
+          "shard": "shards/molmospaces/000517",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_9343__00000000__randomized_gopro_analogue_1",
+          "width": 624
+        },
+        "input_sha256": "b3b9bfaa7e0b170f913faf9dd6eb22d6a57e5f01fa1ced73bb320fff9d7a512d"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0000.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_2cam_randomized__house_8840__00000000__wrist_camera.mp4",
+          "offset": 4196494336,
+          "size": 640270
+        },
+        "clip": {
+          "caption": "Pick up the soapdispenser and place it in or on the black ceramic bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 241,
+          "num_objects": 2,
+          "sample_id": "molmospaces/object/pick_place_color_2cam_randomized__house_8840__00000000__wrist_camera",
+          "shard": "shards/molmospaces/000360",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_2cam_randomized__house_8840__00000000__wrist_camera",
+          "width": 624
+        },
+        "input_sha256": "2b0e84c1bce208a5c342a2a1e4f7d72cb8b9cd897d0db98abf6bda29c502833a"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0004.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_5cam__house_9313__00000000__randomized_gopro_analogue_1.mp4",
+          "offset": 1420740608,
+          "size": 101619
+        },
+        "clip": {
+          "caption": "Pick up the tall dark cup with ridges base and place it in or on the smooth gray bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 259,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_5cam__house_9313__00000000__randomized_gopro_analogue_1",
+          "shard": "shards/molmospaces/000534",
+          "source_3d_availability": "materialized",
+          "split": "test",
+          "track_kind": "object",
+          "video_id": "pick_place_5cam__house_9313__00000000__randomized_gopro_analogue_1",
+          "width": 624
+        },
+        "input_sha256": "cc38d5fb19a485846264f7fcf5a0500638a621a21773ea5db3f4d573a9828684"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0004.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_3006__00000003__wrist_camera_zed_mini.mp4",
+          "offset": 558397952,
+          "size": 800624
+        },
+        "clip": {
+          "caption": "Pick up the dark phone and place it in or on the tan bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 391,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_3006__00000003__wrist_camera_zed_mini",
+          "shard": "shards/molmospaces/000542",
+          "source_3d_availability": "materialized",
+          "split": "test",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_3006__00000003__wrist_camera_zed_mini",
+          "width": 624
+        },
+        "input_sha256": "d27597d31da7fe9506b7cdedf003fec2ad0f845a26d7676af46ae3b85245991b"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0004.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_3045__00000006__randomized_zed2_analogue_1.mp4",
+          "offset": 584282112,
+          "size": 327152
+        },
+        "clip": {
+          "caption": "Pick up the smooth brown wooden bowl with rim and place it in or on the white decorative bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 255,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_3045__00000006__randomized_zed2_analogue_1",
+          "shard": "shards/molmospaces/000408",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_3045__00000006__randomized_zed2_analogue_1",
+          "width": 624
+        },
+        "input_sha256": "7b4ec41cfd1e42f874772b7d1bb607bdc0f25a1755d9271dd795d972300caf04"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0002.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_2cam_randomized__house_8737__00000002__exo_camera_1.mp4",
+          "offset": 6694869504,
+          "size": 273931
+        },
+        "clip": {
+          "caption": "Pick up the medium red apple and place it in or on the round light ashtray",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 347,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_8737__00000002__exo_camera_1",
+          "shard": "shards/molmospaces/000101",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_2cam_randomized__house_8737__00000002__exo_camera_1",
+          "width": 624
+        },
+        "input_sha256": "6527f69c9db3ed5739a21d848c31b91a85183b3545facb1ddf8b97298ee52c0f"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0003.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_7179__00000009__droid_shoulder_light_randomization.mp4",
+          "offset": 10447838720,
+          "size": 216717
+        },
+        "clip": {
+          "caption": "Pick up the light blue soap bottle with pump and place it in or on the purple mug",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 285,
+          "num_objects": 2,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_7179__00000009__droid_shoulder_light_randomization",
+          "shard": "shards/molmospaces/000488",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_7179__00000009__droid_shoulder_light_randomization",
+          "width": 624
+        },
+        "input_sha256": "b0b390b355c679d057e16821b1b71dc8b1ecc7b36583bf5ab603fd376036acd1"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0001.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_9314__00000003__droid_shoulder_light_randomization.mp4",
+          "offset": 553412096,
+          "size": 200390
+        },
+        "clip": {
+          "caption": "Pick up the glossy green cup with flared rim and place it in or on the white pet water bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 250,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_9314__00000003__droid_shoulder_light_randomization",
+          "shard": "shards/molmospaces/000517",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_9314__00000003__droid_shoulder_light_randomization",
+          "width": 624
+        },
+        "input_sha256": "2dbe2a38dad5acc358870e2088841e4a767a4a84f617a059fe5081131817e795"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0003.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_2cam_randomized__house_4021__00000001__wrist_camera.mp4",
+          "offset": 1571812352,
+          "size": 492148
+        },
+        "clip": {
+          "caption": "Pick up the plain white ceramic mug with handle and place it in or on the dishware",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 252,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_4021__00000001__wrist_camera",
+          "shard": "shards/molmospaces/000036",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_2cam_randomized__house_4021__00000001__wrist_camera",
+          "width": 624
+        },
+        "input_sha256": "c14d65f7be0b2e3a19fe3f5de68fc599f35306b597305cbfb30cafc5885efe6e"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0002.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_2cam_randomized__house_3578__00000000__wrist_camera.mp4",
+          "offset": 7805465600,
+          "size": 714946
+        },
+        "clip": {
+          "caption": "Pick up the shiny green apple and place it in or on the place receptacl 0",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 277,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_3578__00000000__wrist_camera",
+          "shard": "shards/molmospaces/000033",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_2cam_randomized__house_3578__00000000__wrist_camera",
+          "width": 624
+        },
+        "input_sha256": "4ecd3dbc23a2aa70b89d56c1c82e38091327cfe573b036c8406644c8db79e4a9"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0000.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_5cam__house_5126__00000005__randomized_zed2_analogue_1.mp4",
+          "offset": 4019789312,
+          "size": 186867
+        },
+        "clip": {
+          "caption": "Pick up the matte dark cup and place it in or on the glossy marbled gray bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 272,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_5cam__house_5126__00000005__randomized_zed2_analogue_1",
+          "shard": "shards/molmospaces/000195",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_5cam__house_5126__00000005__randomized_zed2_analogue_1",
+          "width": 624
+        },
+        "input_sha256": "926120afe2db6e0979fbd6f91e98af85278cab1c22a57070d23de27cabbc49e8"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0002.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_8041__00000000__randomized_gopro_analogue_1.mp4",
+          "offset": 6050548224,
+          "size": 279581
+        },
+        "clip": {
+          "caption": "Pick up the black mug and place it in or on the blue bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 259,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_8041__00000000__randomized_gopro_analogue_1",
+          "shard": "shards/molmospaces/000492",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_8041__00000000__randomized_gopro_analogue_1",
+          "width": 624
+        },
+        "input_sha256": "2404b2882cbb875278c553a377ccda06472a58cff9981fed45c698ee8dcd66a1"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0002.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_2cam_randomized__house_5338__00000009__exo_camera_1.mp4",
+          "offset": 9961967616,
+          "size": 172037
+        },
+        "clip": {
+          "caption": "Pick up the black mug and place it in or on the purple bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 282,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_2cam_randomized__house_5338__00000009__exo_camera_1",
+          "shard": "shards/molmospaces/000316",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_2cam_randomized__house_5338__00000009__exo_camera_1",
+          "width": 624
+        },
+        "input_sha256": "d78c5682dd130aef5c8f5459e195e20edce48c45c188222b285bbaf43a9d6db2"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0002.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_2cam_randomized__house_6877__00000001__exo_camera_1.mp4",
+          "offset": 750499328,
+          "size": 339332
+        },
+        "clip": {
+          "caption": "Pick up the fruit and place it in or on the shallow round bowl with feet",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 262,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_6877__00000001__exo_camera_1",
+          "shard": "shards/molmospaces/000075",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_2cam_randomized__house_6877__00000001__exo_camera_1",
+          "width": 624
+        },
+        "input_sha256": "9a3094e3ad904d76f08e8d21efdf0ebb9ebe20415dd0405906a86090e6022a0b"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0003.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_1012__00000009__wrist_camera_zed_mini.mp4",
+          "offset": 3616542720,
+          "size": 363302
+        },
+        "clip": {
+          "caption": "Pick up the slim blue remote control with buttons and place it in or on the purple bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 258,
+          "num_objects": 2,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_1012__00000009__wrist_camera_zed_mini",
+          "shard": "shards/molmospaces/000370",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_1012__00000009__wrist_camera_zed_mini",
+          "width": 624
+        },
+        "input_sha256": "92a8226f03c1d9a6ac4a1cb8ac4c7d04e00f3865d9d8e029903546f6732427ea"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0002.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_6230__00000000__randomized_zed2_analogue_2.mp4",
+          "offset": 4512081920,
+          "size": 234382
+        },
+        "clip": {
+          "caption": "Pick up the murphy and place it in or on the tan bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 228,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_6230__00000000__randomized_zed2_analogue_2",
+          "shard": "shards/molmospaces/000467",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_6230__00000000__randomized_zed2_analogue_2",
+          "width": 624
+        },
+        "input_sha256": "9d88c87f1a989482fd94ba2eec865e3dcce9191972dee97f97a00a55a02a58ea"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0001.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_6100__00000000__randomized_gopro_analogue_1.mp4",
+          "offset": 10603639808,
+          "size": 170679
+        },
+        "clip": {
+          "caption": "Pick up the shiny copper goblet and place it in or on the brown bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 274,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_6100__00000000__randomized_gopro_analogue_1",
+          "shard": "shards/molmospaces/000463",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_6100__00000000__randomized_gopro_analogue_1",
+          "width": 624
+        },
+        "input_sha256": "2c886528a48711027a22f59a11f72d0552cec587c42701e5a00bb94b493cdffa"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0003.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_2cam_randomized__house_2069__00000012__exo_camera_1.mp4",
+          "offset": 886874112,
+          "size": 126274
+        },
+        "clip": {
+          "caption": "Pick up the green plastic spray bottle with nozzle and place it in or on the light green bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 256,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_2cam_randomized__house_2069__00000012__exo_camera_1",
+          "shard": "shards/molmospaces/000282",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_2cam_randomized__house_2069__00000012__exo_camera_1",
+          "width": 624
+        },
+        "input_sha256": "0eeb780b20618f5749528638dcc9125105f4b3afeb114ffc664678cbde31a8d7"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0002.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_5112__00000000__droid_shoulder_light_randomization.mp4",
+          "offset": 6034605568,
+          "size": 221583
+        },
+        "clip": {
+          "caption": "Pick up the transparent tapered clear plastic cup and place it in or on the brown bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 266,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_5112__00000000__droid_shoulder_light_randomization",
+          "shard": "shards/molmospaces/000448",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_5112__00000000__droid_shoulder_light_randomization",
+          "width": 624
+        },
+        "input_sha256": "b13ba61b2b747c0a1d5c6ff33fffdfc4f54df4b22210108b78c22f6cdbf690d5"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0001.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_5cam__house_3314__00000000__wrist_camera_zed_mini.mp4",
+          "offset": 5213852672,
+          "size": 668003
+        },
+        "clip": {
+          "caption": "Pick up the copper ridged cup and place it in or on the rustic brown handmade bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 257,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_5cam__house_3314__00000000__wrist_camera_zed_mini",
+          "shard": "shards/molmospaces/000160",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_5cam__house_3314__00000000__wrist_camera_zed_mini",
+          "width": 624
+        },
+        "input_sha256": "85caf4effd8b19a453b35e074b7b35a98884c6b8df8c9dabe528d483505c25d1"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0002.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_2cam_randomized__house_4160__00000000__wrist_camera.mp4",
+          "offset": 200695808,
+          "size": 275371
+        },
+        "clip": {
+          "caption": "Pick up the smooth white ceramic bowl and place it in or on the pixelated bowl filled with ramen",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 256,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_4160__00000000__wrist_camera",
+          "shard": "shards/molmospaces/000043",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_2cam_randomized__house_4160__00000000__wrist_camera",
+          "width": 624
+        },
+        "input_sha256": "e0bed0769e34de38967865b943c033aadd28ff6e2889a1f0381f19347f0b34cd"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0004.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_5cam__house_9250__00000000__droid_shoulder_light_randomization.mp4",
+          "offset": 1676575232,
+          "size": 134377
+        },
+        "clip": {
+          "caption": "Pick up the small oval red potato and place it in or on the colorful ceramic bowl with bird",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 245,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_5cam__house_9250__00000000__droid_shoulder_light_randomization",
+          "shard": "shards/molmospaces/000265",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_5cam__house_9250__00000000__droid_shoulder_light_randomization",
+          "width": 624
+        },
+        "input_sha256": "12cf142fe376e92656ab381f9cac6445fbfe710d4d48d4b602edd45050f2dc7b"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0001.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_2cam_randomized__house_6047__00000007__wrist_camera.mp4",
+          "offset": 3038968320,
+          "size": 289384
+        },
+        "clip": {
+          "caption": "Pick up the ceramic bowl and place it in or on the light yellow ashtray",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 229,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_2cam_randomized__house_6047__00000007__wrist_camera",
+          "shard": "shards/molmospaces/000326",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_2cam_randomized__house_6047__00000007__wrist_camera",
+          "width": 624
+        },
+        "input_sha256": "117a08999bd168976d7a8d8d4c9f537156e67e967570fe65427e44a15a6a8f1a"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0000.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_2cam_randomized__house_1375__00000007__wrist_camera.mp4",
+          "offset": 8888397824,
+          "size": 651220
+        },
+        "clip": {
+          "caption": "Pick up the papertowel and place it in or on the light yellow bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 270,
+          "num_objects": 2,
+          "sample_id": "molmospaces/object/pick_place_color_2cam_randomized__house_1375__00000007__wrist_camera",
+          "shard": "shards/molmospaces/000273",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_2cam_randomized__house_1375__00000007__wrist_camera",
+          "width": 624
+        },
+        "input_sha256": "076375f8c3b797e12b87f850a9b70d1a45e5a25e2eee47a582abb32f074d9af5"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0000.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_2cam_randomized__house_6008__00000003__wrist_camera.mp4",
+          "offset": 704422912,
+          "size": 333461
+        },
+        "clip": {
+          "caption": "Pick up the matte black ceramic mug with handle and place it in or on the tan bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 253,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_2cam_randomized__house_6008__00000003__wrist_camera",
+          "shard": "shards/molmospaces/000323",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_2cam_randomized__house_6008__00000003__wrist_camera",
+          "width": 624
+        },
+        "input_sha256": "13ad1405ff2fe5e90a19c58b1e02267a9c6c4838cc886af4fc38cee251047783"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0001.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_5cam__house_7098__00000003__wrist_camera_zed_mini.mp4",
+          "offset": 4126728192,
+          "size": 407139
+        },
+        "clip": {
+          "caption": "Pick up the blue bowl and place it in or on the golden-brown round metallic bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 239,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_5cam__house_7098__00000003__wrist_camera_zed_mini",
+          "shard": "shards/molmospaces/000229",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_5cam__house_7098__00000003__wrist_camera_zed_mini",
+          "width": 624
+        },
+        "input_sha256": "1ac23c458386ad5a421edb2f9e22ca6f0020e8082327c38b7dacf25edf1a31d9"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0002.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_1357__00000001__randomized_zed2_analogue_1.mp4",
+          "offset": 3600499200,
+          "size": 118317
+        },
+        "clip": {
+          "caption": "Pick up the transparent soap bottle with golden pump and place it in or on the light yellow bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 268,
+          "num_objects": 2,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_1357__00000001__randomized_zed2_analogue_1",
+          "shard": "shards/molmospaces/000381",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_1357__00000001__randomized_zed2_analogue_1",
+          "width": 624
+        },
+        "input_sha256": "a78010a94a4af1a999546a9f18f868520444879c6ffed5db5339feca62157725"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0000.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_9003__00000011__randomized_zed2_analogue_2.mp4",
+          "offset": 7614976512,
+          "size": 328254
+        },
+        "clip": {
+          "caption": "Pick up the dark kitchen spatula and place it in or on the white bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 328,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_9003__00000011__randomized_zed2_analogue_2",
+          "shard": "shards/molmospaces/000503",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_9003__00000011__randomized_zed2_analogue_2",
+          "width": 624
+        },
+        "input_sha256": "1717f42b07028e50d92ed77d317935e63f916ced1344ce146d0eabd5ce27daa4"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0000.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_3010__00000000__randomized_gopro_analogue_1.mp4",
+          "offset": 10644482560,
+          "size": 98458
+        },
+        "clip": {
+          "caption": "Pick up the white mug and place it in or on the purple bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 260,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_3010__00000000__randomized_gopro_analogue_1",
+          "shard": "shards/molmospaces/000404",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_3010__00000000__randomized_gopro_analogue_1",
+          "width": 624
+        },
+        "input_sha256": "538368716fe8b5ba597316bc849ced639e6636754b2b55da15d0c6f6caf7b86b"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0002.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_2cam_randomized__house_5477__00000005__wrist_camera.mp4",
+          "offset": 4548449280,
+          "size": 691236
+        },
+        "clip": {
+          "caption": "Pick up the small oval brown potato with texture and place it in or on the red bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 259,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_2cam_randomized__house_5477__00000005__wrist_camera",
+          "shard": "shards/molmospaces/000321",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_2cam_randomized__house_5477__00000005__wrist_camera",
+          "width": 624
+        },
+        "input_sha256": "81029ca3003064b6aca3c4e082644717b82efd9e2a450ca7029bcafde5891a0f"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0003.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_2cam_randomized__house_4062__00000003__wrist_camera.mp4",
+          "offset": 4537988608,
+          "size": 488907
+        },
+        "clip": {
+          "caption": "Pick up the glossy brown goblet cup and place it in or on the blue bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 242,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_2cam_randomized__house_4062__00000003__wrist_camera",
+          "shard": "shards/molmospaces/000304",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_2cam_randomized__house_4062__00000003__wrist_camera",
+          "width": 624
+        },
+        "input_sha256": "f7ce8fc5cb6833d3f11ed844f1812760b2d6c29668c4c3853cb77e11c6354254"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0004.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_5cam__house_3046__00000012__randomized_gopro_analogue_1.mp4",
+          "offset": 1435854336,
+          "size": 96031
+        },
+        "clip": {
+          "caption": "Pick up the smooth yellow apple and place it in or on the patchwork ceramic bowl rustic",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 255,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_5cam__house_3046__00000012__randomized_gopro_analogue_1",
+          "shard": "shards/molmospaces/000152",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_5cam__house_3046__00000012__randomized_gopro_analogue_1",
+          "width": 624
+        },
+        "input_sha256": "d500aa566137a1f2571bf7675f21ab875b8388eb18e2760c2342ef65f9e9a83e"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0003.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_2394__00000001__wrist_camera_zed_mini.mp4",
+          "offset": 9837890560,
+          "size": 790100
+        },
+        "clip": {
+          "caption": "Pick up the soap bottle and place it in or on the red bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 262,
+          "num_objects": 2,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_2394__00000001__wrist_camera_zed_mini",
+          "shard": "shards/molmospaces/000400",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_2394__00000001__wrist_camera_zed_mini",
+          "width": 624
+        },
+        "input_sha256": "62c744893602bdd31ee8a5cbea4349a7dbd2d4fba8e62a1fb040c68bb8f36401"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0000.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_8488__00000001__randomized_zed2_analogue_2.mp4",
+          "offset": 3745253376,
+          "size": 147132
+        },
+        "clip": {
+          "caption": "Pick up the small red potato with uneven skin and place it in or on the tan bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 245,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_8488__00000001__randomized_zed2_analogue_2",
+          "shard": "shards/molmospaces/000502",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_8488__00000001__randomized_zed2_analogue_2",
+          "width": 624
+        },
+        "input_sha256": "31c384227672f3de26211cc0008ef0f271359a23e4a36b99650278e646ca996a"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0002.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_5cam__house_9229__00000001__randomized_gopro_analogue_1.mp4",
+          "offset": 185236992,
+          "size": 124362
+        },
+        "clip": {
+          "caption": "Pick up the dark matte cup with ridges and place it in or on the round shallow rustic clay bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 253,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_5cam__house_9229__00000001__randomized_gopro_analogue_1",
+          "shard": "shards/molmospaces/000265",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_5cam__house_9229__00000001__randomized_gopro_analogue_1",
+          "width": 624
+        },
+        "input_sha256": "0dd828c1345b062e456637ba7d6e3d21fd3cc4b589da03b92020e2e7e025e799"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0001.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_2cam_randomized__house_9344__00000001__wrist_camera.mp4",
+          "offset": 9876552192,
+          "size": 609767
+        },
+        "clip": {
+          "caption": "Pick up the purple spray bottle with white nozzle and place it in or on the matte dark gray bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 235,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_9344__00000001__wrist_camera",
+          "shard": "shards/molmospaces/000103",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_2cam_randomized__house_9344__00000001__wrist_camera",
+          "width": 624
+        },
+        "input_sha256": "4d3e5932f0eac275bfeb013cc1737069487b79bdbbd0cb498888b49a71d082cb"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0001.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_2cam_randomized__house_4768__00000001__exo_camera_1.mp4",
+          "offset": 1137750528,
+          "size": 197754
+        },
+        "clip": {
+          "caption": "Pick up the plain white ceramic mug and place it in or on the marbled gray bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 248,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_4768__00000001__exo_camera_1",
+          "shard": "shards/molmospaces/000521",
+          "source_3d_availability": "materialized",
+          "split": "test",
+          "track_kind": "object",
+          "video_id": "pick_place_2cam_randomized__house_4768__00000001__exo_camera_1",
+          "width": 624
+        },
+        "input_sha256": "3c1ed5fe883342c1d7001d07156bc999ba7444ce965ff6e7599f7bf4bb55a447"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0001.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_5cam__house_8190__00000006__randomized_zed2_analogue_1.mp4",
+          "offset": 6788680704,
+          "size": 165629
+        },
+        "clip": {
+          "caption": "Pick up the small red potato with texture and place it in or on the gray bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 227,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_5cam__house_8190__00000006__randomized_zed2_analogue_1",
+          "shard": "shards/molmospaces/000246",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_5cam__house_8190__00000006__randomized_zed2_analogue_1",
+          "width": 624
+        },
+        "input_sha256": "b9a005f3b109176381ec61a7c87f647ff2fee10adbdb8c0b422caaa00a0d67d3"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0001.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_2cam_randomized__house_4062__00000009__exo_camera_1.mp4",
+          "offset": 5352280064,
+          "size": 213138
+        },
+        "clip": {
+          "caption": "Pick up the smooth white egg and place it in or on the light gray shallow round bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 240,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_4062__00000009__exo_camera_1",
+          "shard": "shards/molmospaces/000040",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_2cam_randomized__house_4062__00000009__exo_camera_1",
+          "width": 624
+        },
+        "input_sha256": "55ef554f7eb5cc5f196c47a0ef95c7cc52e51dbbf967567a1c66ccdb52cd43ff"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0001.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_5cam__house_4004__00000000__randomized_zed2_analogue_1.mp4",
+          "offset": 5424918528,
+          "size": 153075
+        },
+        "clip": {
+          "caption": "Pick up the blue orange keychain and place it in or on the white bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 238,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_5cam__house_4004__00000000__randomized_zed2_analogue_1",
+          "shard": "shards/molmospaces/000163",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_5cam__house_4004__00000000__randomized_zed2_analogue_1",
+          "width": 624
+        },
+        "input_sha256": "3d8a354aec9036813d8805d17514b8044e1c332e65c91bdbb2076c7d21c8d760"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0001.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_3190__00000001__randomized_zed2_analogue_1.mp4",
+          "offset": 9437403136,
+          "size": 153580
+        },
+        "clip": {
+          "caption": "Pick up the glossy black dog statue sitting and place it in or on the purple bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 236,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_3190__00000001__randomized_zed2_analogue_1",
+          "shard": "shards/molmospaces/000413",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_3190__00000001__randomized_zed2_analogue_1",
+          "width": 624
+        },
+        "input_sha256": "e534814038929c8d6dae06cd30e9bb1081366471f378cdeb7a46904c1d81e91f"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0002.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_2cam_randomized__house_137__00000000__exo_camera_1.mp4",
+          "offset": 7183670784,
+          "size": 287642
+        },
+        "clip": {
+          "caption": "Pick up the gold pump bottle and place it in or on the gray ceramic bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 249,
+          "num_objects": 2,
+          "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_137__00000000__exo_camera_1",
+          "shard": "shards/molmospaces/000004",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_2cam_randomized__house_137__00000000__exo_camera_1",
+          "width": 624
+        },
+        "input_sha256": "f6d8a94e7331ddd6f6c477d8242fb112f2c6e15d0287ae29095ee07932e1fbdb"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0000.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_3183__00000001__randomized_zed2_analogue_2.mp4",
+          "offset": 8997716480,
+          "size": 326944
+        },
+        "clip": {
+          "caption": "Pick up the smooth white bowl and place it in or on the blue bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 269,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_3183__00000001__randomized_zed2_analogue_2",
+          "shard": "shards/molmospaces/000413",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_3183__00000001__randomized_zed2_analogue_2",
+          "width": 624
+        },
+        "input_sha256": "baac1ad2b319b249950dd0900bebc9b144a55aa5850e1298a721c36853b68e4d"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0003.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_2cam_randomized__house_8068__00000003__exo_camera_1.mp4",
+          "offset": 1342480384,
+          "size": 298529
+        },
+        "clip": {
+          "caption": "Pick up the sleek dark rectangular phone and place it in or on the red clay bowl with zigzag pattern",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 281,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_8068__00000003__exo_camera_1",
+          "shard": "shards/molmospaces/000091",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_2cam_randomized__house_8068__00000003__exo_camera_1",
+          "width": 624
+        },
+        "input_sha256": "e7a81e445eae9443d4cf66e277197fc44e5e22171b708e185dc435b63e9a25cb"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0000.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_5016__00000007__randomized_zed2_analogue_2.mp4",
+          "offset": 4487357440,
+          "size": 189757
+        },
+        "clip": {
+          "caption": "Pick up the glass salt shaker and place it in or on the light green display box",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 247,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_5016__00000007__randomized_zed2_analogue_2",
+          "shard": "shards/molmospaces/000441",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_5016__00000007__randomized_zed2_analogue_2",
+          "width": 624
+        },
+        "input_sha256": "7ba8d5294db63ff11687b772e09185d0ffffb1cedd55e7c43ac7aea58114295b"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0000.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_7090__00000005__randomized_gopro_analogue_1.mp4",
+          "offset": 3926258176,
+          "size": 112711
+        },
+        "clip": {
+          "caption": "Pick up the brown wooden bowl and place it in or on the light yellow mug",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 259,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_7090__00000005__randomized_gopro_analogue_1",
+          "shard": "shards/molmospaces/000481",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_7090__00000005__randomized_gopro_analogue_1",
+          "width": 624
+        },
+        "input_sha256": "9c9c38aa0d88eb77db96cc74881409f70aecd7c06747665befafbae16cbd8c9f"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0000.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_2cam_randomized__house_4080__00000006__exo_camera_1.mp4",
+          "offset": 8607362048,
+          "size": 327190
+        },
+        "clip": {
+          "caption": "Pick up the dark green ladle with handle and place it in or on the blue bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 256,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_2cam_randomized__house_4080__00000006__exo_camera_1",
+          "shard": "shards/molmospaces/000305",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_2cam_randomized__house_4080__00000006__exo_camera_1",
+          "width": 624
+        },
+        "input_sha256": "efb0144281b19ee64fa991b063f57b72fa2a277a474ac125554a305ee5192780"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0001.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_2cam_randomized__house_3423__00000002__wrist_camera.mp4",
+          "offset": 1461577728,
+          "size": 961228
+        },
+        "clip": {
+          "caption": "Pick up the round plump red tomato with stem and place it in or on the round black and gray ashtray",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 383,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_3423__00000002__wrist_camera",
+          "shard": "shards/molmospaces/000031",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_2cam_randomized__house_3423__00000002__wrist_camera",
+          "width": 624
+        },
+        "input_sha256": "4c50384cfaeb44130a98c26c6387f1a96d9ed137b5922dc70948beb50618e148"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0000.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_2cam_randomized__house_4685__00000011__wrist_camera.mp4",
+          "offset": 5490533376,
+          "size": 246805
+        },
+        "clip": {
+          "caption": "Pick up the yellow wooden pencil and place it in or on the square ashtray with deep cavity",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 244,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_4685__00000011__wrist_camera",
+          "shard": "shards/molmospaces/000046",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_2cam_randomized__house_4685__00000011__wrist_camera",
+          "width": 624
+        },
+        "input_sha256": "2c04c1aeb56538e3931711bde911e47ada1aa78d7135e6a88b539b3cd1c341f3"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0000.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_5cam__house_2025__00000002__randomized_gopro_analogue_1.mp4",
+          "offset": 1512630784,
+          "size": 64093
+        },
+        "clip": {
+          "caption": "Pick up the matte black mug and place it in or on the round terracotta clay serving dish",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 248,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_5cam__house_2025__00000002__randomized_gopro_analogue_1",
+          "shard": "shards/molmospaces/000132",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_5cam__house_2025__00000002__randomized_gopro_analogue_1",
+          "width": 624
+        },
+        "input_sha256": "39b24c55d6804e8be35fcb686f00dea719e3e1d0278455a39b4fa8601b081f11"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0000.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_3089__00000003__randomized_zed2_analogue_2.mp4",
+          "offset": 7774669312,
+          "size": 175611
+        },
+        "clip": {
+          "caption": "Pick up the small transparent glass salt shaker and place it in or on the light green bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 240,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_3089__00000003__randomized_zed2_analogue_2",
+          "shard": "shards/molmospaces/000410",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_3089__00000003__randomized_zed2_analogue_2",
+          "width": 624
+        },
+        "input_sha256": "ac8dd5cb9f34e93a384f2677a140aa18c9010a85e6788f4b2797dfd411dfa4e0"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0004.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_4116__00000004__wrist_camera_zed_mini.mp4",
+          "offset": 1121908736,
+          "size": 649711
+        },
+        "clip": {
+          "caption": "Pick up the yellow kitchen knife and place it in or on the light blue pet water bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 250,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_4116__00000004__wrist_camera_zed_mini",
+          "shard": "shards/molmospaces/000429",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_4116__00000004__wrist_camera_zed_mini",
+          "width": 624
+        },
+        "input_sha256": "86d0f6d3adaf56adf573c717646c6b2cd7f3fd0901f1c87de8821491242c12f1"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0003.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_3218__00000002__randomized_zed2_analogue_1.mp4",
+          "offset": 7240186368,
+          "size": 321861
+        },
+        "clip": {
+          "caption": "Pick up the yellow apple with stem and place it in or on the orange bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 312,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_3218__00000002__randomized_zed2_analogue_1",
+          "shard": "shards/molmospaces/000414",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_3218__00000002__randomized_zed2_analogue_1",
+          "width": 624
+        },
+        "input_sha256": "f919564eec20002359fb681d295e19798121b0289e48c63d5d3db79503694553"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0001.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_2cam_randomized__house_4147__00000000__wrist_camera.mp4",
+          "offset": 4962344448,
+          "size": 370121
+        },
+        "clip": {
+          "caption": "Pick up the tall dark cup with ridges base and place it in or on the light green bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 249,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_2cam_randomized__house_4147__00000000__wrist_camera",
+          "shard": "shards/molmospaces/000306",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_2cam_randomized__house_4147__00000000__wrist_camera",
+          "width": 624
+        },
+        "input_sha256": "92e762362dad07071c9e488563ca7ba7e2aef0dabf5b62e4a0e99d8a579ec31c"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0004.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_2cam_randomized__house_8660__00000004__wrist_camera.mp4",
+          "offset": 101785600,
+          "size": 596583
+        },
+        "clip": {
+          "caption": "Pick up the medium sized red apple and place it in or on the rustic brown handmade bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 265,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_8660__00000004__wrist_camera",
+          "shard": "shards/molmospaces/000096",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_2cam_randomized__house_8660__00000004__wrist_camera",
+          "width": 624
+        },
+        "input_sha256": "d4f630f8fb47fec8eaa848740651e7ef0bf0f411eea2cddd9c4cfd4cffaf7997"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0002.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_5cam__house_145__00000001__randomized_zed2_analogue_1.mp4",
+          "offset": 9739878912,
+          "size": 320823
+        },
+        "clip": {
+          "caption": "Pick up the tall transparent cup and place it in or on the white ceramic bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 267,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_5cam__house_145__00000001__randomized_zed2_analogue_1",
+          "shard": "shards/molmospaces/000124",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_5cam__house_145__00000001__randomized_zed2_analogue_1",
+          "width": 624
+        },
+        "input_sha256": "62a9432225c4c4de7a77400cc9aa5938ec47633e2a4eb2d7e897f0a92641e928"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0000.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_2183__00000006__randomized_gopro_analogue_1.mp4",
+          "offset": 3096872448,
+          "size": 193269
+        },
+        "clip": {
+          "caption": "Pick up the smooth glossy red apple with stem and place it in or on the orange bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 249,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_2183__00000006__randomized_gopro_analogue_1",
+          "shard": "shards/molmospaces/000397",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_2183__00000006__randomized_gopro_analogue_1",
+          "width": 624
+        },
+        "input_sha256": "c0b7af2627e0985373a06b98c29cfd6de43dfa9412b805bf9fe1d094203d7261"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0003.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_2cam_randomized__house_4727__00000001__exo_camera_1.mp4",
+          "offset": 5452437504,
+          "size": 165857
+        },
+        "clip": {
+          "caption": "Pick up the clear glass cup and place it in or on the hand-painted insect bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 267,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_4727__00000001__exo_camera_1",
+          "shard": "shards/molmospaces/000048",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_2cam_randomized__house_4727__00000001__exo_camera_1",
+          "width": 624
+        },
+        "input_sha256": "079d88f9e186e9dfb51f872c6a9bfa4a9ae905eb60a8721aed3cc4c54549b7e2"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0004.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_9093__00000001__wrist_camera_zed_mini.mp4",
+          "offset": 911264256,
+          "size": 384480
+        },
+        "clip": {
+          "caption": "Pick up the alarmclock and place it in or on the tan bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 275,
+          "num_objects": 2,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_9093__00000001__wrist_camera_zed_mini",
+          "shard": "shards/molmospaces/000512",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_9093__00000001__wrist_camera_zed_mini",
+          "width": 624
+        },
+        "input_sha256": "2bdd771ea2eb1507f364fe667cf43559d5bdf13a5b89cb84953719d97d64eb20"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0000.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_2cam_randomized__house_3123__00000002__wrist_camera.mp4",
+          "offset": 3043767808,
+          "size": 647336
+        },
+        "clip": {
+          "caption": "Pick up the rough brown potato and place it in or on the white bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 249,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_2cam_randomized__house_3123__00000002__wrist_camera",
+          "shard": "shards/molmospaces/000293",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_2cam_randomized__house_3123__00000002__wrist_camera",
+          "width": 624
+        },
+        "input_sha256": "038b63e9545d43c2ff210fd697df02606f7cf4b17fda3398a721e17b372fd241"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0002.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_9155__00000003__wrist_camera_zed_mini.mp4",
+          "offset": 1075092992,
+          "size": 662322
+        },
+        "clip": {
+          "caption": "Pick up the transparent tall wine glass and place it in or on the purple bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 266,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_9155__00000003__wrist_camera_zed_mini",
+          "shard": "shards/molmospaces/000515",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_9155__00000003__wrist_camera_zed_mini",
+          "width": 624
+        },
+        "input_sha256": "c6251664b40a58b0c4ed0d93f960a2aa2db9f28839bde215b45d2e7de607c909"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0003.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_2cam_randomized__house_2715__00000001__exo_camera_1.mp4",
+          "offset": 348481024,
+          "size": 180778
+        },
+        "clip": {
+          "caption": "Pick up the glossy beige mug and place it in or on the green bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 258,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_2cam_randomized__house_2715__00000001__exo_camera_1",
+          "shard": "shards/molmospaces/000289",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_2cam_randomized__house_2715__00000001__exo_camera_1",
+          "width": 624
+        },
+        "input_sha256": "87d92074daf66734e55f5186ecc97984762c08d4d9e56c72d1ef4f1d954e8546"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0002.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_2cam_randomized__house_53__00000002__wrist_camera.mp4",
+          "offset": 542475776,
+          "size": 678379
+        },
+        "clip": {
+          "caption": "Pick up the slender shiny polished metal spoon and place it in or on the shallow bowl with rim",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 271,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_53__00000002__wrist_camera",
+          "shard": "shards/molmospaces/000051",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_2cam_randomized__house_53__00000002__wrist_camera",
+          "width": 624
+        },
+        "input_sha256": "101825461304e82063dded63876efc0d300b17ff6d757d8065993a8c7a57a364"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0004.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_2cam_randomized__house_130__00000002__exo_camera_1.mp4",
+          "offset": 946026496,
+          "size": 203614
+        },
+        "clip": {
+          "caption": "Pick up the smooth pale beige egg and place it in or on the red bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 300,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_2cam_randomized__house_130__00000002__exo_camera_1",
+          "shard": "shards/molmospaces/000270",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_2cam_randomized__house_130__00000002__exo_camera_1",
+          "width": 624
+        },
+        "input_sha256": "cc5668f8a777004a27b6b840252d4f5f6141e74e9df9ec1058cf7fb76f1d46b5"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0003.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_5cam__house_8440__00000000__wrist_camera_zed_mini.mp4",
+          "offset": 6634875392,
+          "size": 616786
+        },
+        "clip": {
+          "caption": "Pick up the crockery and place it in or on the wooden mug with frothy beverage",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 294,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_5cam__house_8440__00000000__wrist_camera_zed_mini",
+          "shard": "shards/molmospaces/000250",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_5cam__house_8440__00000000__wrist_camera_zed_mini",
+          "width": 624
+        },
+        "input_sha256": "061b909edf8c3c0cc995b71987cb92015e3df3213fecc88b469bae44ac7279fc"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0002.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_2cam_randomized__house_8117__00000002__wrist_camera.mp4",
+          "offset": 4661045760,
+          "size": 622890
+        },
+        "clip": {
+          "caption": "Pick up the pepper shaker and place it in or on the round rustic bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 262,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_8117__00000002__wrist_camera",
+          "shard": "shards/molmospaces/000094",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_2cam_randomized__house_8117__00000002__wrist_camera",
+          "width": 624
+        },
+        "input_sha256": "b0a2b9331c263266a9797db2654878124de8b4b4927e84f1bc24d0c41a72fbe2"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0002.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_2cam_randomized__house_9505__00000001__wrist_camera.mp4",
+          "offset": 8659028480,
+          "size": 999716
+        },
+        "clip": {
+          "caption": "Pick up the shiny metal ladle with black handle and place it in or on the blue decorative ceramic bottle",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 295,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_9505__00000001__wrist_camera",
+          "shard": "shards/molmospaces/000108",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_2cam_randomized__house_9505__00000001__wrist_camera",
+          "width": 624
+        },
+        "input_sha256": "4b68d30c4917ef0b3487c8a1a8d6f3f07127f472a0ddd7ac1db22861b5b767ed"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0001.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_4055__00000006__randomized_zed2_analogue_2.mp4",
+          "offset": 8908834304,
+          "size": 326769
+        },
+        "clip": {
+          "caption": "Pick up the yellow bottle and place it in or on the light yellow bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 268,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_4055__00000006__randomized_zed2_analogue_2",
+          "shard": "shards/molmospaces/000424",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_4055__00000006__randomized_zed2_analogue_2",
+          "width": 624
+        },
+        "input_sha256": "cb428b844e1c43cb5adbef9632e1a3957b79395ad72227733c7b40483fe2b1e8"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0002.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_2cam_randomized__house_8009__00000001__wrist_camera.mp4",
+          "offset": 9965656576,
+          "size": 335285
+        },
+        "clip": {
+          "caption": "Pick up the white ceramic mug and place it in or on the light green bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 272,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_2cam_randomized__house_8009__00000001__wrist_camera",
+          "shard": "shards/molmospaces/000348",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_2cam_randomized__house_8009__00000001__wrist_camera",
+          "width": 624
+        },
+        "input_sha256": "c1fa49b3424fa4f57fb5c2734943398b5cbc0442dae532a3f9f97d6fe96e6e41"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0001.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_5cam__house_172__00000007__randomized_gopro_analogue_1.mp4",
+          "offset": 1753864704,
+          "size": 201165
+        },
+        "clip": {
+          "caption": "Pick up the gold pump bottle and place it in or on the white ceramic mug with crescent moon",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 264,
+          "num_objects": 2,
+          "sample_id": "molmospaces/object/pick_place_5cam__house_172__00000007__randomized_gopro_analogue_1",
+          "shard": "shards/molmospaces/000126",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_5cam__house_172__00000007__randomized_gopro_analogue_1",
+          "width": 624
+        },
+        "input_sha256": "9621d62fe70cdf791cdbc21e7e7d1ac85599b40ae4f8d543f61211f8e82355fc"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0004.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_5074__00000003__randomized_gopro_analogue_1.mp4",
+          "offset": 2194747904,
+          "size": 252207
+        },
+        "clip": {
+          "caption": "Pick up the medium green apple with spots and place it in or on the yellow ceramic dish",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 258,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_5074__00000003__randomized_gopro_analogue_1",
+          "shard": "shards/molmospaces/000446",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_5074__00000003__randomized_gopro_analogue_1",
+          "width": 624
+        },
+        "input_sha256": "c76e7156fb3536a6aa875582b6329a4c0af2cff39aeb551212f0b1b157dadb84"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0000.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_5cam__house_7184__00000001__randomized_zed2_analogue_1.mp4",
+          "offset": 8330347520,
+          "size": 437431
+        },
+        "clip": {
+          "caption": "Pick up the medium-sized smooth red apple with stem and place it in or on the glossy golden bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 270,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_5cam__house_7184__00000001__randomized_zed2_analogue_1",
+          "shard": "shards/molmospaces/000231",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_5cam__house_7184__00000001__randomized_zed2_analogue_1",
+          "width": 624
+        },
+        "input_sha256": "951baecc87def3074ea2f1b80479e8035002c7c137ce3806be4527f02df12156"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0003.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_5cam__house_6379__00000000__randomized_zed2_analogue_1.mp4",
+          "offset": 1555495424,
+          "size": 276237
+        },
+        "clip": {
+          "caption": "Pick up the yellow kitchen knife with blue bolster and place it in or on the rectangular ornate red box",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 262,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_5cam__house_6379__00000000__randomized_zed2_analogue_1",
+          "shard": "shards/molmospaces/000216",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_5cam__house_6379__00000000__randomized_zed2_analogue_1",
+          "width": 624
+        },
+        "input_sha256": "696c9ad0b39ed9dfc1117b9c4a9638bc2da127d8e9d66326993f933defaabd41"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0004.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_484__00000002__droid_shoulder_light_randomization.mp4",
+          "offset": 2727119872,
+          "size": 303026
+        },
+        "clip": {
+          "caption": "Pick up the glossy brown goblet cup and place it in or on the tan bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 267,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_484__00000002__droid_shoulder_light_randomization",
+          "shard": "shards/molmospaces/000437",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_484__00000002__droid_shoulder_light_randomization",
+          "width": 624
+        },
+        "input_sha256": "76821836b37ed2120d60c44e0ee450b7e61fe98c1fdfe36328492d4e0ebbc4aa"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0000.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_1081__00000000__wrist_camera_zed_mini.mp4",
+          "offset": 4723554816,
+          "size": 237027
+        },
+        "clip": {
+          "caption": "Pick up the purple spray bottle and place it in or on the tan bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 269,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_1081__00000000__wrist_camera_zed_mini",
+          "shard": "shards/molmospaces/000375",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_1081__00000000__wrist_camera_zed_mini",
+          "width": 624
+        },
+        "input_sha256": "b444c25d0232f4c6c7784889b4a86c584699ecc6d5bb4220de907c4971b295a5"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0003.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_5cam__house_6148__00000000__wrist_camera_zed_mini.mp4",
+          "offset": 2166900736,
+          "size": 605856
+        },
+        "clip": {
+          "caption": "Pick up the bowl and place it in or on the pink geometric box",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 271,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_5cam__house_6148__00000000__wrist_camera_zed_mini",
+          "shard": "shards/molmospaces/000212",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_5cam__house_6148__00000000__wrist_camera_zed_mini",
+          "width": 624
+        },
+        "input_sha256": "8106e9eec20aa26e6cb7c172d15d034904468dab9df971cc84d0bc4d70b51c84"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0003.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_5cam__house_172__00000006__randomized_zed2_analogue_1.mp4",
+          "offset": 3663913984,
+          "size": 123696
+        },
+        "clip": {
+          "caption": "Pick up the transparent bottle with pump and place it in or on the round clay dish",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 247,
+          "num_objects": 2,
+          "sample_id": "molmospaces/object/pick_place_5cam__house_172__00000006__randomized_zed2_analogue_1",
+          "shard": "shards/molmospaces/000126",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_5cam__house_172__00000006__randomized_zed2_analogue_1",
+          "width": 624
+        },
+        "input_sha256": "b693aac03b520148e9f59423a3a214121efa161913b67837443529d716bc6788"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0001.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_2cam_randomized__house_5524__00000000__wrist_camera.mp4",
+          "offset": 7622725632,
+          "size": 366986
+        },
+        "clip": {
+          "caption": "Pick up the medium red apple and place it in or on the rustic bowl with ridges",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 289,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_5524__00000000__wrist_camera",
+          "shard": "shards/molmospaces/000057",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_2cam_randomized__house_5524__00000000__wrist_camera",
+          "width": 624
+        },
+        "input_sha256": "a881853c6db2ab0ed7001479f74e3c689f26a5d8f0eb52fa519f299082e87e45"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0001.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_4213__00000001__randomized_zed2_analogue_2.mp4",
+          "offset": 7824119296,
+          "size": 157707
+        },
+        "clip": {
+          "caption": "Pick up the glossy brown goblet cup for beverages and place it in or on the green bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 256,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_4213__00000001__randomized_zed2_analogue_2",
+          "shard": "shards/molmospaces/000434",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_4213__00000001__randomized_zed2_analogue_2",
+          "width": 624
+        },
+        "input_sha256": "3c1f0bf3f5f265e2f8355c9d6e74abfc7b59e8f0bc7f21f70c3d62e44d0e4942"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0004.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_69__00000000__randomized_gopro_analogue_1.mp4",
+          "offset": 2709515776,
+          "size": 95664
+        },
+        "clip": {
+          "caption": "Pick up the transparent bottle with soap and place it in or on the red bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 335,
+          "num_objects": 2,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_69__00000000__randomized_gopro_analogue_1",
+          "shard": "shards/molmospaces/000470",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_69__00000000__randomized_gopro_analogue_1",
+          "width": 624
+        },
+        "input_sha256": "e3f2e8383a75f92d1b26a55a510d18de78ce73bd29273e59e1901b47c2dff566"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0003.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_4122__00000001__wrist_camera_zed_mini.mp4",
+          "offset": 6298913280,
+          "size": 521629
+        },
+        "clip": {
+          "caption": "Pick up the soap dispenser and place it in or on the yellow bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 287,
+          "num_objects": 2,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_4122__00000001__wrist_camera_zed_mini",
+          "shard": "shards/molmospaces/000430",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_4122__00000001__wrist_camera_zed_mini",
+          "width": 624
+        },
+        "input_sha256": "be9c72af6f3d604a78ba141e1067cc60aa936a524e6fe6394c077b85bd05e0b6"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0003.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_5cam__house_9149__00000001__droid_shoulder_light_randomization.mp4",
+          "offset": 9646015488,
+          "size": 164039
+        },
+        "clip": {
+          "caption": "Pick up the medium red apple with stem and place it in or on the round bowl with dark band decoration",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 247,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_5cam__house_9149__00000001__droid_shoulder_light_randomization",
+          "shard": "shards/molmospaces/000534",
+          "source_3d_availability": "materialized",
+          "split": "test",
+          "track_kind": "object",
+          "video_id": "pick_place_5cam__house_9149__00000001__droid_shoulder_light_randomization",
+          "width": 624
+        },
+        "input_sha256": "e9bed963f2cd140989a8bb48c1eb35bc45bd7464c593eaec6a83bc32c9cb7509"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0001.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_9200__00000000__randomized_zed2_analogue_2.mp4",
+          "offset": 4264979968,
+          "size": 300836
+        },
+        "clip": {
+          "caption": "Pick up the red apple and place it in or on the purple bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 258,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_9200__00000000__randomized_zed2_analogue_2",
+          "shard": "shards/molmospaces/000515",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_9200__00000000__randomized_zed2_analogue_2",
+          "width": 624
+        },
+        "input_sha256": "b4140037e4d4f3e98c4002fba704b4068fdaf43094f3fca8b3cf96699eac88a3"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0001.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_5cam__house_16__00000012__randomized_gopro_analogue_1.mp4",
+          "offset": 6856627200,
+          "size": 115982
+        },
+        "clip": {
+          "caption": "Pick up the dispenser and place it in or on the white bowl with liquid soup",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 283,
+          "num_objects": 2,
+          "sample_id": "molmospaces/object/pick_place_5cam__house_16__00000012__randomized_gopro_analogue_1",
+          "shard": "shards/molmospaces/000125",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_5cam__house_16__00000012__randomized_gopro_analogue_1",
+          "width": 624
+        },
+        "input_sha256": "c102df5aaf4571259ad0d5bd3ab248ccfa6291f6ce6be94b654b0a5f3fcc8ba9"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0002.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_5cam__house_4127__00000007__randomized_zed2_analogue_2.mp4",
+          "offset": 5346672640,
+          "size": 294707
+        },
+        "clip": {
+          "caption": "Pick up the gray hourglass-shaped cup and place it in or on the rustic shallow bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 251,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_5cam__house_4127__00000007__randomized_zed2_analogue_2",
+          "shard": "shards/molmospaces/000178",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_5cam__house_4127__00000007__randomized_zed2_analogue_2",
+          "width": 624
+        },
+        "input_sha256": "5af3847cdacb1e724b57ad4110d68f02d172f4b924be5d36f26ce19cf77d86b4"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0000.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_5cam__house_2008__00000019__randomized_zed2_analogue_1.mp4",
+          "offset": 9369306624,
+          "size": 147192
+        },
+        "clip": {
+          "caption": "Pick up the blue vase and place it in or on the medium blue cooking pot",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 283,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_5cam__house_2008__00000019__randomized_zed2_analogue_1",
+          "shard": "shards/molmospaces/000129",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_5cam__house_2008__00000019__randomized_zed2_analogue_1",
+          "width": 624
+        },
+        "input_sha256": "fc86e3c2b20d0a7d0e9ae0c9902a89d5134c9eb867b63daf49a8539a2542d922"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0000.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_2cam_randomized__house_9337__00000017__wrist_camera.mp4",
+          "offset": 3638777344,
+          "size": 634382
+        },
+        "clip": {
+          "caption": "Pick up the soapdispenser and place it in or on the black dish",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 250,
+          "num_objects": 2,
+          "sample_id": "molmospaces/object/pick_place_color_2cam_randomized__house_9337__00000017__wrist_camera",
+          "shard": "shards/molmospaces/000362",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_2cam_randomized__house_9337__00000017__wrist_camera",
+          "width": 624
+        },
+        "input_sha256": "b3dd66bc959c9caf42596bbde780a01edeb6f483137c868bc9cbc47b1a95f639"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0003.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_6021__00000006__wrist_camera_zed_mini.mp4",
+          "offset": 1443481600,
+          "size": 619932
+        },
+        "clip": {
+          "caption": "Pick up the translucent glass bottle with bulbous body and place it in or on the light yellow bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 286,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_6021__00000006__wrist_camera_zed_mini",
+          "shard": "shards/molmospaces/000457",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_6021__00000006__wrist_camera_zed_mini",
+          "width": 624
+        },
+        "input_sha256": "f029d67e46ff2aa5a6b0c9c46bab1881a39f4c9b5e87cebf3ab29ecbd4d9813c"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0001.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_2cam_randomized__house_3354__00000003__wrist_camera.mp4",
+          "offset": 8012836864,
+          "size": 809072
+        },
+        "clip": {
+          "caption": "Pick up the plain white ceramic mug with handle and place it in or on the tan bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 307,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_2cam_randomized__house_3354__00000003__wrist_camera",
+          "shard": "shards/molmospaces/000295",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_2cam_randomized__house_3354__00000003__wrist_camera",
+          "width": 624
+        },
+        "input_sha256": "97e76b7bc3cad33dca802180c657328ebb9d268b5cfbe2b5fbfcd92cbd38a993"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0001.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_2cam_randomized__house_5450__00000003__wrist_camera.mp4",
+          "offset": 7957370880,
+          "size": 319177
+        },
+        "clip": {
+          "caption": "Pick up the red apple and place it in or on the rustic round brown ceramic bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 244,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_5450__00000003__wrist_camera",
+          "shard": "shards/molmospaces/000056",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_2cam_randomized__house_5450__00000003__wrist_camera",
+          "width": 624
+        },
+        "input_sha256": "eeac4af249b65b681125ba418e1ecd80a71a9d74a7ad5958bd24afc4f9c7370c"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0003.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_5cam__house_5055__00000001__wrist_camera_zed_mini.mp4",
+          "offset": 776264192,
+          "size": 526307
+        },
+        "clip": {
+          "caption": "Pick up the matte black ceramic mug with handle and place it in or on the medium blue ceramic bowl with rim",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 252,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_5cam__house_5055__00000001__wrist_camera_zed_mini",
+          "shard": "shards/molmospaces/000190",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_5cam__house_5055__00000001__wrist_camera_zed_mini",
+          "width": 624
+        },
+        "input_sha256": "24290d3ea303ad34465ecb314f1f4dcd1ded47ef0dd53ff69969db3a943399b0"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0000.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_5cam__house_4006__00000004__droid_shoulder_light_randomization.mp4",
+          "offset": 4973838848,
+          "size": 167857
+        },
+        "clip": {
+          "caption": "Pick up the gray spray bottle and place it in or on the textured rustic clay bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 247,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_5cam__house_4006__00000004__droid_shoulder_light_randomization",
+          "shard": "shards/molmospaces/000163",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_5cam__house_4006__00000004__droid_shoulder_light_randomization",
+          "width": 624
+        },
+        "input_sha256": "1b220bda72f664d9b70136d244898e7df572c43b4fb7e22707afed36ad4cccc2"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0003.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_5cam__house_6005__00000000__randomized_zed2_analogue_2.mp4",
+          "offset": 1018011648,
+          "size": 255255
+        },
+        "clip": {
+          "caption": "Pick up the blue remote and place it in or on the red patterned bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 259,
+          "num_objects": 2,
+          "sample_id": "molmospaces/object/pick_place_5cam__house_6005__00000000__randomized_zed2_analogue_2",
+          "shard": "shards/molmospaces/000201",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_5cam__house_6005__00000000__randomized_zed2_analogue_2",
+          "width": 624
+        },
+        "input_sha256": "f22b9d8ea034a6fbd1c5544fbaf8f004c662424ae1b222562e5d0204849bc917"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0002.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_2cam_randomized__house_7380__00000015__wrist_camera.mp4",
+          "offset": 9628372992,
+          "size": 566489
+        },
+        "clip": {
+          "caption": "Pick up the compact gray spray bottle with nozzle and place it in or on the green display box",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 272,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_2cam_randomized__house_7380__00000015__wrist_camera",
+          "shard": "shards/molmospaces/000343",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_2cam_randomized__house_7380__00000015__wrist_camera",
+          "width": 624
+        },
+        "input_sha256": "a3c518aa0e782e61f97899684eac614af6198cf565094b2333e6ce1fc4fa3121"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0001.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_color_5cam__house_1110__00000001__wrist_camera_zed_mini.mp4",
+          "offset": 10169428480,
+          "size": 411775
+        },
+        "clip": {
+          "caption": "Pick up the medium rough reddish brown potato and place it in or on the white bowl",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 261,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_color_5cam__house_1110__00000001__wrist_camera_zed_mini",
+          "shard": "shards/molmospaces/000377",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_color_5cam__house_1110__00000001__wrist_camera_zed_mini",
+          "width": 624
+        },
+        "input_sha256": "bb21f61c1559bf44515d012f7779b425c6f1a79a1c7a714f17bb41b8621f843c"
+      },
+      {
+        "asset": {
+          "archive": "archives/molmospaces/videos/videos-0003.tar",
+          "asset_kind": "video",
+          "member_name": "videos/pick_place_5cam__house_8081__00000003__droid_shoulder_light_randomization.mp4",
+          "offset": 5628003840,
+          "size": 250553
+        },
+        "clip": {
+          "caption": "Pick up the spud and place it in or on the white ceramic bowl with handle",
+          "dataset": "molmospaces",
+          "fps": 15.0,
+          "height": 352,
+          "num_frames": 274,
+          "num_objects": 1,
+          "sample_id": "molmospaces/object/pick_place_5cam__house_8081__00000003__droid_shoulder_light_randomization",
+          "shard": "shards/molmospaces/000243",
+          "source_3d_availability": "materialized",
+          "split": "train",
+          "track_kind": "object",
+          "video_id": "pick_place_5cam__house_8081__00000003__droid_shoulder_light_randomization",
+          "width": 624
+        },
+        "input_sha256": "179e1905bdb0ce79604108cf8dd28c2a1a20fd5be95f3cf7383338b722a8f76b"
+      }
+    ]
+  },
+  "elapsed_seconds": 20.843695177696645,
+  "format_version": 1,
+  "groups": [
+    "group-000",
+    "group-001",
+    "group-002",
+    "group-003"
+  ],
+  "known_unique_frames": 36881113,
+  "known_unique_videos": 140701,
+  "source_coordinate_convention_verified": false,
+  "state": "jpeg224-frame-index-pilot",
+  "time_semantics_verified": false
+}

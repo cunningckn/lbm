@@ -1,0 +1,83 @@
+{
+  "full_hash_audit": {
+    "checked_files": 32,
+    "content_verified": true,
+    "listed_files": 32,
+    "sha256sums_sha256": "dd201d884833ac0aa8af653c1167b129f25f3ff05b6e08b9757678c1e22fee13"
+  },
+  "original_paths_available_before_deny": {
+    "/home/tione/workspace/kainingchen/Datasets/molmo-motion-1m": false,
+    "/home/tione/workspace/kainingchen/Datasets/molmo-motion-1m-mmap/completion-tests/rgb224-pi0-20260915-smoke": false,
+    "/home/tione/workspace/kainingchen/Datasets/molmo-motion-1m-mmap/v1": false
+  },
+  "original_paths_denied": [
+    "/home/tione/workspace/kainingchen/Datasets/molmo-motion-1m",
+    "/home/tione/workspace/kainingchen/Datasets/molmo-motion-1m-mmap/v1",
+    "/home/tione/workspace/kainingchen/Datasets/molmo-motion-1m-mmap/completion-tests/rgb224-pi0-20260915-smoke"
+  ],
+  "package_unchanged": true,
+  "python_isolated": true,
+  "results": [
+    {
+      "array_sha256": {
+        "camera_poses_source": "c87e59d91af193c7f934689e041953d02fdb964e6cd085cec4afcfa163556e97",
+        "content_mask": "ab3be3c649b3b552e2cfbe1512ec1741297240912f3235d1203f07bd92679f06",
+        "frame_ids": "67685d7039b7a291ab445cd3d6b077896b7f9aaa43552fc1d6dc7bc0819c87d2",
+        "intrinsics_224": "3a65ac51f6e63a2f02a288e3e152ff6737a504e6351e371a5bef98149badf3f3",
+        "intrinsics_source_pixels": "92c43ff4fa7b0712f7da4c470cb8035f5426b14509bbe978f6a2b1ac8b06f435",
+        "points2d_224": "8d7337b3b9a050f93c13599a4448a474a9b1059866eacde6e9b48a045123ae85",
+        "points2d_source": "d5d3649c399521a42e2c8f51a06fcd8c5eb634cd0bf6283197a7d7289e1a4b36",
+        "points3d": "1c1e9e84999eece0a67af7c8cf0268fd083d8ae9a2d8e24e74999d3b252a7914",
+        "pts": "850c0a41521aba353f6c38a8cadd4f9b62385a8dd720fccb5d9e7c538c3fcee1",
+        "rgb": "c830d1afff000f4d7b893a67be19ceff62d3f11bdea67b6db55836c33173b195"
+      },
+      "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_0__00000000__exo_camera_1"
+    },
+    {
+      "array_sha256": {
+        "camera_poses_source": "ebdad79c86f0ed0aa55ce2f7ae0906ebeee2e40c9c71e1e980d1f458c5cce065",
+        "content_mask": "ab3be3c649b3b552e2cfbe1512ec1741297240912f3235d1203f07bd92679f06",
+        "frame_ids": "67685d7039b7a291ab445cd3d6b077896b7f9aaa43552fc1d6dc7bc0819c87d2",
+        "intrinsics_224": "68aa04d50fc6f83e33a41710c69444a1498ed7fdf97032ba698deafafe157464",
+        "intrinsics_source_pixels": "bd68c963ed223e90eda30d87b193ddbe30d729256168ad19044983f7587ab12d",
+        "points2d_224": "c09b2ed1ea26ebc3edb58c2a73a901831184beafb9fda71291f11dfdce327e2e",
+        "points2d_source": "2790c1d6b35684fa14c1dfeb51c3d7e33654ec9b2cddb9718e5bb4d4b2e050b3",
+        "points3d": "025e6b8910cddce2d44f071d4f6d53ea949e2b86aea3eaf4ab510bccc27242a8",
+        "pts": "850c0a41521aba353f6c38a8cadd4f9b62385a8dd720fccb5d9e7c538c3fcee1",
+        "rgb": "8276a1d002ae0df1b2e9157e24f4097e8fef43c69a596e7e7f4fd6b46cbcbb7b"
+      },
+      "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_0__00000000__wrist_camera"
+    },
+    {
+      "array_sha256": {
+        "camera_poses_source": "cfa6e54bda88405f57c9b9103b451605a083e71b9b9ccb2d77af4754ccbfeb04",
+        "content_mask": "ab3be3c649b3b552e2cfbe1512ec1741297240912f3235d1203f07bd92679f06",
+        "frame_ids": "d53e990142b693f59a95579cdc8ffede4bf14a2cc733da5776a254baf95c72a4",
+        "intrinsics_224": "657f932f3bdf91c49a39ecf98ec0e6030d39a7766ab187d7b822daa4227fc045",
+        "intrinsics_source_pixels": "026a44306001daba48b290a2fdf8f40e0cfab3480f9cc6c0e81c9fdeb80a2203",
+        "points2d_224": "ca488df40d5069a295cd7f2a95897e2174af4f95908bf4683809b6832772abf9",
+        "points2d_source": "d84e1617be962b7bcfbbbb2812a1229450f93c599d1bdd832c26c43ab63762c0",
+        "points3d": "a219262f1f5f35fc481e28b212c79f0efe9ba07fef8e6dda914cd014ef20716a",
+        "pts": "6000346901b83cb522059dc61dec4f19e1ae210dfddcd7d90abbea224bc04d9c",
+        "rgb": "5ff07049263251c9da5fc85647c4dfe2a2c82989a387c88c4e98ed8ccfd614f4"
+      },
+      "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_0__00000001__exo_camera_1"
+    },
+    {
+      "array_sha256": {
+        "camera_poses_source": "465c9807d8ce96f3586ec7de2e0e8f46a0fcf9ec137a7b7ebf47bb8d5057ffa3",
+        "content_mask": "ab3be3c649b3b552e2cfbe1512ec1741297240912f3235d1203f07bd92679f06",
+        "frame_ids": "d53e990142b693f59a95579cdc8ffede4bf14a2cc733da5776a254baf95c72a4",
+        "intrinsics_224": "b720674ce1b6ce7d8d48fc4ed5362fe37aa68b232009d4dd1fc9d0eaacb54d86",
+        "intrinsics_source_pixels": "99d18b28dbd6ba489e5dca1c8f9b0789dcb7c0637a251103b949af54ff32e1e4",
+        "points2d_224": "e24b74311c0be1b1b7b51bd4f22e92ef2815f181a9f1a29068eccbff500b0495",
+        "points2d_source": "8a67018eff0f06eed9e354802ec50f9bef9d7cd647c940b184e0f6ec11149bef",
+        "points3d": "70d921948bfec32de4ca98cc3e5dff85f44996edcc0a4f512bbc5efdca919a26",
+        "pts": "6000346901b83cb522059dc61dec4f19e1ae210dfddcd7d90abbea224bc04d9c",
+        "rgb": "816dcf2b2afca59da7014b323892616e7996cde5de094d8d3f558ffefe497d9e"
+      },
+      "sample_id": "molmospaces/object/pick_place_2cam_randomized__house_0__00000001__wrist_camera"
+    }
+  ],
+  "status": "passed"
+}

@@ -1,0 +1,3054 @@
+{
+  "build_wall_seconds": 20.843695177696645,
+  "cache_allocated_bytes": 171954176,
+  "cache_logical_bytes": 171871091,
+  "estimate_caveat": "stratified pilot mean, not population-weighted; not guaranteed capacity",
+  "estimated_full_jpeg_bytes": {
+    "85": 235383244517.9311,
+    "95": 387387173299.34717
+  },
+  "evaluation_wall_seconds": 117.39257107581943,
+  "frames": 26695,
+  "full_hash_audit": {
+    "checked_files": 25,
+    "content_verified": true,
+    "listed_files": 25,
+    "sha256sums_sha256": "303cca8fddf30080039001553a40b31ec1c8bfa7ac2cc7a10cbd124c82fa4842"
+  },
+  "jpeg_bytes": {
+    "85": 170373267,
+    "95": 280395567
+  },
+  "jpeg_frame_bytes_percentiles": {
+    "85": {
+      "max": 9109.0,
+      "min": 3480.0,
+      "p50": 6367.0,
+      "p95": 8173.5999999999985
+    },
+    "95": {
+      "max": 15392.0,
+      "min": 5517.0,
+      "p50": 10525.0,
+      "p95": 13689.3
+    }
+  },
+  "known_unique_frames": 36881113,
+  "known_unique_videos": 140701,
+  "mp4_bytes": 35867293,
+  "peak_rss_kib": 715224,
+  "png_reference_count": 12,
+  "q95_payload_retained": false,
+  "reference": {
+    "file": "data/utils/image_preprocess.py",
+    "function": "resize_with_pad",
+    "repository_head": "9d75617c630efc71aa7dddebc81987e3ae8689b0",
+    "sha256": "85c66cd60814b8169c85a2fae52026cfd80f89942fd8bb1ed3b0b08f594a5396"
+  },
+  "results": [
+    {
+      "clock_error_seconds": 0.18349834983498425,
+      "content_psnr_db": {
+        "85": 34.97337034331018,
+        "95": 37.62718246151152
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.945005924843963,
+          0.9476771616588403,
+          0.9429778663502688
+        ],
+        "95": [
+          0.9691858331287736,
+          0.9723141742329696,
+          0.9680880063230234
+        ]
+      },
+      "frames": 279,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "5a5b123db42f4d5fb28180aaf38e8ef4e529cbc5732834c308258c03882a9b9d",
+        "139": "1f828e357704c478a1f2e23d379a7702e77aa54df42be25b74013115113b0a92",
+        "278": "72a5d73d43438ee0942217aee5c6113ec9880de94be8877bad14e5c2788002be"
+      },
+      "source_bytes": 321313,
+      "source_projection_median_px": 8.468120179844935e-06,
+      "source_projection_samples": 17,
+      "video_id": "pick_place_2cam_randomized__house_0__00000000__exo_camera_1"
+    },
+    {
+      "clock_error_seconds": 0.1656765676567673,
+      "content_psnr_db": {
+        "85": 36.75298118004869,
+        "95": 39.93157266487403
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9369603371096917,
+          0.9605768637347406,
+          0.9462199813782949
+        ],
+        "95": [
+          0.9696331066193545,
+          0.9817365766316944,
+          0.975892788189383
+        ]
+      },
+      "frames": 252,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "8adeaa90594e076b6a87886cb72afc13db177c6329b7ce75509003e5fa24d354",
+        "126": "a2ef1bfb95c8345f2a10dc37c1830d80fb26961596eba5c4a86988260ef42d6e",
+        "251": "0c4b12015252376d6329a26c692e42b0467a29502ad4da7483e858435dc4d94d"
+      },
+      "source_bytes": 492148,
+      "source_projection_median_px": 1.3353646485814952e-05,
+      "source_projection_samples": 17,
+      "video_id": "pick_place_2cam_randomized__house_4021__00000001__wrist_camera"
+    },
+    {
+      "clock_error_seconds": 0.16831683168316758,
+      "content_psnr_db": {
+        "85": 39.408883733301906,
+        "95": 42.28005316502895
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9603053332196443,
+          0.986241791692772,
+          0.9593086033415855
+        ],
+        "95": [
+          0.9770551656194418,
+          0.9928886024559483,
+          0.9774285381484082
+        ]
+      },
+      "frames": 256,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "37279dbf262dd90e0305b73342aa3b5c913ae9e9af6c02bf1112ba51409f14e9",
+        "128": "53317252e839ea08d8da8deac2132e2f789663103c91173a7898b9708cb1193d",
+        "255": "6f7098e707b8bf63dbdb3f3bd5083475903ea93d72e2085f71158b0629d4b7e6"
+      },
+      "source_bytes": 275371,
+      "source_projection_median_px": 2.3954735328100582e-05,
+      "source_projection_samples": 12,
+      "video_id": "pick_place_2cam_randomized__house_4160__00000000__wrist_camera"
+    },
+    {
+      "clock_error_seconds": 0.16039603960395965,
+      "content_psnr_db": {
+        "85": 39.32499887791839,
+        "95": 41.895133312463145
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9683561345061841,
+          0.9710280484637459,
+          0.9606441586737398
+        ],
+        "95": [
+          0.9848729477318918,
+          0.9836348750213881,
+          0.980901620415643
+        ]
+      },
+      "frames": 244,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "c55b9e488438c53a08bcb3d8684958196856b9f87a459b70bddfca37a3f9ed86",
+        "122": "48052a7c8b0786c7f12d6af58682cefb8c7ce6e13ac19f796003c02fffd15412",
+        "243": "2e5b85647421c321d0900e41783efd3fd27e05047f59fb790850f1d292e25249"
+      },
+      "source_bytes": 246805,
+      "source_projection_median_px": 7.980620818157365e-06,
+      "source_projection_samples": 12,
+      "video_id": "pick_place_2cam_randomized__house_4685__00000011__wrist_camera"
+    },
+    {
+      "clock_error_seconds": 0.16303630363035992,
+      "content_psnr_db": {
+        "85": 37.45848063638364,
+        "95": 40.9463906087599
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9617296446129258,
+          0.9632311205376833,
+          0.9626057974721061
+        ],
+        "95": [
+          0.9809598932431319,
+          0.9820266319135852,
+          0.9810937102256349
+        ]
+      },
+      "frames": 248,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "e679ba2e01d77ee69227e6fe14feda753a697219e7c6673fbb0b8549457528fa",
+        "124": "3c035f4e866e77f74fb59ddbe88761076bd2f1395ec39f52177ca666dcaf6b16",
+        "247": "13dfefcd26be1dbd7a7e6a5ae5b9703015e5e8c3713e3bb57706616089ceb913"
+      },
+      "source_bytes": 197754,
+      "source_projection_median_px": 8.675361881864218e-06,
+      "source_projection_samples": 18,
+      "video_id": "pick_place_2cam_randomized__house_4768__00000001__exo_camera_1"
+    },
+    {
+      "clock_error_seconds": 0.16237623762376074,
+      "content_psnr_db": {
+        "85": 37.860761001285226,
+        "95": 41.135047680283954
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.957921560757813,
+          0.9572855092216926,
+          0.9571497895561857
+        ],
+        "95": [
+          0.9791740454421568,
+          0.9785271549665122,
+          0.9786284444990262
+        ]
+      },
+      "frames": 247,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "fc8bd518a58229dc0435110fc1063a8c7d1e643cb2a07c179adef1550dc3a390",
+        "123": "1e4329b0d16e360ebae6ea371e7a840ec64e425b3477e63ede363123721ddeb5",
+        "246": "737c746e3f72e5d073fedb51c783dc4fa0179afa604a35635f1bb5c96568554d"
+      },
+      "source_bytes": 123696,
+      "source_projection_median_px": 6.3685274048119454e-06,
+      "source_projection_samples": 19,
+      "video_id": "pick_place_5cam__house_172__00000006__randomized_zed2_analogue_1"
+    },
+    {
+      "clock_error_seconds": 0.16501650165016457,
+      "content_psnr_db": {
+        "85": 37.40717559246029,
+        "95": 41.76702325040753
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9632001800463194,
+          0.9687975292668033,
+          0.9640418166901531
+        ],
+        "95": [
+          0.9842978805405845,
+          0.9873228505384072,
+          0.9849190271589955
+        ]
+      },
+      "frames": 251,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "0fbbb60824e7d8af0cdbc7b0b4d918a85f1172797ff46b02bb8b09f8d6cd264a",
+        "125": "69a1f3dd0489c9648b3500493c74a2bfe2de40b3439a184732044b763925895c",
+        "250": "d65f46dbe9f497c9639046c493d32e6611774e85d66d3f7bf7a3fe2e654df4d3"
+      },
+      "source_bytes": 294707,
+      "source_projection_median_px": 6.983791300796344e-06,
+      "source_projection_samples": 13,
+      "video_id": "pick_place_5cam__house_4127__00000007__randomized_zed2_analogue_2"
+    },
+    {
+      "clock_error_seconds": 0.17029702970296867,
+      "content_psnr_db": {
+        "85": 38.684510977610984,
+        "95": 42.680359982713185
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9672943812065332,
+          0.9697105980493025,
+          0.9701951758111703
+        ],
+        "95": [
+          0.984312930922164,
+          0.9850497008699507,
+          0.9851119079994941
+        ]
+      },
+      "frames": 259,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "1235c2c8f411d3db4446a4a730f73b007847acec27e1643f53894e298e359b48",
+        "129": "1da95f0159d4bbbceb1abc8c090f6fee6ee3559e6f1f8488a3b81bba31fc035b",
+        "258": "fcbe851a566251ab170d7df045ed68dc1c6777c9c58de637cb6b2b6a3e48cb7c"
+      },
+      "source_bytes": 255255,
+      "source_projection_median_px": 7.144937076681516e-06,
+      "source_projection_samples": 20,
+      "video_id": "pick_place_5cam__house_6005__00000000__randomized_zed2_analogue_2"
+    },
+    {
+      "clock_error_seconds": 0.17227722772276977,
+      "content_psnr_db": {
+        "85": 38.44685951301492,
+        "95": 42.05226588676578
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9645741830777639,
+          0.9652868991890231,
+          0.9642397919451202
+        ],
+        "95": [
+          0.9837482689274712,
+          0.9840592728987095,
+          0.9832141222160135
+        ]
+      },
+      "frames": 262,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "f440fed1b5b64fbc3a453bce2e3e06d1a6116ba139eae00b58d3036e824c221e",
+        "131": "245c58c1c892ca2090e9d10f1273fcbd68cf9c54d4f53d43d43e89af8ca567b1",
+        "261": "57119b83c6cc3575e8f9024cf5f10deb30228d4fa64719dd5535a775b31ce7af"
+      },
+      "source_bytes": 276237,
+      "source_projection_median_px": 1.1607033565950935e-05,
+      "source_projection_samples": 23,
+      "video_id": "pick_place_5cam__house_6379__00000000__randomized_zed2_analogue_1"
+    },
+    {
+      "clock_error_seconds": 0.19339933993399683,
+      "content_psnr_db": {
+        "85": 37.75412189042889,
+        "95": 40.39389632772979
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9451092172788615,
+          0.9614795964857255,
+          0.9351695467187119
+        ],
+        "95": [
+          0.9708729477879459,
+          0.9784840415164675,
+          0.9651358452735174
+        ]
+      },
+      "frames": 294,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "2d999e6088b8930af3c6b9d4f72e5dd9fe71454513cdbaa07cc8fd8830aabce0",
+        "147": "1406c3cbbf29209f8dd0a524f3a4476318013bd8cacc7e63c18f7e7911822776",
+        "293": "da7f9e5de9d5644a11039e8749f68f2cfec325e771a45049a7e01427fb8d52f6"
+      },
+      "source_bytes": 616786,
+      "source_projection_median_px": 2.1780654216910322e-05,
+      "source_projection_samples": 13,
+      "video_id": "pick_place_5cam__house_8440__00000000__wrist_camera_zed_mini"
+    },
+    {
+      "clock_error_seconds": 0.20198019801980038,
+      "content_psnr_db": {
+        "85": 36.27206202535136,
+        "95": 39.31482692108996
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.95004397549329,
+          0.9559576307011032,
+          0.9544513546710273
+        ],
+        "95": [
+          0.9790440920433521,
+          0.9808317793536406,
+          0.9810570439392895
+        ]
+      },
+      "frames": 307,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "4aca0605903dd9dcdbc0d0305a497c4e1b67d3a7592468ea3de46c2359e8f69a",
+        "153": "aa4775bfcf9d46c574cde6f3ff85d9ae3ce718df0c59bf0c0778385af9e0d6c0",
+        "306": "325ec769244ff8c8944e41ad5ee66bfc54d8128e15c5e674c397bc831bb403a1"
+      },
+      "source_bytes": 809072,
+      "source_projection_median_px": 7.150632482327282e-06,
+      "source_projection_samples": 15,
+      "video_id": "pick_place_color_2cam_randomized__house_3354__00000003__wrist_camera"
+    },
+    {
+      "clock_error_seconds": 0.18547854785478535,
+      "content_psnr_db": {
+        "85": 37.09343982164456,
+        "95": 40.157503690893506
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9664950439449417,
+          0.9646815268385623,
+          0.9669262532025019
+        ],
+        "95": [
+          0.9829682232977993,
+          0.9828593984875441,
+          0.9829100432412714
+        ]
+      },
+      "frames": 282,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "2171ba2f290da3ac504831d71a3416f6275c543a48a8e341bce8282f34d64c53",
+        "141": "b3058b95353aa98727c72887ae6ed5726b80414c4b6dcaffffcda174dfab47c0",
+        "281": "b9e3dcd0a9e668c3c7c7fc63d8b1ab0faeceef94c82aa43c363189ca88ea7d2c"
+      },
+      "source_bytes": 172037,
+      "source_projection_median_px": 1.1002432791036335e-05,
+      "source_projection_samples": 16,
+      "video_id": "pick_place_color_2cam_randomized__house_5338__00000009__exo_camera_1"
+    },
+    {
+      "clock_error_seconds": 0.16633663366336648,
+      "content_psnr_db": {
+        "85": 39.5895484659774,
+        "95": 44.2621310205746
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9793897565672842,
+          0.9814176674831255,
+          0.9772941944396539
+        ],
+        "95": [
+          0.9917260166233723,
+          0.993050591387116,
+          0.9905726861898541
+        ]
+      },
+      "frames": 253,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "744cf333ecc51f32996c7865ee772d8aed4884a4f1c46a6015f29b263211e375",
+        "126": "321c75548565c3a855025590675a3221770585e0a2d86b2be23053360e5b7b91",
+        "252": "b5d34fcf14d78a048aab989de982b1d87d17b027b1947eb0ed7e3ce6d154cbd0"
+      },
+      "source_bytes": 333461,
+      "source_projection_median_px": 1.1757900019022913e-05,
+      "source_projection_samples": 20,
+      "video_id": "pick_place_color_2cam_randomized__house_6008__00000003__wrist_camera"
+    },
+    {
+      "clock_error_seconds": 0.17887788778877933,
+      "content_psnr_db": {
+        "85": 38.46463307445776,
+        "95": 41.82158386425219
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9599662387473895,
+          0.9634953334788708,
+          0.9595723677335956
+        ],
+        "95": [
+          0.9805808383663875,
+          0.9819940434981906,
+          0.9782205496031294
+        ]
+      },
+      "frames": 272,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "558dad9ecb61b5ece873e9a825a97182396b38a955fc78233234c226b85bf263",
+        "136": "745b97a04347f053c3c24ae39c3f7120efc53193d46daf773ab7e4fe4ffa2eda",
+        "271": "784737225e4576027acb5d835b5c53391dfd27e2e8afd74ccb221017c32ad86b"
+      },
+      "source_bytes": 335285,
+      "source_projection_median_px": 1.2388110280070668e-05,
+      "source_projection_samples": 13,
+      "video_id": "pick_place_color_2cam_randomized__house_8009__00000001__wrist_camera"
+    },
+    {
+      "clock_error_seconds": 0.1636963696369662,
+      "content_psnr_db": {
+        "85": 36.54556324639363,
+        "95": 39.72892127697949
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9632771295527428,
+          0.9635924396932246,
+          0.9625139820771546
+        ],
+        "95": [
+          0.9813851643103239,
+          0.9813002190047008,
+          0.9813937193259504
+        ]
+      },
+      "frames": 249,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "13f1a2eb38ed30d0ab9417644d55d2dd787d5cbefa87c394c9fa8c3a9361a473",
+        "124": "818401e7468f6797fdc95c429a660479e4c86d78f26a412fe7b4cec4fbcf4c62",
+        "248": "0813904417e6036c1b5872d674f5902f2486bf1ea020a7051c921483fbf3a499"
+      },
+      "source_bytes": 193269,
+      "source_projection_median_px": 8.603798037629003e-06,
+      "source_projection_samples": 21,
+      "video_id": "pick_place_color_5cam__house_2183__00000006__randomized_gopro_analogue_1"
+    },
+    {
+      "clock_error_seconds": 0.17227722772276977,
+      "content_psnr_db": {
+        "85": 35.27050090144592,
+        "95": 38.067226348278425
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9443688765071284,
+          0.9431841743747454,
+          0.946643059665444
+        ],
+        "95": [
+          0.9707557046098492,
+          0.9734033688737038,
+          0.9735544182585256
+        ]
+      },
+      "frames": 262,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "8f173c9d3cca0a2553986475fdf6e7c929bc54c53375ae3acb48e8eae4c375c5",
+        "131": "984f8e74e701e2412d24cab987e6a615a1b58899c44f6d23fad1f5c0fc7f4b44",
+        "261": "9422c5d0d3070c10ad2ddad987e440118eb27f8a7ecc2ce2e60a3fe132b8aae1"
+      },
+      "source_bytes": 790100,
+      "source_projection_median_px": 7.651678432337732e-06,
+      "source_projection_samples": 10,
+      "video_id": "pick_place_color_5cam__house_2394__00000001__wrist_camera_zed_mini"
+    },
+    {
+      "clock_error_seconds": 0.1709570957095714,
+      "content_psnr_db": {
+        "85": 36.452657696285286,
+        "95": 39.796855247772605
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9697775766570015,
+          0.9693012594261982,
+          0.9697318544925664
+        ],
+        "95": [
+          0.9855503369509641,
+          0.9852907711968699,
+          0.9853964941869994
+        ]
+      },
+      "frames": 260,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "aa74246a813be517354535a471b4efd11968ff855d58268e63684f04183c7ef7",
+        "130": "e0cb50816900ff5866f70030d7fae27a87d64a631f2ba40cbdc987eeff45b907",
+        "259": "b2027beb263d275b820144f517f6bb4f31478123c7d3c0d9dbc8de45462aa99d"
+      },
+      "source_bytes": 98458,
+      "source_projection_median_px": 8.399449120562006e-06,
+      "source_projection_samples": 19,
+      "video_id": "pick_place_color_5cam__house_3010__00000000__randomized_gopro_analogue_1"
+    },
+    {
+      "clock_error_seconds": 0.1676567656765684,
+      "content_psnr_db": {
+        "85": 37.55772021233778,
+        "95": 41.12635145758705
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9518278791037805,
+          0.9587553329776694,
+          0.9526361059774588
+        ],
+        "95": [
+          0.9750336711443156,
+          0.9796898650692342,
+          0.9761933100729162
+        ]
+      },
+      "frames": 255,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "9aa1486593853325daa67d186d8e5e7f702569f86118b5d5dd2b4c4125570e75",
+        "127": "f421154a897717bdd74ec1fe8015f5bba95bd688e17e3f114615ae509950e602",
+        "254": "978f7e481afb24ee2c14aab784aa93d4fbccf2a4a19a6beed8f9ed8d49d5f7e7"
+      },
+      "source_bytes": 327152,
+      "source_projection_median_px": 8.14469751842629e-06,
+      "source_projection_samples": 21,
+      "video_id": "pick_place_color_5cam__house_3045__00000006__randomized_zed2_analogue_1"
+    },
+    {
+      "clock_error_seconds": 0.15511551155115377,
+      "content_psnr_db": {
+        "85": 37.51577415953456,
+        "95": 39.76879723480823
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9482883372094498,
+          0.9497186435633562,
+          0.9513114042355734
+        ],
+        "95": [
+          0.9707310495841904,
+          0.9712937925476886,
+          0.9723972969279796
+        ]
+      },
+      "frames": 236,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "cf5f30edc5ec57071ded3612d3a5d16853b76ec713c309e95a6468d32f98919e",
+        "118": "46683b32041a078d2afbf9b9d76a215f9d00c90b45ca60b438eb3f0d5aa41ba0",
+        "235": "248f6f9ef86c2185c72ae124c0245160f08dc4b1f5a046d31db7d99f9324ef16"
+      },
+      "source_bytes": 153580,
+      "source_projection_median_px": 1.465434536821283e-05,
+      "source_projection_samples": 5,
+      "video_id": "pick_place_color_5cam__house_3190__00000001__randomized_zed2_analogue_1"
+    },
+    {
+      "clock_error_seconds": 0.20528052805280694,
+      "content_psnr_db": {
+        "85": 36.85218538093872,
+        "95": 40.81524716870849
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.962812001188483,
+          0.9654029933827442,
+          0.9641124600800911
+        ],
+        "95": [
+          0.9819682103651307,
+          0.9836290982373462,
+          0.9826026761388192
+        ]
+      },
+      "frames": 312,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "11fb93828a5873897e9a9377e41a50d0180daf98764c20b03e2f419ceb2cad6a",
+        "156": "f1f23818dd53cb7060c24f16b469553af986f28108e6d78491729f73e1cb53fc",
+        "311": "51d87a3628c05cef13f3436d52b0acb1e0c78381874c2559f1ca443646f68480"
+      },
+      "source_bytes": 321861,
+      "source_projection_median_px": 6.304981780118211e-06,
+      "source_projection_samples": 15,
+      "video_id": "pick_place_color_5cam__house_3218__00000002__randomized_zed2_analogue_1"
+    },
+    {
+      "clock_error_seconds": 0.18877887788778835,
+      "content_psnr_db": {
+        "85": 36.964694526403456,
+        "95": 39.25649316807862
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9617952808853111,
+          0.9614220573155278,
+          0.9562022335000216
+        ],
+        "95": [
+          0.9787171264977926,
+          0.9792062802041079,
+          0.9765510671947825
+        ]
+      },
+      "frames": 287,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "cdcc25468b9a1e1e0ea69bbd3c085a2263beadb3490e5a9c5f56ae8440aa3b6e",
+        "143": "dc43928dab725373d4e9cf8aef0b9ff3410017ac41511487b202904a03bc630f",
+        "286": "46d598327d17d1db11b491ef45d21a5b7a000c7c4de3de16ba98d55ec9ea4473"
+      },
+      "source_bytes": 521629,
+      "source_projection_median_px": 6.74136486169849e-06,
+      "source_projection_samples": 6,
+      "video_id": "pick_place_color_5cam__house_4122__00000001__wrist_camera_zed_mini"
+    },
+    {
+      "clock_error_seconds": 0.16237623762376074,
+      "content_psnr_db": {
+        "85": 39.007195042773176,
+        "95": 42.56619938783174
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9684223040428295,
+          0.9696029010521526,
+          0.9693748549109819
+        ],
+        "95": [
+          0.9843505053828839,
+          0.9859002251056356,
+          0.9850157847710288
+        ]
+      },
+      "frames": 247,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "6fc2eecf0757ed9f8df32749f160c145b3caa58efc28acd825413c48fab09569",
+        "123": "d7b660fc006adc1fbb1b5ca6f240b2d82deadcc953fd0e381762515d7ba3a14e",
+        "246": "e40dcfc94636dd16453d8059696ae5c07ec9c662f4e68c4f3c7152f0e3db9280"
+      },
+      "source_bytes": 189757,
+      "source_projection_median_px": 5.493975223432712e-06,
+      "source_projection_samples": 13,
+      "video_id": "pick_place_color_5cam__house_5016__00000007__randomized_zed2_analogue_2"
+    },
+    {
+      "clock_error_seconds": 0.18019801980198125,
+      "content_psnr_db": {
+        "85": 37.22847627395951,
+        "95": 40.75288483800669
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.967248857686846,
+          0.9670286586397455,
+          0.9664052456877666
+        ],
+        "95": [
+          0.9835779637890228,
+          0.9835595545357935,
+          0.983279229176733
+        ]
+      },
+      "frames": 274,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "89ef15a842f077aeca5a6eb4b388861dfbcbd515e39fa0bea2efa87d681b1a4a",
+        "137": "6aa6ecbc7336a57d53af7a920c806a3e94f643b05b976d31e388a8bf97711615",
+        "273": "00b18f17cd8ec5b1b55f800b15128b12c794b25699099bf784b4eff67b52c7a3"
+      },
+      "source_bytes": 170679,
+      "source_projection_median_px": 6.536246419366998e-06,
+      "source_projection_samples": 15,
+      "video_id": "pick_place_color_5cam__house_6100__00000000__randomized_gopro_analogue_1"
+    },
+    {
+      "clock_error_seconds": 0.17491749174917715,
+      "content_psnr_db": {
+        "85": 37.90354380756096,
+        "95": 42.281053114312
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9861014881790879,
+          0.956462746348694,
+          0.9820737440914981
+        ],
+        "95": [
+          0.9946864588164743,
+          0.9816719955318671,
+          0.9927538403244395
+        ]
+      },
+      "frames": 266,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "bb17a8ab5a57293e7f2eeda5e6dd8a4a5c4521aeacf66f51c823b2f33e0e65c1",
+        "133": "98de0ebea509bf1f104560f9311f55410069059a0d86d692b6d9f18b9e703fcd",
+        "265": "7fa2e7dd11fab99933b854e1085d712e9b7bf5f7fedd83e87ef627a69ae1bbf8"
+      },
+      "source_bytes": 662322,
+      "source_projection_median_px": 1.21175866905841e-05,
+      "source_projection_samples": 4,
+      "video_id": "pick_place_color_5cam__house_9155__00000003__wrist_camera_zed_mini"
+    },
+    {
+      "clock_error_seconds": 0.24884488448844877,
+      "content_psnr_db": {
+        "85": 34.6148890754199,
+        "95": 37.08930500832534
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.944285990998658,
+          0.9448380558752367,
+          0.9432111627127338
+        ],
+        "95": [
+          0.9697759287961047,
+          0.9701505076829097,
+          0.9690989668638185
+        ]
+      },
+      "frames": 378,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "a566d8ded6e94e1ff4810b69a0d96002ec1443e7ed3e50bfc5990ada3349aca2",
+        "189": "869ae67efde3172097be3e303dda48cdf147943c2c9ed72fe48591b8582ae442",
+        "377": "118bf2584fc102ba552659284db6e56cbe0bf6082839390bf63feb93c4c56d1f"
+      },
+      "source_bytes": 192313,
+      "source_projection_median_px": 1.0646964288063257e-05,
+      "source_projection_samples": 20,
+      "video_id": "pick_place_color_5cam__house_9343__00000000__randomized_gopro_analogue_1"
+    },
+    {
+      "clock_error_seconds": 0.18349834983498425,
+      "content_psnr_db": {
+        "85": 36.504011080464394,
+        "95": 39.765053991192126
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9487726370529348,
+          0.964136940897089,
+          0.94905937552255
+        ],
+        "95": [
+          0.9723849203337477,
+          0.9854682084907682,
+          0.9711102444317302
+        ]
+      },
+      "frames": 279,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "50a8df891430c40280ef497e4d91525d164cd7cd861f6528a9affde3b76f5063",
+        "139": "6e6117b2f95d86c73c10f8e58cd599022fa9de455b3822e9a222f8f1a4493e6a",
+        "278": "1d6842af077f1d760f0823c9b44580a70e613d2f5a888309d89815884defb04b"
+      },
+      "source_bytes": 900100,
+      "source_projection_median_px": 1.2279940464092388e-05,
+      "source_projection_samples": 22,
+      "video_id": "pick_place_2cam_randomized__house_0__00000000__wrist_camera"
+    },
+    {
+      "clock_error_seconds": 0.1636963696369662,
+      "content_psnr_db": {
+        "85": 34.77363612965625,
+        "95": 38.148242216636625
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9501172458198835,
+          0.9480756778357903,
+          0.949578915958917
+        ],
+        "95": [
+          0.9761189208292439,
+          0.9752291557426136,
+          0.97617005659755
+        ]
+      },
+      "frames": 249,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "cd5433745801107b4e2989169665a4ecad598a7e8f10a4733f5cd3a0228c21ca",
+        "124": "c7aa50514f65aa2d04b67b87dcd1bc7e2c2777ef8038a5cfb78d385fb6d2070b",
+        "248": "51ea8a7adf0ea49bd5d3e43d76eedf39e1d2f323d6dd1018b0281b8bd9e3b484"
+      },
+      "source_bytes": 287642,
+      "source_projection_median_px": 1.0648978144289129e-05,
+      "source_projection_samples": 13,
+      "video_id": "pick_place_2cam_randomized__house_137__00000000__exo_camera_1"
+    },
+    {
+      "clock_error_seconds": 0.18217821782178234,
+      "content_psnr_db": {
+        "85": 38.53531215555767,
+        "95": 42.705855840231806
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9758141404452978,
+          0.9510328288402569,
+          0.9778291923067005
+        ],
+        "95": [
+          0.990044311349016,
+          0.9777102215664225,
+          0.9913179552811592
+        ]
+      },
+      "frames": 277,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "734aa72a38475ca12f9c41307c12a7b4bbe8e9bd28386bce9a03ae4265d76ca5",
+        "138": "95fc055f5c1ce8bff596a56f25343c153b1d4e2cb3fb84eb48cdb3346489be30",
+        "276": "84154269b69b894ebc704ad0a6d5637f9b77d4343bc1675f4da1aca368c24733"
+      },
+      "source_bytes": 714946,
+      "source_projection_median_px": 1.2601968348030705e-05,
+      "source_projection_samples": 10,
+      "video_id": "pick_place_2cam_randomized__house_3578__00000000__wrist_camera"
+    },
+    {
+      "clock_error_seconds": 0.17557755775577633,
+      "content_psnr_db": {
+        "85": 36.62459783364191,
+        "95": 39.159507416807784
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9679875862764707,
+          0.9670517230835838,
+          0.9681906487362384
+        ],
+        "95": [
+          0.9836108638738127,
+          0.9832629136068566,
+          0.9834020332493246
+        ]
+      },
+      "frames": 267,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "8c07031b3df842a7a8c2b3be218991a5965432e63135dcda51f20cc99f5938b9",
+        "133": "0883502b71dd61ede2c68baf71fc9af9b31244d39c24f14b4b4200a59f0ded5f",
+        "266": "53bbc1ad924a3d4aca79d094c6f0975b0407eb963302c938f584dacf70dafe2b"
+      },
+      "source_bytes": 165857,
+      "source_projection_median_px": 6.9278523470691884e-06,
+      "source_projection_samples": 15,
+      "video_id": "pick_place_2cam_randomized__house_4727__00000001__exo_camera_1"
+    },
+    {
+      "clock_error_seconds": 0.16039603960395965,
+      "content_psnr_db": {
+        "85": 39.3936585039659,
+        "95": 43.57598173459478
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9855709429284399,
+          0.9742425012643959,
+          0.9818010078855862
+        ],
+        "95": [
+          0.9943416480554323,
+          0.9875208752299276,
+          0.9931045815716901
+        ]
+      },
+      "frames": 244,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "f6401f1f29f3582082b03c4517cfe50bc57561d018c610650fba2d8d61129130",
+        "122": "f0fd4563eedef282c5467ed1b173c29b1de1bcf84a20c61eedb0a45edabf6180",
+        "243": "9e8b7d4e9aa6e8eb4f78caace16175aa325256580102609ac44127204a5bb086"
+      },
+      "source_bytes": 319177,
+      "source_projection_median_px": 8.645194768915425e-06,
+      "source_projection_samples": 8,
+      "video_id": "pick_place_2cam_randomized__house_5450__00000003__wrist_camera"
+    },
+    {
+      "clock_error_seconds": 0.19009900990099027,
+      "content_psnr_db": {
+        "85": 37.09409425023496,
+        "95": 39.45067570224411
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9207545760288536,
+          0.9294603347726705,
+          0.9142130619570827
+        ],
+        "95": [
+          0.9506311459557182,
+          0.9592568829725049,
+          0.9413613379209568
+        ]
+      },
+      "frames": 289,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "78ae9be912893748ebbb45e275cbe300692ef4c54699d9b75239c22ab0f721d5",
+        "144": "fc49d772ce2c769b732275cb028864ebd03bbbc716a845b44acbd384789d0349",
+        "288": "5bd27dfe171bf78080dde5f33e1cf54d801a73a2f80a818d20346a1590536b68"
+      },
+      "source_bytes": 366986,
+      "source_projection_median_px": 9.315662103984203e-06,
+      "source_projection_samples": 11,
+      "video_id": "pick_place_2cam_randomized__house_5524__00000000__wrist_camera"
+    },
+    {
+      "clock_error_seconds": 0.17227722772276977,
+      "content_psnr_db": {
+        "85": 37.46995192839552,
+        "95": 40.640979477513994
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9485769445131949,
+          0.9513766489845006,
+          0.9488569219327191
+        ],
+        "95": [
+          0.9740565912504211,
+          0.9760742807149617,
+          0.9743308150193166
+        ]
+      },
+      "frames": 262,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "54379707dd63b72c2e40e2277e994ef944f0eff428c496a167376de9eaa6ca78",
+        "131": "65e87d7fe26b7b631621db7d82131cbe20bdab9422bc4caa19dfbbfc933a2dd8",
+        "261": "20053ec1c94daaadd345910377b68103d0fc54ace97be9ab80b39f5a4346bd85"
+      },
+      "source_bytes": 339332,
+      "source_projection_median_px": 9.020812362028598e-06,
+      "source_projection_samples": 8,
+      "video_id": "pick_place_2cam_randomized__house_6877__00000001__exo_camera_1"
+    },
+    {
+      "clock_error_seconds": 0.17227722772276977,
+      "content_psnr_db": {
+        "85": 37.97281963264944,
+        "95": 42.359914456682624
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9653549583353352,
+          0.9682115761491792,
+          0.9622364327962104
+        ],
+        "95": [
+          0.9863538566747786,
+          0.9866360480419195,
+          0.9848512647299922
+        ]
+      },
+      "frames": 262,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "e721b0fda9877d59e7df0161f3b015c0cb8553629743046f332bf3da438b2922",
+        "131": "dd86cfda798b95e5b1e5b3c34e4f98074943afc4858d511e6ea8304a8737c7c0",
+        "261": "ab0ace57b1d9e71927c412dfa57db30dc700ef065956431e2e562c867b0ef126"
+      },
+      "source_bytes": 622890,
+      "source_projection_median_px": 9.701056077812357e-06,
+      "source_projection_samples": 10,
+      "video_id": "pick_place_2cam_randomized__house_8117__00000002__wrist_camera"
+    },
+    {
+      "clock_error_seconds": 0.228382838283828,
+      "content_psnr_db": {
+        "85": 37.99470794689636,
+        "95": 41.768619437942704
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9624298259655268,
+          0.9603404714039181,
+          0.9591940244108598
+        ],
+        "95": [
+          0.9831232604517558,
+          0.9826078788992952,
+          0.9814218809780387
+        ]
+      },
+      "frames": 347,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "c9c384eabebad324f1d5202b8e61c41abb5d5464c0c32168cae71739e8fd828c",
+        "173": "0694144c979c0b9d25c453ad55edefb6987b50731c362fc6f15c72a4d07a3584",
+        "346": "82aebd3e40f1aad7cb64bc8fee3a2e8a5a166210ca928a21bd2fdd49287fe214"
+      },
+      "source_bytes": 273931,
+      "source_projection_median_px": 4.768424256097048e-06,
+      "source_projection_samples": 19,
+      "video_id": "pick_place_2cam_randomized__house_8737__00000002__exo_camera_1"
+    },
+    {
+      "clock_error_seconds": 0.17359735973597523,
+      "content_psnr_db": {
+        "85": 39.41068745695797,
+        "95": 43.20890439457952
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9679050799810933,
+          0.9665290385741981,
+          0.9668135694961499
+        ],
+        "95": [
+          0.9839138899539269,
+          0.9833335215915803,
+          0.9828993009188279
+        ]
+      },
+      "frames": 264,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "82b66093306831f032d9a8b389548d4ba164a8a9e3e1143d47435af24ed38dae",
+        "132": "88c9f13b868396b1536018516448427474b56604b10bbe36c49af08340a3ab05",
+        "263": "dd33fb964b1e1e001522f8e8463511428e76611dd4e1ad00607e0822bebe46eb"
+      },
+      "source_bytes": 201165,
+      "source_projection_median_px": 9.57017488623376e-06,
+      "source_projection_samples": 17,
+      "video_id": "pick_place_5cam__house_172__00000007__randomized_gopro_analogue_1"
+    },
+    {
+      "clock_error_seconds": 0.18613861386138808,
+      "content_psnr_db": {
+        "85": 37.42057364650361,
+        "95": 40.98306603004289
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9673870908867507,
+          0.9657970238403778,
+          0.9680255036568063
+        ],
+        "95": [
+          0.984793482019796,
+          0.9842001438529483,
+          0.9846951094324746
+        ]
+      },
+      "frames": 283,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "9162e3db0950872447fa8e17be9c56b424b9e68ac787aa5afa16dec4db306582",
+        "141": "6f27581c1621ab572c4584bf71fb5b4622957c5f1b850e0365d0ec4565fe19ff",
+        "282": "320492bca0dc990d937821c45de4f8c6e0a891ae87515683db9b2fd65444f9f1"
+      },
+      "source_bytes": 147192,
+      "source_projection_median_px": 6.643381332475865e-06,
+      "source_projection_samples": 14,
+      "video_id": "pick_place_5cam__house_2008__00000019__randomized_zed2_analogue_1"
+    },
+    {
+      "clock_error_seconds": 0.16303630363035992,
+      "content_psnr_db": {
+        "85": 36.60160563358483,
+        "95": 39.67102327648969
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9465541305049726,
+          0.9466453090464896,
+          0.9462678493016736
+        ],
+        "95": [
+          0.9717844304753593,
+          0.971755272498319,
+          0.9713644830685557
+        ]
+      },
+      "frames": 248,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "b92480d95ece2e8a164942aceb6740d694d196fb5c72200daa58ceccfe1208b2",
+        "124": "8a0f750ba2789d2f161babbce2875b075967de53901f9f989a30051346d80bd1",
+        "247": "cbc125fd0854354a890c22da1d57c0da03c7f3b7c50963e54559ca8372a99cea"
+      },
+      "source_bytes": 64093,
+      "source_projection_median_px": 8.690991882259642e-06,
+      "source_projection_samples": 14,
+      "video_id": "pick_place_5cam__house_2025__00000002__randomized_gopro_analogue_1"
+    },
+    {
+      "clock_error_seconds": 0.15709570957095842,
+      "content_psnr_db": {
+        "85": 37.77017072254906,
+        "95": 40.418748883978765
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9434506686929095,
+          0.948379095440504,
+          0.9301074147135949
+        ],
+        "95": [
+          0.9691482969078359,
+          0.9728362919334459,
+          0.9598660938641204
+        ]
+      },
+      "frames": 239,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "48ff6d8b988b9638f5ebb9387d7c4e47da43a55e9c336616dd4a041f8c153a85",
+        "119": "b05a128a07ac3781ef291fb6d0f720c89ae464ffc06615713b17bb59f025e1d9",
+        "238": "b767a62851fc9b6808099528390e1e4859c027d506d997b8d7d73163dc69d762"
+      },
+      "source_bytes": 407139,
+      "source_projection_median_px": 1.1233646168570998e-05,
+      "source_projection_samples": 12,
+      "video_id": "pick_place_5cam__house_7098__00000003__wrist_camera_zed_mini"
+    },
+    {
+      "clock_error_seconds": 0.14917491749174872,
+      "content_psnr_db": {
+        "85": 37.379653608011246,
+        "95": 39.771900411673485
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9550027457670164,
+          0.9591159436696534,
+          0.954397873977627
+        ],
+        "95": [
+          0.9746531456019828,
+          0.977802881145524,
+          0.9744195209246137
+        ]
+      },
+      "frames": 227,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "04ebfd2a738ce2a47fd725a53faa65da7c54054247dbaef0d6a371fc8127ce95",
+        "113": "dd40c8953438ba797338351d6d7733d101896c1375ee1ea05517e6a08b905f49",
+        "226": "eefbc4416824b07bd0fdb9db32307faac8bb891497e77411c9de0e28d00ae584"
+      },
+      "source_bytes": 165629,
+      "source_projection_median_px": 1.2689395494058208e-05,
+      "source_projection_samples": 10,
+      "video_id": "pick_place_5cam__house_8190__00000006__randomized_zed2_analogue_1"
+    },
+    {
+      "clock_error_seconds": 0.16237623762376074,
+      "content_psnr_db": {
+        "85": 36.74242757031226,
+        "95": 39.853192909905644
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9630006604877024,
+          0.9631443692970083,
+          0.9624597384555559
+        ],
+        "95": [
+          0.9832388575335617,
+          0.9832597812628205,
+          0.9828926835559341
+        ]
+      },
+      "frames": 247,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "87200a58422ca95ec21ba2b28945c23e26466d4f44fa69651fc96b621e6ec9bb",
+        "123": "c170b87feed4bb1faf314c684ee8c5ad56abc81c4afd52bfdffe38c3fd6f26bb",
+        "246": "1db34f9ac500e6beb43f41a608b80575c5a05b93866c1e5a59d6e48476b65bd7"
+      },
+      "source_bytes": 164039,
+      "source_projection_median_px": 7.04590407708734e-06,
+      "source_projection_samples": 16,
+      "video_id": "pick_place_5cam__house_9149__00000001__droid_shoulder_light_randomization"
+    },
+    {
+      "clock_error_seconds": 0.16105610561055883,
+      "content_psnr_db": {
+        "85": 38.33001403123599,
+        "95": 41.576446581626925
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9625831140751705,
+          0.9618647032155195,
+          0.9623679645673325
+        ],
+        "95": [
+          0.9813037935402433,
+          0.981282379631588,
+          0.981332271092768
+        ]
+      },
+      "frames": 245,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "5bcbe9277a5166d27f5c51cae28202ae5be74917252268ecf139928d7723546c",
+        "122": "13d479e2d52abeca28b273f8059ab1efc8404cc97db61f0af6f2b08396743cba",
+        "244": "7f5589147488ce3efa86a10d148a88ed04baf99bb15289471d56efaea760361c"
+      },
+      "source_bytes": 134377,
+      "source_projection_median_px": 9.817484455003909e-06,
+      "source_projection_samples": 16,
+      "video_id": "pick_place_5cam__house_9250__00000000__droid_shoulder_light_randomization"
+    },
+    {
+      "clock_error_seconds": 0.16831683168316758,
+      "content_psnr_db": {
+        "85": 36.849976091549024,
+        "95": 39.86534787257375
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9479336638844075,
+          0.9477454733532399,
+          0.9498359409354938
+        ],
+        "95": [
+          0.9747112436830697,
+          0.9737631813229913,
+          0.9750605915440397
+        ]
+      },
+      "frames": 256,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "2af7bf66e412906355f5757789289bd6c1480475c3d5231f6b701189e64b8d2a",
+        "128": "623edb1e7de7c0c3d55bb2111068b5f858ab8151b854e0602d743e6a5c5c985d",
+        "255": "439d3f31969715222ab164a2be5467fb3bf670a23474e1d1656d4f3f3536e657"
+      },
+      "source_bytes": 126274,
+      "source_projection_median_px": 9.315476208231271e-06,
+      "source_projection_samples": 15,
+      "video_id": "pick_place_color_2cam_randomized__house_2069__00000012__exo_camera_1"
+    },
+    {
+      "clock_error_seconds": 0.1696369636963695,
+      "content_psnr_db": {
+        "85": 36.53228290695063,
+        "95": 39.749112717012125
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9701802042472375,
+          0.9707613926854138,
+          0.9712212829781074
+        ],
+        "95": [
+          0.9861882833012966,
+          0.9866349500633459,
+          0.9866797113529473
+        ]
+      },
+      "frames": 258,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "e6007d76e3180a84884014486558f285900eb8e70e64c0a3554bcc95e517627b",
+        "129": "3cd5491e2991171eb48a4780b8a17f114176846db442920227ac7da529f92a87",
+        "257": "570e929781446d75a4608f6fdd30f0ad43cd7e7a2d0d69d832a10cb65c38948d"
+      },
+      "source_bytes": 180778,
+      "source_projection_median_px": 1.1578099082620032e-05,
+      "source_projection_samples": 15,
+      "video_id": "pick_place_color_2cam_randomized__house_2715__00000001__exo_camera_1"
+    },
+    {
+      "clock_error_seconds": 0.1636963696369662,
+      "content_psnr_db": {
+        "85": 37.821980499503105,
+        "95": 41.540314892906245
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9659778276938523,
+          0.9727153349559531,
+          0.9812236608613304
+        ],
+        "95": [
+          0.9857079667762768,
+          0.9886292210869075,
+          0.9931985885413205
+        ]
+      },
+      "frames": 249,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "7a6ccde7322febb398e6a8be678b8d8c63bb5579801078356612d1b9476ac3fd",
+        "124": "e075ff6a4360d45d8a15352ffdc14ef45d0e22c6449f83780568467d09062d19",
+        "248": "684a95f503a9f9fc6665e3e0de463b7bb47f515554d34b31dfef64e748e51816"
+      },
+      "source_bytes": 370121,
+      "source_projection_median_px": 1.2262007795115773e-05,
+      "source_projection_samples": 15,
+      "video_id": "pick_place_color_2cam_randomized__house_4147__00000000__wrist_camera"
+    },
+    {
+      "clock_error_seconds": 0.17029702970296867,
+      "content_psnr_db": {
+        "85": 34.678048801051496,
+        "95": 37.121844476379685
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9093664487510166,
+          0.896610812237573,
+          0.9134550744071737
+        ],
+        "95": [
+          0.9505742941660055,
+          0.9440624771897147,
+          0.9492056900189788
+        ]
+      },
+      "frames": 259,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "177c42fd2c4a2b15f8615ede6b5e311dc8cefb64ac0237703546caa7a32dddc3",
+        "129": "62825c594bc7aa45994468537badab564c96b1539a25d12d0e19bf7651848ec2",
+        "258": "b43c045ec4b9ecf77a006f0196710daa73ed42e77a6d4ac4a5abd8a34c160b54"
+      },
+      "source_bytes": 691236,
+      "source_projection_median_px": 1.1266465222868933e-05,
+      "source_projection_samples": 10,
+      "video_id": "pick_place_color_2cam_randomized__house_5477__00000005__wrist_camera"
+    },
+    {
+      "clock_error_seconds": 0.17887788778877933,
+      "content_psnr_db": {
+        "85": 34.75498324506248,
+        "95": 36.68607259247915
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9298870019364133,
+          0.9021013126299314,
+          0.9128540179647858
+        ],
+        "95": [
+          0.962280150269771,
+          0.9394095760908653,
+          0.9506278619394917
+        ]
+      },
+      "frames": 272,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "d029f6ad682aab5de0dee87bf26d11ec95ad5b8c8667d187826b0d3ff4f8ab98",
+        "136": "f3885f06bc10c123c4541c3d035277a2e87c6ff7fa6eaa9ce0b80dca1a8a9b75",
+        "271": "955b5e6bb3e0e7531b50d2b9d32c9fc675d3f04ec6a04b994e8fb4ca0bc65cde"
+      },
+      "source_bytes": 566489,
+      "source_projection_median_px": 1.815702482235479e-05,
+      "source_projection_samples": 7,
+      "video_id": "pick_place_color_2cam_randomized__house_7380__00000015__wrist_camera"
+    },
+    {
+      "clock_error_seconds": 0.15841584158415856,
+      "content_psnr_db": {
+        "85": 35.85127617798342,
+        "95": 38.934782284365255
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9474355446916448,
+          0.9607390079745485,
+          0.9428609423799985
+        ],
+        "95": [
+          0.9758027155797745,
+          0.9833766043522424,
+          0.9724661874353107
+        ]
+      },
+      "frames": 241,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "7dc1a1eaca8af351d2ac3c933b5679bd2f22bda962079f48e3619b373c645be2",
+        "120": "9fdb3a881c860f95a8920a335c82622f1f10bda551ae5b73546f2ff206127475",
+        "240": "2110d0b5b3711f948b87cf9e6f2e1149ff69acbeaf3bf1194b205555b4d3e275"
+      },
+      "source_bytes": 640270,
+      "source_projection_median_px": 1.0592970488670786e-05,
+      "source_projection_samples": 5,
+      "video_id": "pick_place_color_2cam_randomized__house_8840__00000000__wrist_camera"
+    },
+    {
+      "clock_error_seconds": 0.17557755775577633,
+      "content_psnr_db": {
+        "85": 35.84509338104594,
+        "95": 39.239906550293696
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9596473615260651,
+          0.9604406252564571,
+          0.9595678934483463
+        ],
+        "95": [
+          0.9823092960381334,
+          0.9826864559078361,
+          0.982057882351414
+        ]
+      },
+      "frames": 267,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "67665d7bc68f1034232ff0c1c6683a0549b93e3c00a457e3aac5269be021aaee",
+        "133": "4131bc3765defc523336ee091e0d0a03dd2912b2046f320de6fc142e5005db1c",
+        "266": "46e8db7ab930a31cd529bcc899e6495975992e6367d3db31cd0c6d1981b1989d"
+      },
+      "source_bytes": 303026,
+      "source_projection_median_px": 7.344911614935843e-06,
+      "source_projection_samples": 23,
+      "video_id": "pick_place_color_5cam__house_484__00000002__droid_shoulder_light_randomization"
+    },
+    {
+      "clock_error_seconds": 0.17029702970296867,
+      "content_psnr_db": {
+        "85": 37.929107187697475,
+        "95": 41.187277800388856
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9623822956515373,
+          0.9625232283317343,
+          0.9630536897142487
+        ],
+        "95": [
+          0.9794135508426383,
+          0.9793450658329128,
+          0.9793421517535744
+        ]
+      },
+      "frames": 259,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "a83e0b01528b232a61b2e05a2070f20e156f828055f73ef4529d66b47b717295",
+        "129": "bbd7ad3daa0df565ddcac70db29822de99c82300957f6816804596eb2d8e092e",
+        "258": "8afffd21e277931c244b5f087bf6870cbd578ef1d56b2dc6684d8d1da68cc9bd"
+      },
+      "source_bytes": 112711,
+      "source_projection_median_px": 7.743193152450086e-06,
+      "source_projection_samples": 23,
+      "video_id": "pick_place_color_5cam__house_7090__00000005__randomized_gopro_analogue_1"
+    },
+    {
+      "clock_error_seconds": 0.16105610561055883,
+      "content_psnr_db": {
+        "85": 35.5033163482325,
+        "95": 39.035241325870935
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9667734263219611,
+          0.9652731404902135,
+          0.9667598755194534
+        ],
+        "95": [
+          0.9840053000561696,
+          0.9834986806111893,
+          0.9838518494464731
+        ]
+      },
+      "frames": 245,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "da7870ad9dae4d8b562ac41ecdbe4fdcf632773e7c489d05f911cc97003866ab",
+        "122": "89b189f2774e4a833cc0ce7eb329bbcf26e3837549c5fffc535af824b6c319e6",
+        "244": "2d3e4e77491005c77550e0517e2f6666ee22628d760825e032f9e5ac06dda962"
+      },
+      "source_bytes": 147132,
+      "source_projection_median_px": 9.291856754851418e-06,
+      "source_projection_samples": 14,
+      "video_id": "pick_place_color_5cam__house_8488__00000001__randomized_zed2_analogue_2"
+    },
+    {
+      "clock_error_seconds": 0.16633663366336648,
+      "content_psnr_db": {
+        "85": 35.18596362711912,
+        "95": 37.41335650780333
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9557021863051082,
+          0.9447498711917665,
+          0.954875984620234
+        ],
+        "95": [
+          0.9756792994921826,
+          0.9696091490411803,
+          0.9756459800657701
+        ]
+      },
+      "frames": 253,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "05d6c14ef5eda7c137f33f96b54ebdd046c05e072b200143c1c1df72868a61c1",
+        "126": "a4a725cd9158cba85fb82a4d5e644e104014884b8f1524c9054018f5d9f9a8fd",
+        "252": "116328b5e4c0f43529b6e87604d21437c4e702f3fb22777ca79386132692a665"
+      },
+      "source_bytes": 449386,
+      "source_projection_median_px": 9.905651192611115e-06,
+      "source_projection_samples": 22,
+      "video_id": "pick_place_2cam_randomized__house_0__00000001__exo_camera_1"
+    },
+    {
+      "clock_error_seconds": 0.1577557755775576,
+      "content_psnr_db": {
+        "85": 36.011843814148605,
+        "95": 38.71977493346761
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9560768208886877,
+          0.9572839968642567,
+          0.9560547634528088
+        ],
+        "95": [
+          0.9768799986979714,
+          0.9770996586014532,
+          0.976776736756149
+        ]
+      },
+      "frames": 240,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "0a0a5d72e12fd98af810547234ce96eee0f7a737f596d508f19a29ffe81c379d",
+        "120": "9d326d23b36a7645523df9ecf784dbb15563c43422e9c408a89b9bc8c742aef9",
+        "239": "2c27342da69bbff85bf7ca085c72d4d5ae344881a3c36551f5ca6a2cdbd95c0b"
+      },
+      "source_bytes": 213138,
+      "source_projection_median_px": 1.0685992287740908e-05,
+      "source_projection_samples": 10,
+      "video_id": "pick_place_2cam_randomized__house_4062__00000009__exo_camera_1"
+    },
+    {
+      "clock_error_seconds": 0.1782178217821766,
+      "content_psnr_db": {
+        "85": 36.720734689927646,
+        "95": 39.613279627062376
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9413674506997465,
+          0.966514324944022,
+          0.9344268487613507
+        ],
+        "95": [
+          0.9704067363178549,
+          0.9839334548543645,
+          0.9648754231373342
+        ]
+      },
+      "frames": 271,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "535930f9af6d0e3523e2cd0bbfcb8c87b17eac7bd534e5042a6b8deeca4e2e1f",
+        "135": "91cd073e645ca8766307049b19d80b5afbe37b474310fb1b8d91aebf08509204",
+        "270": "69eb248ac55b7457decad71e2bf0fd698eea6128efc7569ac326e8817382bb4c"
+      },
+      "source_bytes": 678379,
+      "source_projection_median_px": 3.7811162461865935e-05,
+      "source_projection_samples": 4,
+      "video_id": "pick_place_2cam_randomized__house_53__00000002__wrist_camera"
+    },
+    {
+      "clock_error_seconds": 0.1742574257425744,
+      "content_psnr_db": {
+        "85": 39.536348292244995,
+        "95": 43.00089328474607
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9612491155947046,
+          0.9571606145140912,
+          0.9562082077385181
+        ],
+        "95": [
+          0.9815859826726535,
+          0.977929093647289,
+          0.9786690690886637
+        ]
+      },
+      "frames": 265,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "98b7f0f6984b5a314b96b82827b7c54ee2868339ffdf6c3cba264c633e77c9b6",
+        "132": "9a75f170bdbb674f660972165db9de1dd560377a0a8ba6023bafa726734f414d",
+        "264": "3fcc872ad281409a314a7f64aa28941a5ec08018186451928d733e98fb6a25b1"
+      },
+      "source_bytes": 596583,
+      "source_projection_median_px": 1.5416720097868e-05,
+      "source_projection_samples": 18,
+      "video_id": "pick_place_2cam_randomized__house_8660__00000004__wrist_camera"
+    },
+    {
+      "clock_error_seconds": 0.194059405940596,
+      "content_psnr_db": {
+        "85": 36.59302198491815,
+        "95": 40.56368884611242
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9512470049832857,
+          0.9698731232717454,
+          0.9512190311095862
+        ],
+        "95": [
+          0.9787519203773011,
+          0.9885823425888952,
+          0.9792026119718833
+        ]
+      },
+      "frames": 295,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "c969bb574f875d1ffa4478dd556a8cdc6e50db7a1fbe6d1d70bd3a519433eff4",
+        "147": "9aad3f40dc0a955e1f507effd8539bd75bbb2a7605a7dd338ae29410df70bcd3",
+        "294": "e15744ee134a06f173b05aed53a7e4f934d4d1d8f05de80acf3ab7124be7558e"
+      },
+      "source_bytes": 999716,
+      "source_projection_median_px": 1.269529926400979e-05,
+      "source_projection_samples": 16,
+      "video_id": "pick_place_2cam_randomized__house_9505__00000001__wrist_camera"
+    },
+    {
+      "clock_error_seconds": 0.1656765676567673,
+      "content_psnr_db": {
+        "85": 37.75929679262747,
+        "95": 41.520838233929126
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9532300371917275,
+          0.9833872113188106,
+          0.9574235260126635
+        ],
+        "95": [
+          0.975383028533614,
+          0.9937996727279557,
+          0.9779178593331425
+        ]
+      },
+      "frames": 252,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "712acdec2a73e8dbdf5d4b75464c3fb47f7c0e034cc5b783fbfa65bb789a3bcc",
+        "126": "4cbd5ded1becb7a155d5ee60f44695513f18edf248d91453787e686608955368",
+        "251": "05c9f04099e383425011ffa8bd0a604ffee9a76a878683724063a2875a1e1139"
+      },
+      "source_bytes": 526307,
+      "source_projection_median_px": 1.1928437680820072e-05,
+      "source_projection_samples": 7,
+      "video_id": "pick_place_5cam__house_5055__00000001__wrist_camera_zed_mini"
+    },
+    {
+      "clock_error_seconds": 0.17887788778877933,
+      "content_psnr_db": {
+        "85": 39.81702414969528,
+        "95": 43.6741259790269
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9719956392754714,
+          0.96747971606707,
+          0.96850815050611
+        ],
+        "95": [
+          0.9875954027557081,
+          0.9852459485825974,
+          0.9862233458400645
+        ]
+      },
+      "frames": 272,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "63adad3c6237e9ef1c2b14497cf1b7266f23ac91f7e17289f9785a2377ad842e",
+        "136": "9d480b8debdc148d35b0016f34df910fc6a53c35d4735e039734a1422593d383",
+        "271": "c28ad672cc4d387c4b248691c70d72ccacd31ba9d40806d7e31dfa8fde94c43b"
+      },
+      "source_bytes": 186867,
+      "source_projection_median_px": 7.65239074136941e-06,
+      "source_projection_samples": 18,
+      "video_id": "pick_place_5cam__house_5126__00000005__randomized_zed2_analogue_1"
+    },
+    {
+      "clock_error_seconds": 0.16633663366336648,
+      "content_psnr_db": {
+        "85": 36.72927835557865,
+        "95": 40.329930061476695
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9691133142510383,
+          0.9681601237602847,
+          0.970501590795501
+        ],
+        "95": [
+          0.9858110763036225,
+          0.9850671686715212,
+          0.986252181941924
+        ]
+      },
+      "frames": 253,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "022fb389ce497745358d05cb98edc43e8e360ad15b9508a1783043bb227f0c23",
+        "126": "fab9ef2fb431d138c8a3ba866e2664abfcbab96577f271cc158a239ade1962d8",
+        "252": "189a388451b27bfbfeedf317bb05db53c7b29afaac1babf273ee70370c15436a"
+      },
+      "source_bytes": 124362,
+      "source_projection_median_px": 1.0678048546187918e-05,
+      "source_projection_samples": 15,
+      "video_id": "pick_place_5cam__house_9229__00000001__randomized_gopro_analogue_1"
+    },
+    {
+      "clock_error_seconds": 0.17029702970296867,
+      "content_psnr_db": {
+        "85": 38.52967217978683,
+        "95": 41.97475020642291
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9738822638071487,
+          0.974624156492912,
+          0.9744196370487814
+        ],
+        "95": [
+          0.9882273313991011,
+          0.9886434416728654,
+          0.9885774455054986
+        ]
+      },
+      "frames": 259,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "f6324eabfb3ca4cad173a4ad7aa0fdf156d0a5e301fb16427a1dacf11f0df1d0",
+        "129": "1aa607f563c29bdb43030fbfbff3194cda992dd8a78a6c5587b95b75eff2275a",
+        "258": "3f0738bd6c853ae120fb5dcf962002ca5e15e552112ec64643f8baf0a4e851aa"
+      },
+      "source_bytes": 101619,
+      "source_projection_median_px": 1.1232250102729054e-05,
+      "source_projection_samples": 20,
+      "video_id": "pick_place_5cam__house_9313__00000000__randomized_gopro_analogue_1"
+    },
+    {
+      "clock_error_seconds": 0.1590759075907595,
+      "content_psnr_db": {
+        "85": 35.46771123013572,
+        "95": 38.16133264556221
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9345211869154514,
+          0.9381311388861643,
+          0.9304742379559858
+        ],
+        "95": [
+          0.967025317225656,
+          0.9705431257526262,
+          0.9644101475572896
+        ]
+      },
+      "frames": 242,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "98bc3ec35c4e497f5e049b4464f8dad2c62d0f24b85983c77c5e1754b2a5a424",
+        "121": "6486642c3169ed8cad2ddad24fb96f294a81b1670e385ba37c49754bcb3030f4",
+        "241": "3ca99c2c63e3e00e84afd297cf4b0b21a7df2b2bfc0f4858ee2d84b8625ca5e9"
+      },
+      "source_bytes": 488907,
+      "source_projection_median_px": 9.828302106085985e-06,
+      "source_projection_samples": 12,
+      "video_id": "pick_place_color_2cam_randomized__house_4062__00000003__wrist_camera"
+    },
+    {
+      "clock_error_seconds": 0.16831683168316758,
+      "content_psnr_db": {
+        "85": 39.22277314691485,
+        "95": 41.93034824032449
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9705891833125478,
+          0.980381801547542,
+          0.9719530213453469
+        ],
+        "95": [
+          0.9867727651378416,
+          0.9918013772072919,
+          0.9866624613666533
+        ]
+      },
+      "frames": 256,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "aab93c8a486b157f00f994ee1184a38f85e4026d0154811c32e4e9d80719635d",
+        "128": "3914690bc6e6cd1697c87e1d8eca20efce6f580ac5da0b4972677ac7d588af73",
+        "255": "d934f56c28284682192feca7761cdd4520c730c23dba430339254335354d85bb"
+      },
+      "source_bytes": 327190,
+      "source_projection_median_px": 7.03615675880712e-06,
+      "source_projection_samples": 19,
+      "video_id": "pick_place_color_2cam_randomized__house_4080__00000006__exo_camera_1"
+    },
+    {
+      "clock_error_seconds": 0.15049504950495063,
+      "content_psnr_db": {
+        "85": 40.256093833181225,
+        "95": 43.41080863863923
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9682850914083128,
+          0.9747792604900706,
+          0.9663950150194078
+        ],
+        "95": [
+          0.9818812960225659,
+          0.9878827702602995,
+          0.9804471176362616
+        ]
+      },
+      "frames": 229,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "8bd28df5b69f1af5c517b33d2d4172b6f1b4d138df40acf55b69941979e14b87",
+        "114": "65847b34e6520b47c75250a9ff40c19b468dc651151ed0af8a73180b27b8a4eb",
+        "228": "4bb3aac5d2c207b499756e1907501d0265d5e5260d7d241818921972287fe5c0"
+      },
+      "source_bytes": 289384,
+      "source_projection_median_px": 7.597986308513569e-06,
+      "source_projection_samples": 7,
+      "video_id": "pick_place_color_2cam_randomized__house_6047__00000007__wrist_camera"
+    },
+    {
+      "clock_error_seconds": 0.1643564356435654,
+      "content_psnr_db": {
+        "85": 37.65824334164036,
+        "95": 41.942702461246
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9559454641905875,
+          0.9588418979489814,
+          0.9544349329819785
+        ],
+        "95": [
+          0.980742335492306,
+          0.9825124081112956,
+          0.9802291953238259
+        ]
+      },
+      "frames": 250,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "e27578eab0793e8b7a221fde26a8f965eb7c0b92431e20a09c23fca0d9f67690",
+        "125": "a727ac2f58cfac3527d5c76af582f634f2a0e1655d67508f86f437851e14fe1b",
+        "249": "6ce85399939c2bef4dcb8d1633e29d4175809a3934167203b5beb63ed3118c86"
+      },
+      "source_bytes": 634382,
+      "source_projection_median_px": 7.462878191785615e-06,
+      "source_projection_samples": 7,
+      "video_id": "pick_place_color_2cam_randomized__house_9337__00000017__wrist_camera"
+    },
+    {
+      "clock_error_seconds": 0.1696369636963695,
+      "content_psnr_db": {
+        "85": 40.73893027244094,
+        "95": 44.72804639567169
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9754244889392302,
+          0.9611893467004556,
+          0.9714526166506593
+        ],
+        "95": [
+          0.9873456246256138,
+          0.9825601748003132,
+          0.9853730635636584
+        ]
+      },
+      "frames": 258,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "cb3eef30c8f84e81e5fff1f9d16854bf6f6fde69fba857c6ec8447fd6d7ad46b",
+        "129": "79c9a68c2297287e1abe87419fb51b5152c174dd957b4b43767574651ba329bf",
+        "257": "58704f0ede8dde4df5925ae06d023e71fe349ba6948f5c6a352b8881e169a5bd"
+      },
+      "source_bytes": 363302,
+      "source_projection_median_px": 1.464259372157508e-05,
+      "source_projection_samples": 7,
+      "video_id": "pick_place_color_5cam__house_1012__00000009__wrist_camera_zed_mini"
+    },
+    {
+      "clock_error_seconds": 0.17689768976897824,
+      "content_psnr_db": {
+        "85": 41.264974188763965,
+        "95": 44.55268290694902
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9730435549027835,
+          0.9755477222014326,
+          0.9730134241520552
+        ],
+        "95": [
+          0.9863522932708239,
+          0.987386672564703,
+          0.9857136655123155
+        ]
+      },
+      "frames": 269,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "ab47eb4379a5ea22800b2f2b59a8b19d4c26a986f9cbda8cf48746139846679c",
+        "134": "65738f2a82589c2632780a332e57e01d1e51445fe7c03140bf76ab1f9cc6111c",
+        "268": "872733d9b11fab24f3122d6f2351e688543550143ab9eaedd5c16f775b959996"
+      },
+      "source_bytes": 237027,
+      "source_projection_median_px": 1.04334796896822e-05,
+      "source_projection_samples": 14,
+      "video_id": "pick_place_color_5cam__house_1081__00000000__wrist_camera_zed_mini"
+    },
+    {
+      "clock_error_seconds": 0.17161716171617059,
+      "content_psnr_db": {
+        "85": 37.389724367208984,
+        "95": 40.55780555288837
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9484818369764643,
+          0.9611207769337918,
+          0.941519332572172
+        ],
+        "95": [
+          0.9739339406775982,
+          0.9807188996777846,
+          0.9696623150544116
+        ]
+      },
+      "frames": 261,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "01eadb1c8f7b5c2faa78bed115e7764011b53472683226eb15b5ec826dc44f1d",
+        "130": "7688a499d475c2599b76be95ffa3f60840bb8c1d0daff10290aef5d38da40b5d",
+        "260": "bd8fdd871489bf837f338fb5acf6818ce94559227a9c6bc5cbf0435a142b97b8"
+      },
+      "source_bytes": 411775,
+      "source_projection_median_px": 1.0598980918849274e-05,
+      "source_projection_samples": 11,
+      "video_id": "pick_place_color_5cam__house_1110__00000001__wrist_camera_zed_mini"
+    },
+    {
+      "clock_error_seconds": 0.1762376237623755,
+      "content_psnr_db": {
+        "85": 37.604386367376385,
+        "95": 40.43719219821838
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9590646888468114,
+          0.9584885210527295,
+          0.9581771446230872
+        ],
+        "95": [
+          0.9787398256172916,
+          0.9782672696253627,
+          0.9776928650406528
+        ]
+      },
+      "frames": 268,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "3c6d84e468b704da7ed32525e4445ca5b7c1924d67d292e8acf3a00005f0866c",
+        "134": "c4b219ad0c8cdf291f42be015b74c4eb48b94df03b426e2ad6dca91ff9612a43",
+        "267": "3a3201066b5a3fc2b88823ccb41d11976850f9690786c9b018daec464c65a22a"
+      },
+      "source_bytes": 118317,
+      "source_projection_median_px": 1.1355846446551126e-05,
+      "source_projection_samples": 17,
+      "video_id": "pick_place_color_5cam__house_1357__00000001__randomized_zed2_analogue_1"
+    },
+    {
+      "clock_error_seconds": 0.1577557755775576,
+      "content_psnr_db": {
+        "85": 35.07080104955299,
+        "95": 38.16726759512099
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9335357872257534,
+          0.941487557820917,
+          0.9330889329731827
+        ],
+        "95": [
+          0.9650432982205513,
+          0.970313917369408,
+          0.9651277894776434
+        ]
+      },
+      "frames": 240,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "4f65940f714bca19b239ab69930f801418a7f9fea7693368a5982c4d474b8086",
+        "120": "df395d1fa1b672ad88a9aff3e5a1b3f5db7730dce8bdfb4b25e9fed63f6a1f12",
+        "239": "55462f1da90ccee8bd0745a64ca9f958e689e8535abf45dd13c4a07ba345f75f"
+      },
+      "source_bytes": 175611,
+      "source_projection_median_px": 8.346780504619651e-06,
+      "source_projection_samples": 12,
+      "video_id": "pick_place_color_5cam__house_3089__00000003__randomized_zed2_analogue_2"
+    },
+    {
+      "clock_error_seconds": 0.17689768976897824,
+      "content_psnr_db": {
+        "85": 38.440788283318696,
+        "95": 41.733399181597434
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9676596007693502,
+          0.9650497199574332,
+          0.9643699671940248
+        ],
+        "95": [
+          0.9840453349225724,
+          0.9819086161749756,
+          0.9808628372831789
+        ]
+      },
+      "frames": 269,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "61e9fefe6e2b93dd6ffca9b726bccd9e2cb9ad72a9abd91432e7a35033d60d4c",
+        "134": "4c1af9c6f67f241b9ffd474343818bfb9ee120891dd62fadd537df5ae52bad8b",
+        "268": "176b835ff11c891909387a13125d8fc9a650de100feb04a3ec93afa990b6c5e0"
+      },
+      "source_bytes": 326944,
+      "source_projection_median_px": 1.1175488967428175e-05,
+      "source_projection_samples": 17,
+      "video_id": "pick_place_color_5cam__house_3183__00000001__randomized_zed2_analogue_2"
+    },
+    {
+      "clock_error_seconds": 0.16831683168316758,
+      "content_psnr_db": {
+        "85": 35.04476148679216,
+        "95": 38.484033201543
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9490819853832129,
+          0.9477071717751681,
+          0.9500398511862257
+        ],
+        "95": [
+          0.974543576753952,
+          0.9736511046115212,
+          0.9756738615999532
+        ]
+      },
+      "frames": 256,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "a429162153b926bbd061fc1ec7956bea7177ba46a30f6c678cd235b847de401a",
+        "128": "5fa5819399d579e1b08651ed63f6257269c3876c2f06eb96da38f71718a49698",
+        "255": "a1e3d75674f2fcd63c3890c9179e3a4ac045f1ecc2af6cd96eb6a8f574944755"
+      },
+      "source_bytes": 157707,
+      "source_projection_median_px": 9.672141100372077e-06,
+      "source_projection_samples": 20,
+      "video_id": "pick_place_color_5cam__house_4213__00000001__randomized_zed2_analogue_2"
+    },
+    {
+      "clock_error_seconds": 0.1696369636963695,
+      "content_psnr_db": {
+        "85": 34.73203961717641,
+        "95": 37.97962855550977
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9494686966546064,
+          0.9473971425515707,
+          0.9498611573932522
+        ],
+        "95": [
+          0.9742380690559935,
+          0.9737431082973198,
+          0.9743667072297226
+        ]
+      },
+      "frames": 258,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "36e049cfb14bc4095b44335a0036638b9c556cedbe12bfaf32729e0dfd766787",
+        "129": "afa3487a4d3354b31bce19da734287970bd6c7ff90d90f2ad53ebca8a40d8fe2",
+        "257": "0753dd5e4077807faa6ec871a2d6b4a26fe5d57103d101d041f3f5af0a1694bb"
+      },
+      "source_bytes": 252207,
+      "source_projection_median_px": 9.045886877155756e-06,
+      "source_projection_samples": 15,
+      "video_id": "pick_place_color_5cam__house_5074__00000003__randomized_gopro_analogue_1"
+    },
+    {
+      "clock_error_seconds": 0.17491749174917715,
+      "content_psnr_db": {
+        "85": 36.084760676187955,
+        "95": 39.269499026486734
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9376607756759148,
+          0.9397259766195202,
+          0.9362368148860115
+        ],
+        "95": [
+          0.9669956185868567,
+          0.9668979760360611,
+          0.9652741810483482
+        ]
+      },
+      "frames": 266,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "a04c5d57b9a4bbc71abadee982f102afdb3660e20e0c9ea7e92348ca986c2bd2",
+        "133": "3f88efdcd2bb8bc9840d6de4b394a32af9bec7972cd20673205f1d3e75ec48e7",
+        "265": "85303f858eb84740caa983c025e9274291af3a02bef674074fc6b1f382e53846"
+      },
+      "source_bytes": 221583,
+      "source_projection_median_px": 8.426184625917334e-06,
+      "source_projection_samples": 17,
+      "video_id": "pick_place_color_5cam__house_5112__00000000__droid_shoulder_light_randomization"
+    },
+    {
+      "clock_error_seconds": 0.18745874587458644,
+      "content_psnr_db": {
+        "85": 37.97004373197287,
+        "95": 41.441304399475726
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9669856869093271,
+          0.9656724099074306,
+          0.9644074176585322
+        ],
+        "95": [
+          0.983151878128146,
+          0.9827795709163748,
+          0.98218627103219
+        ]
+      },
+      "frames": 285,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "3e662c4a2e97344ace572e92d59803c63301dd111b40bf8dfb79d0c4ff363389",
+        "142": "3e2ae335f7d29cb04e8511413e581a45a6f6bf0714575359a5d47e589312832d",
+        "284": "6a782c43587e4e6128197cff0283f6d4232ecd2290fdb53909125195b4ba8304"
+      },
+      "source_bytes": 216717,
+      "source_projection_median_px": 9.524261676504977e-06,
+      "source_projection_samples": 14,
+      "video_id": "pick_place_color_5cam__house_7179__00000009__droid_shoulder_light_randomization"
+    },
+    {
+      "clock_error_seconds": 0.18085808580858043,
+      "content_psnr_db": {
+        "85": 39.38245776296335,
+        "95": 42.53883675876462
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9536422087025117,
+          0.9846361741153311,
+          0.9423434576886889
+        ],
+        "95": [
+          0.9735931910476464,
+          0.9936677071733196,
+          0.9667013379098615
+        ]
+      },
+      "frames": 275,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "cfd1e5c75d25df5e3da33c9a6e8c40960bc8684e8aa415d7534156eff889d200",
+        "137": "42ad571e594ef17f21d39c738091c779feaad2b02777a4e4a47a876bd0dc1b06",
+        "274": "556ecdf5565b1a27885bd808b10c694c4feac7b133720a00cc6de155fa691496"
+      },
+      "source_bytes": 384480,
+      "source_projection_median_px": 2.451787030155134e-05,
+      "source_projection_samples": 2,
+      "video_id": "pick_place_color_5cam__house_9093__00000001__wrist_camera_zed_mini"
+    },
+    {
+      "clock_error_seconds": 0.1696369636963695,
+      "content_psnr_db": {
+        "85": 38.023994566881754,
+        "95": 41.96860981659471
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9688696722479416,
+          0.978866521898803,
+          0.9693322105681587
+        ],
+        "95": [
+          0.9863391694148179,
+          0.9913073165540703,
+          0.9861991456210464
+        ]
+      },
+      "frames": 258,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "3b0653a35a339c54d61b76b06ea02a474ce541d16fec50505d9bf08eb0f84b52",
+        "129": "50313e5b030f122121eae354850a4a0271160b91420df667f59aa52355709c74",
+        "257": "d7c55c704de2b82cd639b73f18b37c6150952dc3db6642efb6d2e74bb529ece8"
+      },
+      "source_bytes": 300836,
+      "source_projection_median_px": 7.3445479517368066e-06,
+      "source_projection_samples": 6,
+      "video_id": "pick_place_color_5cam__house_9200__00000000__randomized_zed2_analogue_2"
+    },
+    {
+      "clock_error_seconds": 0.16633663366336648,
+      "content_psnr_db": {
+        "85": 36.17515192910695,
+        "95": 38.28206139950038
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.941681511057462,
+          0.9589750916559211,
+          0.9341030978213385
+        ],
+        "95": [
+          0.9674482125184412,
+          0.9780575656133234,
+          0.9651379944906742
+        ]
+      },
+      "frames": 253,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "67d8cff3bd1b2c6158d1b3b422dd389a6d76c7709738161cf8592c69ae88b66a",
+        "126": "d4cdeea4827ebf384b1383d25495532c7c8ece49f83cff3623fcae049f4875e4",
+        "252": "0a7ee47603ce1a60cb38fc95f98005da168021d682db45127babe27675e91fb2"
+      },
+      "source_bytes": 578376,
+      "source_projection_median_px": 2.7909005292571875e-05,
+      "source_projection_samples": 6,
+      "video_id": "pick_place_2cam_randomized__house_0__00000001__wrist_camera"
+    },
+    {
+      "clock_error_seconds": 0.2521452145214518,
+      "content_psnr_db": {
+        "85": 36.66528773249495,
+        "95": 40.03461526511305
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9708930141811947,
+          0.9508278117482504,
+          0.9704838810943809
+        ],
+        "95": [
+          0.9879383804297098,
+          0.9780263010357327,
+          0.986809589331783
+        ]
+      },
+      "frames": 383,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "0eb036e0635ad598c83b427bcd9f8ef098d362ac42ef56d8efb5bb45755cb1d4",
+        "191": "ba19b38a15e179f3b06caa5189589557c5e6218cfb00578b8ce515af65758f93",
+        "382": "13a00847a4c1c2676f1c2b8f0fc99cd57bddbcf8e9f33b58b0abf9bcdca45272"
+      },
+      "source_bytes": 961228,
+      "source_projection_median_px": 1.238673085826442e-05,
+      "source_projection_samples": 13,
+      "video_id": "pick_place_2cam_randomized__house_3423__00000002__wrist_camera"
+    },
+    {
+      "clock_error_seconds": 0.18481848184818617,
+      "content_psnr_db": {
+        "85": 39.66817509688934,
+        "95": 43.84933809780695
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9754813124775188,
+          0.9761279294125161,
+          0.9746453082583454
+        ],
+        "95": [
+          0.9878499074215173,
+          0.987741437644309,
+          0.9870837322599177
+        ]
+      },
+      "frames": 281,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "43f21b6636084e00957e4cd7bfffd94816f3d43a99fd2a00c662edd27a0e0a3c",
+        "140": "622ec461699ff1090b0f45dbba63cdefab2a7788f1d029aedb93a7603114960e",
+        "280": "a878321884ec01a16f018b5889bf69db3fa22fd01f1926cafae0a1cb72ce0125"
+      },
+      "source_bytes": 298529,
+      "source_projection_median_px": 9.776594740559663e-06,
+      "source_projection_samples": 18,
+      "video_id": "pick_place_2cam_randomized__house_8068__00000003__exo_camera_1"
+    },
+    {
+      "clock_error_seconds": 0.1544554455445546,
+      "content_psnr_db": {
+        "85": 37.89769568368732,
+        "95": 41.816689579398755
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9679112468008705,
+          0.9658616596985028,
+          0.9654157083052078
+        ],
+        "95": [
+          0.9874221612588668,
+          0.9841646635782427,
+          0.9857141004291394
+        ]
+      },
+      "frames": 235,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "e119d2a102c053981dd6c1e01eb97fd6c31c0b59a450218cf5edb856bef3ca1d",
+        "117": "0769733a7ccaf1694a31f902bb9d4f99a08ebb6f582173b9033448640c3bae10",
+        "234": "89fa450e59c8dd2365a35ba96b7131aa3bd87846c1a8efa980a1d9a1b3ee7bda"
+      },
+      "source_bytes": 609767,
+      "source_projection_median_px": 1.2129428573399937e-05,
+      "source_projection_samples": 9,
+      "video_id": "pick_place_2cam_randomized__house_9344__00000001__wrist_camera"
+    },
+    {
+      "clock_error_seconds": 0.17557755775577633,
+      "content_psnr_db": {
+        "85": 38.50692332949252,
+        "95": 42.91996750229301
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9593442518750493,
+          0.9669781152996925,
+          0.9585104333012816
+        ],
+        "95": [
+          0.9837531524574263,
+          0.9863435947567069,
+          0.9830355837194283
+        ]
+      },
+      "frames": 267,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "4a176357a46be4cd6ccd7dbdd136d505d7be5d4e8dd56f9113212eac01878513",
+        "133": "36311d5ec996d294657676babe83057b78e665a1e87a1545488b2902141b38fa",
+        "266": "4e2b32dcb388bb1d15a8e0e27a34cef53776177a97336267b191ec74e5fe64eb"
+      },
+      "source_bytes": 320823,
+      "source_projection_median_px": 9.552423859378877e-06,
+      "source_projection_samples": 7,
+      "video_id": "pick_place_5cam__house_145__00000001__randomized_zed2_analogue_1"
+    },
+    {
+      "clock_error_seconds": 0.18613861386138808,
+      "content_psnr_db": {
+        "85": 39.56336042379071,
+        "95": 43.536629775097715
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9826228631940274,
+          0.9834980021436218,
+          0.9821607768362591
+        ],
+        "95": [
+          0.9931416599129141,
+          0.9931044419392165,
+          0.9927811450768375
+        ]
+      },
+      "frames": 283,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "2123acfda61aab56e716554f53d871b3761c113244728df30e2277a4b5f8f138",
+        "141": "6b40577d6a875f9c76b097085b746adeacaf00ec97d2b3927bb3c8f13d64d16d",
+        "282": "a77eb9b73c21b322180837818c4c1fcaf9c04db014e15ef9ea0c0e75b5826521"
+      },
+      "source_bytes": 115982,
+      "source_projection_median_px": 1.210794374533702e-05,
+      "source_projection_samples": 13,
+      "video_id": "pick_place_5cam__house_16__00000012__randomized_gopro_analogue_1"
+    },
+    {
+      "clock_error_seconds": 0.1676567656765684,
+      "content_psnr_db": {
+        "85": 38.18858605972492,
+        "95": 41.87115916417922
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9690825503082041,
+          0.9687369610571531,
+          0.9687241175846041
+        ],
+        "95": [
+          0.9837881498739486,
+          0.9838914991089851,
+          0.984362603136951
+        ]
+      },
+      "frames": 255,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "99f1c786e3c9c23877f9a03e7cf705eda100eb83e72ccbd14e2dc7c2747e6c27",
+        "127": "4103f78884e5faff8b031af910f622ad707a9954cd15dbb5a8103f4189a5c2c4",
+        "254": "2210a24112c9c97c1a37502a4ea82eb4c773bfb37c18eb6986dec80622e6fcdb"
+      },
+      "source_bytes": 96031,
+      "source_projection_median_px": 8.83494170784654e-06,
+      "source_projection_samples": 10,
+      "video_id": "pick_place_5cam__house_3046__00000012__randomized_gopro_analogue_1"
+    },
+    {
+      "clock_error_seconds": 0.1689768976897703,
+      "content_psnr_db": {
+        "85": 37.271073620472734,
+        "95": 41.53727470849776
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9607683171202236,
+          0.9590318875842118,
+          0.9563730365176468
+        ],
+        "95": [
+          0.9853352892335879,
+          0.9845555804649689,
+          0.9830915294315806
+        ]
+      },
+      "frames": 257,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "16bbe0a9e3d81c366f79cfae2760dd5cc82ab9fe6f5e9e4a30f89830bb9c247d",
+        "128": "34d9b5ea6fbe804e099cc6f8892b0230f70d56a6025ea87e35d24d9ccde2ed4e",
+        "256": "3273f25f7b1211efc01d1cbca79698fa81ffdb4accd8e9c5ab1253546efd2d87"
+      },
+      "source_bytes": 668003,
+      "source_projection_median_px": 9.111013119843654e-06,
+      "source_projection_samples": 7,
+      "video_id": "pick_place_5cam__house_3314__00000000__wrist_camera_zed_mini"
+    },
+    {
+      "clock_error_seconds": 0.15643564356435746,
+      "content_psnr_db": {
+        "85": 39.17293695091096,
+        "95": 42.324461787765
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9631278166840064,
+          0.9685200173758207,
+          0.961180810397773
+        ],
+        "95": [
+          0.9817197989710337,
+          0.9848897856607134,
+          0.9804088126764728
+        ]
+      },
+      "frames": 238,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "c96b0aa29f6990bfd74d4df4f5b93e76df6903219bff9fa93a307e370e4d4959",
+        "119": "2d80a533a3957fc8f828013399400a086f2a5ac4e6ba84209432414d30b95fba",
+        "237": "9060d81b2c99947f1fdc5870bd07b750869280f0f02f5e01b6641e4a0625158f"
+      },
+      "source_bytes": 153075,
+      "source_projection_median_px": 9.577599467731024e-06,
+      "source_projection_samples": 23,
+      "video_id": "pick_place_5cam__house_4004__00000000__randomized_zed2_analogue_1"
+    },
+    {
+      "clock_error_seconds": 0.16237623762376074,
+      "content_psnr_db": {
+        "85": 36.88156191155659,
+        "95": 40.15124389244387
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9593701757259487,
+          0.9592575277884756,
+          0.9598463855098583
+        ],
+        "95": [
+          0.9815904992115135,
+          0.9812540032857956,
+          0.9816724460672193
+        ]
+      },
+      "frames": 247,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "26490d382ebee42fa536041b6f405f67f56477c4c7a378806399a44d2d8d798e",
+        "123": "2c0673623b7b9e7bbd32c993625b97475e9c9220441394b668c36ac37a195524",
+        "246": "46b4d1f8c4fc238bf2d62f5f438315e49fad39df2f14240bed18c83d4d3c8884"
+      },
+      "source_bytes": 167857,
+      "source_projection_median_px": 8.08169051066072e-06,
+      "source_projection_samples": 19,
+      "video_id": "pick_place_5cam__house_4006__00000004__droid_shoulder_light_randomization"
+    },
+    {
+      "clock_error_seconds": 0.1782178217821766,
+      "content_psnr_db": {
+        "85": 37.16532544163841,
+        "95": 40.63328201840859
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9586920030239082,
+          0.9676987077790246,
+          0.9538626472909311
+        ],
+        "95": [
+          0.9818721729637901,
+          0.9843548742063358,
+          0.9798635693651429
+        ]
+      },
+      "frames": 271,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "69b4eff68793134c6dc769669ef9b66c7976d36ae42ffac9d8ba4ca2c048034f",
+        "135": "ea2756b2fbb145f3afd4b078fa4cab20ce0c34066c26371c48b0d6449d565e44",
+        "270": "0572cfee5a8124f628e7fd2a58bbec8bd50483d430679106260326c80a1efa97"
+      },
+      "source_bytes": 605856,
+      "source_projection_median_px": 1.6898133680269897e-05,
+      "source_projection_samples": 12,
+      "video_id": "pick_place_5cam__house_6148__00000000__wrist_camera_zed_mini"
+    },
+    {
+      "clock_error_seconds": 0.17755775577557742,
+      "content_psnr_db": {
+        "85": 36.022299345159354,
+        "95": 40.057952980205684
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9592278799938775,
+          0.9652285212949164,
+          0.958600171526224
+        ],
+        "95": [
+          0.9822009951600156,
+          0.9858730351934423,
+          0.9819320839167317
+        ]
+      },
+      "frames": 270,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "710ee52c8764293d50bc530e9d38819435f19639ccb5cf139f29dfae2bdda82f",
+        "135": "7804b969af462299f1e1ccd24ad5292667347f058eca0a1ebda6b8798abe903b",
+        "269": "0d850eb0bdba425fb036c8df33ab9ef06e25212b2cb66ab7e9948551617b4279"
+      },
+      "source_bytes": 437431,
+      "source_projection_median_px": 5.627281849605184e-06,
+      "source_projection_samples": 11,
+      "video_id": "pick_place_5cam__house_7184__00000001__randomized_zed2_analogue_1"
+    },
+    {
+      "clock_error_seconds": 0.18019801980198125,
+      "content_psnr_db": {
+        "85": 35.739676536832285,
+        "95": 38.57080032683645
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9477392335785,
+          0.9461446210758434,
+          0.9468428014787054
+        ],
+        "95": [
+          0.972672211918692,
+          0.9725969454627793,
+          0.9722231043249129
+        ]
+      },
+      "frames": 274,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "cff94cf721ceffbee0dafbd7cf7f8b3ddb7f0f38d1d229d9c132f086854cb4a4",
+        "137": "c2f19bff60fdafbf54fe2eb4f8d150c792a852ed872dcb583813787f140e8102",
+        "273": "77f8e1f00390cfcd75cee031798712aeac22d5a106241664a60b158516633cce"
+      },
+      "source_bytes": 250553,
+      "source_projection_median_px": 1.0748166183623346e-05,
+      "source_projection_samples": 20,
+      "video_id": "pick_place_5cam__house_8081__00000003__droid_shoulder_light_randomization"
+    },
+    {
+      "clock_error_seconds": 0.19735973597359902,
+      "content_psnr_db": {
+        "85": 38.820222865449445,
+        "95": 42.73131831337879
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9727002130029668,
+          0.9732314311497854,
+          0.9722550095390323
+        ],
+        "95": [
+          0.9872279942386072,
+          0.9875038129685721,
+          0.9871121094048781
+        ]
+      },
+      "frames": 300,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "40167a4b4a5367f1f7e8df2cdb25572b1ed195c8676ecc6c2b6b52ac26c1a431",
+        "150": "c503b0870c1cdad72996d0ea539d5e4cbce08974b8f078fbb4ff09e357c01304",
+        "299": "ae87f9707077836db234f459e3388f06188c0ffd4532bac82eb24b00c37dca7f"
+      },
+      "source_bytes": 203614,
+      "source_projection_median_px": 9.74798611935701e-06,
+      "source_projection_samples": 9,
+      "video_id": "pick_place_color_2cam_randomized__house_130__00000002__exo_camera_1"
+    },
+    {
+      "clock_error_seconds": 0.17755775577557742,
+      "content_psnr_db": {
+        "85": 37.387665698574075,
+        "95": 40.261304326428416
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.964166880826471,
+          0.9591944252303324,
+          0.9594992300959543
+        ],
+        "95": [
+          0.9829929321222922,
+          0.9807930157010655,
+          0.9799046300061178
+        ]
+      },
+      "frames": 270,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "f439035d82e6f6cabf6ad7ce9dbf524c922822bdf367ca4a9768026ebab20df2",
+        "135": "00d02444b779af9a0198ba63ce75f30351a61e4b59073729e548638eff5e1d39",
+        "269": "ff31d78218802e7e856e5ee7e102db05d3921d5f602e3dac84b43fb38efd80da"
+      },
+      "source_bytes": 651220,
+      "source_projection_median_px": 4.598833141627771e-05,
+      "source_projection_samples": 5,
+      "video_id": "pick_place_color_2cam_randomized__house_1375__00000007__wrist_camera"
+    },
+    {
+      "clock_error_seconds": 0.1636963696369662,
+      "content_psnr_db": {
+        "85": 37.61008615488786,
+        "95": 41.5838281953222
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9539884186861755,
+          0.9616657267151583,
+          0.9491913540314899
+        ],
+        "95": [
+          0.9793848051205204,
+          0.9844203672084437,
+          0.9772905534661654
+        ]
+      },
+      "frames": 249,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "4bbcc1809e4929afda1fbb015022e1e1d7b80fb600b42256fa7d3612117688f0",
+        "124": "f554b31422e8176b141c326b7846c16f520d8869a86055009276209773024608",
+        "248": "0c8effb6764a660574b6bf5aef34942dcf9ddbbe6f90fc0bbc1e031e617ff421"
+      },
+      "source_bytes": 647336,
+      "source_projection_median_px": 1.5716957993303077e-05,
+      "source_projection_samples": 8,
+      "video_id": "pick_place_color_2cam_randomized__house_3123__00000002__wrist_camera"
+    },
+    {
+      "clock_error_seconds": 0.2574257425742559,
+      "content_psnr_db": {
+        "85": 39.13360325020268,
+        "95": 42.947533633498445
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9634999122916756,
+          0.9692434026959155,
+          0.9577147380892583
+        ],
+        "95": [
+          0.984975044126272,
+          0.9844852815496671,
+          0.9817857418036985
+        ]
+      },
+      "frames": 391,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "ac8a32324a7b096d139ec963c9d10376cc9e08c3c89ad2bbedd98b0841ce98a2",
+        "195": "c6f0edbadc912801920834430ba6e320ac0c9ea1c13d657a254caefa6dbe0e18",
+        "390": "733a63b73fa0a5883ef7ccbb35ec941046ebbc80c274aedae9d46ba95b607feb"
+      },
+      "source_bytes": 800624,
+      "source_projection_median_px": 9.439754023424715e-06,
+      "source_projection_samples": 21,
+      "video_id": "pick_place_color_5cam__house_3006__00000003__wrist_camera_zed_mini"
+    },
+    {
+      "clock_error_seconds": 0.1762376237623755,
+      "content_psnr_db": {
+        "85": 34.78992974364343,
+        "95": 37.571467568856036
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9417040195456522,
+          0.9478748701676166,
+          0.9420308984090516
+        ],
+        "95": [
+          0.9702145865384203,
+          0.9730328570859209,
+          0.9695787975678906
+        ]
+      },
+      "frames": 268,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "d07ce5ac36721c80467599b3acadbe63900d0d93bd3577341bded523a78ae287",
+        "134": "8b322e9f0b9672376108d678320371aecb831048d5905e87947b504983beffe3",
+        "267": "a79fe934a55d348ba5511a66880cc9eb535b064a4851d9a60ffd464a09263355"
+      },
+      "source_bytes": 326769,
+      "source_projection_median_px": 9.242453096918557e-06,
+      "source_projection_samples": 23,
+      "video_id": "pick_place_color_5cam__house_4055__00000006__randomized_zed2_analogue_2"
+    },
+    {
+      "clock_error_seconds": 0.1643564356435654,
+      "content_psnr_db": {
+        "85": 37.93493889208651,
+        "95": 41.95275342137408
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9625506690559976,
+          0.960994546584191,
+          0.9615778819600561
+        ],
+        "95": [
+          0.9830750880468196,
+          0.9832350456134066,
+          0.9824804889893194
+        ]
+      },
+      "frames": 250,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "384f5bf12081607bb350c1f6b919707b128c26e598604e4a9643e2a781f8804e",
+        "125": "36005ade86db5da542746508b262740c87e70555a819c71b62a0fed194aa3c77",
+        "249": "d77bb90b9c207ed271119bc1479ed2c7f4b11a908daebe2f06f85843b4d69be4"
+      },
+      "source_bytes": 649711,
+      "source_projection_median_px": 1.5279863952021578e-05,
+      "source_projection_samples": 11,
+      "video_id": "pick_place_color_5cam__house_4116__00000004__wrist_camera_zed_mini"
+    },
+    {
+      "clock_error_seconds": 0.18811881188118917,
+      "content_psnr_db": {
+        "85": 33.52041671010977,
+        "95": 35.64595929817169
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9219238464482871,
+          0.9551624082920639,
+          0.9076803356119422
+        ],
+        "95": [
+          0.9523780329422085,
+          0.976533225902644,
+          0.9397930934685143
+        ]
+      },
+      "frames": 286,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "5494ccd86c474524edf332ccb41327b5089c767d640f6ba632eecf0d46fd90cc",
+        "143": "4e8f5f8b685b6465c13975895fe7b72071686f32808994d3aaa1e53b58f0dc48",
+        "285": "51aec36d53472751a7b86e69792b3b349ab788d2ed1ebcbbbe8a0cd491aa992f"
+      },
+      "source_bytes": 619932,
+      "source_projection_median_px": 2.0262225258201682e-05,
+      "source_projection_samples": 5,
+      "video_id": "pick_place_color_5cam__house_6021__00000006__wrist_camera_zed_mini"
+    },
+    {
+      "clock_error_seconds": 0.14983498349834967,
+      "content_psnr_db": {
+        "85": 33.28247925198716,
+        "95": 35.925719589849685
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9387043216255955,
+          0.941913962806839,
+          0.937961098488081
+        ],
+        "95": [
+          0.9686965653630967,
+          0.9700879283782,
+          0.9686837030494484
+        ]
+      },
+      "frames": 228,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "3efd2519bd92b8c6e59393e4288d988ac69110dbced683a79864d0a5783a869d",
+        "114": "67648445f34bb3911cd5100e1efec21e88d865a8f6adacb2841b3eae4625a04f",
+        "227": "94ad2d7649ed41bcd58f60fb397b155de582a9bdee99fe79291bc324258b74e3"
+      },
+      "source_bytes": 234382,
+      "source_projection_median_px": 1.0448147044461531e-05,
+      "source_projection_samples": 15,
+      "video_id": "pick_place_color_5cam__house_6230__00000000__randomized_zed2_analogue_2"
+    },
+    {
+      "clock_error_seconds": 0.22046204620462007,
+      "content_psnr_db": {
+        "85": 39.83719839477109,
+        "95": 43.40868192290508
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9840319445009696,
+          0.984030578980969,
+          0.9840726237943658
+        ],
+        "95": [
+          0.993321128220131,
+          0.9934234457221747,
+          0.9928932833538848
+        ]
+      },
+      "frames": 335,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "b171298b3503cf7d23ae6f9ef0643c7dfd4e83038a9448b505bbf0ae48697df0",
+        "167": "6cc487e38201f41b5e4534c911bcecb21dbcb8083344f920b3445347f9ada6d8",
+        "334": "fe5b0e7d2a2f74e6b9591459f0bfd8840f8b0330c2774dc46b953652e0b0db76"
+      },
+      "source_bytes": 95664,
+      "source_projection_median_px": 8.486045875250877e-06,
+      "source_projection_samples": 18,
+      "video_id": "pick_place_color_5cam__house_69__00000000__randomized_gopro_analogue_1"
+    },
+    {
+      "clock_error_seconds": 0.17029702970296867,
+      "content_psnr_db": {
+        "85": 36.41967097178953,
+        "95": 39.50715781501894
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9718865663700993,
+          0.9714703473962457,
+          0.9709821921333157
+        ],
+        "95": [
+          0.9867126017520635,
+          0.9871424608894573,
+          0.9865829978057535
+        ]
+      },
+      "frames": 259,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "1ab0d02b230eeeab174ba0509e4bfca6f8bb73b5e67e809dc99a49971abc9904",
+        "129": "4095a7cb5ecbb3daa0a17c85d7d83b7fa65da0d2bdc1710510eb30064f3b46a0",
+        "258": "6bc241ce1f46d32b847426e9d8fa0afe8e16b71f5c24439cbd163fdc8d791835"
+      },
+      "source_bytes": 279581,
+      "source_projection_median_px": 9.419894048069972e-06,
+      "source_projection_samples": 18,
+      "video_id": "pick_place_color_5cam__house_8041__00000000__randomized_gopro_analogue_1"
+    },
+    {
+      "clock_error_seconds": 0.21584158415841515,
+      "content_psnr_db": {
+        "85": 34.70755823595654,
+        "95": 38.16956130164483
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.942575173475891,
+          0.9423095212989301,
+          0.9412292091167824
+        ],
+        "95": [
+          0.97170639453884,
+          0.9718304674407924,
+          0.9709024117009658
+        ]
+      },
+      "frames": 328,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "7a30a8b03e3c0e5ae293d6dbe19462bb88e8adbf21fa0fed16c49b4f8e7f6b52",
+        "164": "1594217f226dabcd9d8a68657c33357409c95041ab7ff8799fb815c821c22c2a",
+        "327": "c4be35ca6c033354964cc745d628581320c3d422854445cf3ba122ad4a7869df"
+      },
+      "source_bytes": 328254,
+      "source_projection_median_px": 9.130826599003408e-06,
+      "source_projection_samples": 19,
+      "video_id": "pick_place_color_5cam__house_9003__00000011__randomized_zed2_analogue_2"
+    },
+    {
+      "clock_error_seconds": 0.1643564356435654,
+      "content_psnr_db": {
+        "85": 37.51758363174928,
+        "95": 41.209208655332425
+      },
+      "content_ssim_first_middle_last": {
+        "85": [
+          0.9551578556212174,
+          0.9578218965893655,
+          0.9558835149168162
+        ],
+        "95": [
+          0.977734477252821,
+          0.9789967966007622,
+          0.9782347125435344
+        ]
+      },
+      "frames": 250,
+      "joint_selection_passed": true,
+      "reference_hashes": {
+        "0": "9567151b34e474eff544bae10479bd9f95adfc7c1067c3cfa7bef6f1c71aee55",
+        "125": "83df37cc7d8c284a39929ef7cba1e522e1552ea80387aa4085fa0d661865df30",
+        "249": "7fa589b6fc90225ebc684558825270dcb749fd1550e1af19ea8bcba009522013"
+      },
+      "source_bytes": 200390,
+      "source_projection_median_px": 6.184982462448629e-06,
+      "source_projection_samples": 18,
+      "video_id": "pick_place_color_5cam__house_9314__00000003__droid_shoulder_light_randomization"
+    }
+  ],
+  "scope": "MolmoSpaces JPEG224 frame-index experiment; not training benchmark",
+  "source_coordinate_convention_verified": false,
+  "time_semantics_verified": false,
+  "videos": 100
+}

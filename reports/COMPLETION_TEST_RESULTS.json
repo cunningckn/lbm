@@ -4,10 +4,10 @@
     "host": "tc_dev",
     "command": "PYTHONPATH=src python3 -m unittest discover -s tests -v",
     "status": "passed",
-    "tests": 12,
+    "tests": 13,
     "failures": 0,
     "errors": 0,
-    "duration_seconds": 0.332
+    "duration_seconds": 0.443
   },
   "tool_lint": {"ruff_version": "0.16.5", "status": "passed"},
   "tool_compileall": {"status": "passed"},

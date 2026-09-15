@@ -58,6 +58,8 @@ class RGBReader:
         audit_component(self.root)
         self.index = np.load(self.root / "frames.npy", mmap_mode="r")
         self.metadata = read_json(self.root / "dataset.json")
+        if self.metadata.get("format_version") != 1 or self.metadata.get("state") != "rgb-pilot":
+            raise ValueError("unsupported RGB cache schema/state")
 
     def get(self, frame_ids, codec="png"):
         if codec not in {"png", "jpeg"}:

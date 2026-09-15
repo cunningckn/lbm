@@ -30,6 +30,7 @@ from .release import (
     require_complete_source,
     verify_release,
 )
+from .rgb224 import benchmark_rgb224_payload, validate_rgb224_payload
 
 
 def _json_print(value: Any) -> None:
@@ -310,6 +311,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     verify_full.add_argument("--report", type=Path, default=None)
 
+    verify_rgb = subcommands.add_parser(
+        "verify-rgb224", help="validate an indexed RGB224 JPEG payload without decoding it"
+    )
+    verify_rgb.add_argument("--payload-root", required=True, type=Path)
+    verify_rgb.add_argument("--max-open-shards", type=int, default=8)
+    verify_rgb.add_argument("--report", type=Path, default=None)
+
     verify = subcommands.add_parser("verify", help="check a completed DROID pilot")
     _add_common_source_output(verify)
     verify.add_argument("--checks", type=int, default=32)
@@ -340,6 +348,16 @@ def build_parser() -> argparse.ArgumentParser:
     generic_benchmark.add_argument("--workers", type=int, default=8)
     generic_benchmark.add_argument("--seed", type=int, default=20260915)
     generic_benchmark.add_argument("--report", type=Path, default=None)
+
+    rgb_benchmark = subcommands.add_parser(
+        "benchmark-rgb224", help="compare seek/read and mmap RGB224 JPEG access"
+    )
+    rgb_benchmark.add_argument("--payload-root", required=True, type=Path)
+    rgb_benchmark.add_argument("--samples", type=int, default=256)
+    rgb_benchmark.add_argument("--warmup", type=int, default=16)
+    rgb_benchmark.add_argument("--max-open-shards", type=int, default=8)
+    rgb_benchmark.add_argument("--seed", type=int, default=20260916)
+    rgb_benchmark.add_argument("--report", type=Path, default=None)
 
     inspect = subcommands.add_parser(
         "inspect-droid", help="summarize only completed DROID source files"
@@ -402,6 +420,12 @@ def main(argv: list[str] | None = None) -> int:
             require_source_identity=arguments.require_source_identity,
         )
         _write_optional_report(result, arguments.report)
+    elif arguments.command == "verify-rgb224":
+        result = validate_rgb224_payload(
+            arguments.payload_root,
+            max_open_shards=arguments.max_open_shards,
+        )
+        _write_optional_report(result, arguments.report)
     elif arguments.command == "verify":
         result = verify_cache(
             arguments.source_root,
@@ -432,6 +456,15 @@ def main(argv: list[str] | None = None) -> int:
             frames=arguments.frames,
             points=arguments.points,
             workers=arguments.workers,
+            seed=arguments.seed,
+        )
+        _write_optional_report(result, arguments.report)
+    elif arguments.command == "benchmark-rgb224":
+        result = benchmark_rgb224_payload(
+            arguments.payload_root,
+            samples=arguments.samples,
+            warmup=arguments.warmup,
+            max_open_shards=arguments.max_open_shards,
             seed=arguments.seed,
         )
         _write_optional_report(result, arguments.report)

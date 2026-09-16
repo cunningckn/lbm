@@ -64,6 +64,19 @@ class MMapDroidReader:
     def __init__(self, cache_root: str | Path) -> None:
         self.root = Path(cache_root).resolve()
         read_completion_marker(self.root)
+        self._load_layout()
+
+    @classmethod
+    def _open_staging(cls, cache_root: str | Path) -> "MMapDroidReader":
+        """Builder-only validation before atomic publication; never writes READY."""
+        reader = cls.__new__(cls)
+        reader.root = Path(cache_root).resolve()
+        if not reader.root.name.startswith(".") or ".partial-" not in reader.root.name:
+            raise ValueError("staging validation requires a DROID partial directory")
+        reader._load_layout()
+        return reader
+
+    def _load_layout(self) -> None:
         self.dataset = read_json(self.root / "dataset.json")
         if self.dataset.get("format") != "molmo-motion-cache":
             raise ValueError(f"not a MolmoMotion cache: {self.root}")

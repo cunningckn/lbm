@@ -566,7 +566,7 @@ def _verify_staged_output(
 
     from .reader import MMapDroidReader
 
-    reader = MMapDroidReader(staged_root)
+    reader = MMapDroidReader._open_staging(staged_root)
     expected_ids = {record.candidate.sample_id for record in prepared}
     actual_ids = set(reader.sample_ids)
     if actual_ids != expected_ids:

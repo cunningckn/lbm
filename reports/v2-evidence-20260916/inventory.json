@@ -1,0 +1,166 @@
+{
+  "status": "passed",
+  "components": {
+    "droid": {
+      "files": 746,
+      "logical_bytes": 2930424339,
+      "allocated_bytes_counting_each_path": 2932416512,
+      "manifest_covers_all_files": true,
+      "metadata_records": 23532,
+      "source_identity": {
+        "component": "droid",
+        "component_fingerprint": "d6eebf7317ea09c1714e00011437c8d8d73f16393c2e28dc96d816be627a1eae",
+        "format_version": 1,
+        "snapshot_fingerprint": "45f5ac11cd78857e33945a5e22118be5e5faa8fb095dc46dc26b4fbf6a11a730",
+        "snapshot_revision": "c3dec07d796ddeccdc8f5a35bf4920b3ee044feb"
+      },
+      "records_read": 23532,
+      "sampled_ids": [
+        "droid/AUTOLab+0d4edc83+2023-10-21-19h-03m-59s__22008760",
+        "droid/PennPAL+acda9df3+2023-06-16-18h-18m-07s__27085680",
+        "droid/tri+a8754edb+2023-10-12-18h-21m-27s__29513368"
+      ]
+    },
+    "egodex": {
+      "files": 10648,
+      "logical_bytes": 125592498790,
+      "allocated_bytes_counting_each_path": 125617426432,
+      "manifest_covers_all_files": true,
+      "metadata_records": 302464,
+      "source_identity": {
+        "component": "egodex",
+        "component_fingerprint": "b4d54cf50738636173ac809b1b43ff18a62e72926bfe8a2cd46bcb9e0ae8377c",
+        "format_version": 1,
+        "snapshot_fingerprint": "45f5ac11cd78857e33945a5e22118be5e5faa8fb095dc46dc26b4fbf6a11a730",
+        "snapshot_revision": "c3dec07d796ddeccdc8f5a35bf4920b3ee044feb"
+      },
+      "records_read": 302464,
+      "sampled_ids": [
+        "egodex/hand/extra_assemble_disassemble_jigsaw_puzzle_0",
+        "egodex/hand/part3_insert_remove_bookshelf_2377",
+        "egodex/object/test_zip_unzip_case_9"
+      ]
+    },
+    "hdepic": {
+      "files": 460,
+      "logical_bytes": 2390226386,
+      "allocated_bytes_counting_each_path": 2391244800,
+      "manifest_covers_all_files": true,
+      "metadata_records": 12746,
+      "source_identity": {
+        "component": "hdepic",
+        "component_fingerprint": "9d7ec71596d6268c9f428a4a3425b0aa1d09fbe89c73a6e9786734180227c235",
+        "format_version": 1,
+        "snapshot_fingerprint": "45f5ac11cd78857e33945a5e22118be5e5faa8fb095dc46dc26b4fbf6a11a730",
+        "snapshot_revision": "c3dec07d796ddeccdc8f5a35bf4920b3ee044feb"
+      },
+      "records_read": 12746,
+      "sampled_ids": [
+        "hdepic/object/000096e54131d742-P08-20240614-085000-246",
+        "hdepic/object/825e4a2d8e5b2782-P09-20240621-153208-6",
+        "hdepic/object/fff18da50a92a8fa-P04-20240414-162750-195"
+      ]
+    },
+    "molmospaces": {
+      "files": 4410,
+      "logical_bytes": 83676313956,
+      "allocated_bytes_counting_each_path": 83686871040,
+      "manifest_covers_all_files": true,
+      "metadata_records": 140701,
+      "source_identity": {
+        "component": "molmospaces",
+        "component_fingerprint": "3cbbb58a986943a6236ab91c6b25786a2b17226218524b644e643ad22c842cd2",
+        "format_version": 1,
+        "paired_component_fingerprints": {
+          "assets": "06375aaffdf9ba4cb54cee160ea1e6b92161700441ccfb57e0569b5f8dfc657c"
+        },
+        "snapshot_fingerprint": "45f5ac11cd78857e33945a5e22118be5e5faa8fb095dc46dc26b4fbf6a11a730",
+        "snapshot_revision": "c3dec07d796ddeccdc8f5a35bf4920b3ee044feb"
+      },
+      "records_read": 140701,
+      "sampled_ids": [
+        "molmospaces/object/pick_place_2cam_randomized__house_0__00000000__exo_camera_1",
+        "molmospaces/object/pick_place_5cam__house_9060__00000003__wrist_camera_zed_mini",
+        "molmospaces/object/pick_place_color_5cam__house_9__00000008__wrist_camera_zed_mini"
+      ],
+      "asset_pairing": {
+        "snapshot_revision": "c3dec07d796ddeccdc8f5a35bf4920b3ee044feb",
+        "snapshot_fingerprint": "45f5ac11cd78857e33945a5e22118be5e5faa8fb095dc46dc26b4fbf6a11a730",
+        "primary_component": "molmospaces",
+        "secondary_component": "assets"
+      }
+    },
+    "stereo4d": {
+      "files": 5,
+      "logical_bytes": 26208339,
+      "allocated_bytes_counting_each_path": 26226688,
+      "manifest_covers_all_files": true,
+      "metadata_records": 23011,
+      "source_identity": {
+        "component": "stereo4d",
+        "component_fingerprint": "50f2c4a5e0f388ec813812944e00807e4db249a5ff7a00e7a5aa265d82d27f7e",
+        "format_version": 1,
+        "snapshot_fingerprint": "45f5ac11cd78857e33945a5e22118be5e5faa8fb095dc46dc26b4fbf6a11a730",
+        "snapshot_revision": "c3dec07d796ddeccdc8f5a35bf4920b3ee044feb"
+      }
+    },
+    "xperience": {
+      "files": 4624,
+      "logical_bytes": 45028997184,
+      "allocated_bytes_counting_each_path": 45039841280,
+      "manifest_covers_all_files": true,
+      "metadata_records": 196749,
+      "source_identity": {
+        "component": "xperience",
+        "component_fingerprint": "88a5b01fd8d03a7ffd5557526cab9be3f2a99ccd0d7984a077dfd0218be38ee6",
+        "format_version": 1,
+        "snapshot_fingerprint": "45f5ac11cd78857e33945a5e22118be5e5faa8fb095dc46dc26b4fbf6a11a730",
+        "snapshot_revision": "c3dec07d796ddeccdc8f5a35bf4920b3ee044feb"
+      },
+      "records_read": 196749,
+      "sampled_ids": [
+        "xperience/hand/003dcaf0-edba-4787-ada0-187d2748f684__ep10__clip_000_sort_purple_beads",
+        "xperience/object/147b3d65-65d6-421b-8944-7d13317f0c3d__ep3__clip_011_pick_up_smartphone",
+        "xperience/object/ffce7044-a586-463e-bdd0-cf0a5222748f__ep9__clip_019_position_cutter_and_cardboard"
+      ]
+    },
+    "ytvis": {
+      "files": 55,
+      "logical_bytes": 154974190,
+      "allocated_bytes_counting_each_path": 155103232,
+      "manifest_covers_all_files": true,
+      "metadata_records": 1035,
+      "source_identity": {
+        "component": "ytvis",
+        "component_fingerprint": "a1fb5fd3295b1299e8474485f44245327982a7da88bf872a33794d483ac6df08",
+        "format_version": 1,
+        "snapshot_fingerprint": "45f5ac11cd78857e33945a5e22118be5e5faa8fb095dc46dc26b4fbf6a11a730",
+        "snapshot_revision": "c3dec07d796ddeccdc8f5a35bf4920b3ee044feb"
+      },
+      "records_read": 1035,
+      "sampled_ids": [
+        "ytvis/object/0043f083b5",
+        "ytvis/object/814fca103a",
+        "ytvis/object/ff23117fe6"
+      ]
+    },
+    "assets": {
+      "files": 58,
+      "logical_bytes": 78795270420,
+      "allocated_bytes_counting_each_path": 78795640832,
+      "manifest_covers_all_files": true,
+      "metadata_records": null,
+      "source_identity": {
+        "component": "assets",
+        "component_fingerprint": "06375aaffdf9ba4cb54cee160ea1e6b92161700441ccfb57e0569b5f8dfc657c",
+        "format_version": 1,
+        "snapshot_fingerprint": "45f5ac11cd78857e33945a5e22118be5e5faa8fb095dc46dc26b4fbf6a11a730",
+        "snapshot_revision": "c3dec07d796ddeccdc8f5a35bf4920b3ee044feb"
+      }
+    }
+  },
+  "delivery_component_logical_bytes": 338594913604,
+  "excluded_from_delivery": [
+    ".droid.partial-rv99_9cb"
+  ]
+}

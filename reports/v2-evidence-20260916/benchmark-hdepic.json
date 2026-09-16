@@ -1,0 +1,40 @@
+{
+  "cache_output": "/home/tione/workspace/kainingchen/Datasets/molmo-motion-1m-mmap/v2/subsets/hdepic",
+  "checksums_equal": true,
+  "dataset": "hdepic",
+  "limitations": [
+    "This is a warm-cache single-process numeric-window benchmark.",
+    "RGB/video decode, PyTorch workers, and GPU transfer are not measured.",
+    "Setup/index construction is excluded from both timed paths."
+  ],
+  "measured_at": "2026-09-16T02:28:50.780371Z",
+  "mmap_npy_parquet_index": {
+    "checksum": 54694132.74481862,
+    "elapsed_seconds": 0.047619619872421026,
+    "latency_ms_mean": 0.18577672562969383,
+    "latency_ms_p50": 0.1830817200243473,
+    "latency_ms_p95": 0.20182610023766756,
+    "samples": 256,
+    "samples_per_second": 5375.935395659527
+  },
+  "parameters": {
+    "frames": 8,
+    "points": 32,
+    "samples": 256,
+    "seed": 20260916,
+    "source_records_per_track_kind": 8,
+    "warmup": 32,
+    "workers": 1
+  },
+  "raw_tar_npz": {
+    "checksum": 54694132.74481862,
+    "elapsed_seconds": 1.4632855919189751,
+    "latency_ms_mean": 5.715480952858343,
+    "latency_ms_p50": 5.548815010115504,
+    "latency_ms_p95": 6.612792960368097,
+    "samples": 256,
+    "samples_per_second": 174.94876011474813
+  },
+  "status": "completed",
+  "throughput_speedup": 30.728628154514926
+}

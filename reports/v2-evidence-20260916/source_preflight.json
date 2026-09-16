@@ -1,0 +1,20 @@
+{
+  "checked_at": "2026-09-16T02:06:48.407542Z",
+  "expected_bytes": 285601107377,
+  "expected_files": 82,
+  "hash_mismatches": [],
+  "hash_verification_requested": true,
+  "hashed_lfs_files": 50,
+  "manifest_path": "/home/tione/workspace/kainingchen/Datasets/molmo-motion-1m/.cache/huggingface/trees/c3dec07d796ddeccdc8f5a35bf4920b3ee044feb.json",
+  "missing_files": [],
+  "present_bytes": 285601107377,
+  "size_mismatches": [],
+  "source_identity": {
+    "format_version": 1,
+    "snapshot_fingerprint": "45f5ac11cd78857e33945a5e22118be5e5faa8fb095dc46dc26b4fbf6a11a730",
+    "snapshot_revision": "c3dec07d796ddeccdc8f5a35bf4920b3ee044feb"
+  },
+  "source_revision": "c3dec07d796ddeccdc8f5a35bf4920b3ee044feb",
+  "source_root": "/home/tione/workspace/kainingchen/Datasets/molmo-motion-1m",
+  "status": "passed"
+}

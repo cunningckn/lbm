@@ -1,0 +1,40 @@
+{
+  "cache_output": "/home/tione/workspace/kainingchen/Datasets/molmo-motion-1m-mmap/v2/subsets/molmospaces",
+  "checksums_equal": true,
+  "dataset": "molmospaces",
+  "limitations": [
+    "This is a warm-cache single-process numeric-window benchmark.",
+    "RGB/video decode, PyTorch workers, and GPU transfer are not measured.",
+    "Setup/index construction is excluded from both timed paths."
+  ],
+  "measured_at": "2026-09-16T02:31:41.174799Z",
+  "mmap_npy_parquet_index": {
+    "checksum": 45245303.42653426,
+    "elapsed_seconds": 0.05191437806934118,
+    "latency_ms_mean": 0.20256423886166885,
+    "latency_ms_p50": 0.20097149536013603,
+    "latency_ms_p95": 0.21736870985478163,
+    "samples": 256,
+    "samples_per_second": 4931.196510879221
+  },
+  "parameters": {
+    "frames": 8,
+    "points": 32,
+    "samples": 256,
+    "seed": 20260916,
+    "source_records_per_track_kind": 8,
+    "warmup": 32,
+    "workers": 1
+  },
+  "raw_tar_npz": {
+    "checksum": 45245303.42653426,
+    "elapsed_seconds": 1.6061278907582164,
+    "latency_ms_mean": 6.273463446632377,
+    "latency_ms_p50": 6.066695088520646,
+    "latency_ms_p95": 6.7643203074112535,
+    "samples": 256,
+    "samples_per_second": 159.38954891017318
+  },
+  "status": "completed",
+  "throughput_speedup": 30.938016605205934
+}

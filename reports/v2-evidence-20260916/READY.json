@@ -1,0 +1,121 @@
+{
+  "component_fingerprints": {
+    "assets": "06375aaffdf9ba4cb54cee160ea1e6b92161700441ccfb57e0569b5f8dfc657c",
+    "droid": "d6eebf7317ea09c1714e00011437c8d8d73f16393c2e28dc96d816be627a1eae",
+    "egodex": "b4d54cf50738636173ac809b1b43ff18a62e72926bfe8a2cd46bcb9e0ae8377c",
+    "hdepic": "9d7ec71596d6268c9f428a4a3425b0aa1d09fbe89c73a6e9786734180227c235",
+    "molmospaces": "3cbbb58a986943a6236ab91c6b25786a2b17226218524b644e643ad22c842cd2",
+    "stereo4d": "50f2c4a5e0f388ec813812944e00807e4db249a5ff7a00e7a5aa265d82d27f7e",
+    "xperience": "88a5b01fd8d03a7ffd5557526cab9be3f2a99ccd0d7984a077dfd0218be38ee6",
+    "ytvis": "a1fb5fd3295b1299e8474485f44245327982a7da88bf872a33794d483ac6df08"
+  },
+  "created_at": "2026-09-16T02:20:34.590498Z",
+  "format": "molmo-motion-cache-release",
+  "format_version": 1,
+  "limitations": [
+    "Stereo4D publishes metadata/track indices only; numeric tracks, camera, and RGB require reconstruction.",
+    "Xperience publishes tracks only; camera and RGB require gated upstream reconstruction.",
+    "DROID, EgoDex, HD-EPIC, and YTVIS RGB require their documented upstream reconstruction."
+  ],
+  "portable": true,
+  "results": {
+    "assets": {
+      "archives": 8,
+      "created_at": "2026-09-16T02:20:34.529725Z",
+      "indexed_assets": 148936,
+      "output": "/home/tione/workspace/kainingchen/Datasets/molmo-motion-1m-mmap/v2/assets",
+      "sha256sums_sha256": "5f1c0fad2ba4547afec421b055dfc52f03d72af6444c8ecb4c74f98fbf3cc277",
+      "status": "ready"
+    },
+    "droid": {
+      "created_at": "2026-09-16T02:11:17.366342Z",
+      "format": "molmo-motion-cache",
+      "format_version": 1,
+      "output": "/home/tione/workspace/kainingchen/Datasets/molmo-motion-1m-mmap/v2/subsets/droid",
+      "records": 23532,
+      "sha256sums_sha256": "2d78c1b4fab4a988756d716740d3d513b72a451b3623cfeaa1438103abf2e159",
+      "status": "ready"
+    },
+    "egodex": {
+      "checksums": "sha256",
+      "created_at": "2026-09-16T02:15:02.893554Z",
+      "dataset": "egodex",
+      "format": "molmo-motion-cache",
+      "format_version": 1,
+      "output": "/home/tione/workspace/kainingchen/Datasets/molmo-motion-1m-mmap/v2/subsets/egodex",
+      "records": 302464,
+      "sha256sums_sha256": "0eb2cef5759d4df600eafe7743de2f91a8b54d01262bf3bf7d49f6a8d4e12525",
+      "status": "ready"
+    },
+    "hdepic": {
+      "checksums": "sha256",
+      "created_at": "2026-09-16T02:15:17.099149Z",
+      "dataset": "hdepic",
+      "format": "molmo-motion-cache",
+      "format_version": 1,
+      "output": "/home/tione/workspace/kainingchen/Datasets/molmo-motion-1m-mmap/v2/subsets/hdepic",
+      "records": 12746,
+      "sha256sums_sha256": "0699a29df9fd99f284881e73278baa1058a6eb1d9e9e4acffcae9fb8e198debc",
+      "status": "ready"
+    },
+    "molmospaces": {
+      "checksums": "sha256",
+      "created_at": "2026-09-16T02:17:21.988778Z",
+      "dataset": "molmospaces",
+      "format": "molmo-motion-cache",
+      "format_version": 1,
+      "output": "/home/tione/workspace/kainingchen/Datasets/molmo-motion-1m-mmap/v2/subsets/molmospaces",
+      "records": 140701,
+      "sha256sums_sha256": "1634ce17041b664102553fbfdc58ec1cea61d42443fd9da649cb8297d3bf8e3e",
+      "status": "ready"
+    },
+    "stereo4d": {
+      "created_at": "2026-09-16T02:19:53.101545Z",
+      "dataset": "stereo4d",
+      "output": "/home/tione/workspace/kainingchen/Datasets/molmo-motion-1m-mmap/v2/subsets/stereo4d",
+      "records": 23011,
+      "sha256sums_sha256": "195e8872cfc49bfc5eac5d15e31d476698d86554e2820355c8650ff30bde0db7",
+      "status": "metadata-only-ready"
+    },
+    "xperience": {
+      "checksums": "sha256",
+      "created_at": "2026-09-16T02:19:47.681084Z",
+      "dataset": "xperience",
+      "format": "molmo-motion-cache",
+      "format_version": 1,
+      "output": "/home/tione/workspace/kainingchen/Datasets/molmo-motion-1m-mmap/v2/subsets/xperience",
+      "records": 196749,
+      "sha256sums_sha256": "54b850d1a5a604ab0bfc475efc7168ebd5a55871102152687ba1b7ac383d3e54",
+      "status": "ready"
+    },
+    "ytvis": {
+      "checksums": "sha256",
+      "created_at": "2026-09-16T02:19:51.082099Z",
+      "dataset": "ytvis",
+      "format": "molmo-motion-cache",
+      "format_version": 1,
+      "output": "/home/tione/workspace/kainingchen/Datasets/molmo-motion-1m-mmap/v2/subsets/ytvis",
+      "records": 1035,
+      "sha256sums_sha256": "5aac3683117bb244f52c3dfa42afff9ef42bc24421904d9876c4e30f6777cfe0",
+      "status": "ready"
+    }
+  },
+  "source_bytes": 285601107377,
+  "source_files": 82,
+  "source_identity": {
+    "format_version": 1,
+    "snapshot_fingerprint": "45f5ac11cd78857e33945a5e22118be5e5faa8fb095dc46dc26b4fbf6a11a730",
+    "snapshot_revision": "c3dec07d796ddeccdc8f5a35bf4920b3ee044feb"
+  },
+  "source_revision": "c3dec07d796ddeccdc8f5a35bf4920b3ee044feb",
+  "status": "ready",
+  "subsets": [
+    "droid",
+    "egodex",
+    "hdepic",
+    "molmospaces",
+    "stereo4d",
+    "xperience",
+    "ytvis"
+  ]
+}

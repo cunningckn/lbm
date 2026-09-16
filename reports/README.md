@@ -1,5 +1,7 @@
 # MolmoMotion 报告索引
 
+- `MOLMO_MOTION_V2_DELIVERY_20260916.md`：v2 全量成品、独立文件验收、磁盘规模、六子集性能及迁移说明；原始 JSON 证据见 `v2-evidence-20260916/`。
+
 - `LBM_MOLMO_DEVELOPMENT_LOG_20260914.md`：LBM 数据吞吐思路与早期适配记录。
 - `MOLMO_MOTION_DROID_PILOT_REPORT.md`：DROID 小样本转存与初始验证。
 - `MOLMO_MOTION_FULL_CONVERSION_REPORT_20260915.md`：完整 MolmoMotion 产物和磁盘/读取结果。
